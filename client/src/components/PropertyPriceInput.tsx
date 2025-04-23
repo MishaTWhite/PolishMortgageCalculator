@@ -1,17 +1,32 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Input } from "@/components/ui/input";
 import { useLanguage } from "@/context/LanguageContext";
 import { useTranslations } from "@/lib/translations";
+import { formatCurrency } from "@/lib/mortgageCalculator";
 
 interface PropertyPriceInputProps {
   value: number;
   onChange: (value: number) => void;
+  currencySymbol?: string;
+  currencyCode?: string;
+  formatAmount?: (amount: number) => string;
 }
 
-export default function PropertyPriceInput({ value, onChange }: PropertyPriceInputProps) {
+export default function PropertyPriceInput({ 
+  value, 
+  onChange, 
+  currencySymbol = "zł", 
+  currencyCode = "PLN",
+  formatAmount = formatCurrency 
+}: PropertyPriceInputProps) {
   const { language } = useLanguage();
   const t = useTranslations(language);
   const [inputValue, setInputValue] = useState(value.toString());
+  
+  // Update input value when the currency or value changes
+  useEffect(() => {
+    setInputValue(value.toString());
+  }, [value, currencyCode]);
   
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const newValue = e.target.value;
@@ -19,7 +34,11 @@ export default function PropertyPriceInput({ value, onChange }: PropertyPriceInp
     
     // Convert to number and validate
     const numValue = Number(newValue);
-    if (!isNaN(numValue) && numValue >= 50000 && numValue <= 10000000) {
+    // The min/max range should be adjusted based on currency
+    const minValue = currencyCode === "PLN" ? 50000 : 10000;
+    const maxValue = currencyCode === "PLN" ? 10000000 : 2000000;
+    
+    if (!isNaN(numValue) && numValue >= minValue && numValue <= maxValue) {
       onChange(numValue);
     }
   };
@@ -28,8 +47,11 @@ export default function PropertyPriceInput({ value, onChange }: PropertyPriceInp
   const handleBlur = () => {
     const numValue = Number(inputValue);
     if (!isNaN(numValue)) {
-      // Constrain to valid range
-      const constrainedValue = Math.max(50000, Math.min(10000000, numValue));
+      // Constrain to valid range - adjusted for currency
+      const minValue = currencyCode === "PLN" ? 50000 : 10000;
+      const maxValue = currencyCode === "PLN" ? 10000000 : 2000000;
+      
+      const constrainedValue = Math.max(minValue, Math.min(maxValue, numValue));
       onChange(constrainedValue);
       setInputValue(constrainedValue.toString());
     } else {
@@ -45,18 +67,18 @@ export default function PropertyPriceInput({ value, onChange }: PropertyPriceInp
       </label>
       <div className="relative mt-1 rounded-md shadow-sm">
         <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-          <span className="text-gray-500 sm:text-sm">PLN</span>
+          <span className="text-gray-500 sm:text-sm">{currencyCode}</span>
         </div>
         <Input
           id="property-price"
           type="number"
           className="pl-12 pr-12 py-3"
-          placeholder="500,000"
+          placeholder={currencyCode === "PLN" ? "500,000" : "100,000"}
           value={inputValue}
           onChange={handleChange}
           onBlur={handleBlur}
-          min={50000}
-          max={10000000}
+          min={currencyCode === "PLN" ? 50000 : 10000}
+          max={currencyCode === "PLN" ? 10000000 : 2000000}
         />
       </div>
     </div>

@@ -7,12 +7,18 @@ interface DownPaymentSliderProps {
   value: number;
   onChange: (value: number) => void;
   downPaymentAmount: number;
+  currencySymbol?: string;
+  currencyCode?: string;
+  formatAmount?: (amount: number) => string;
 }
 
 export default function DownPaymentSlider({ 
   value, 
   onChange, 
-  downPaymentAmount 
+  downPaymentAmount,
+  currencySymbol = "zł",
+  currencyCode = "PLN",
+  formatAmount = formatCurrency
 }: DownPaymentSliderProps) {
   const { language } = useLanguage();
   const t = useTranslations(language);
@@ -28,7 +34,7 @@ export default function DownPaymentSlider({
           {t.downPayment}
         </label>
         <span className="text-sm font-medium">
-          PLN {formatCurrency(downPaymentAmount)} ({value}%)
+          {currencyCode} {formatAmount(downPaymentAmount)} ({value}%)
         </span>
       </div>
       <Slider

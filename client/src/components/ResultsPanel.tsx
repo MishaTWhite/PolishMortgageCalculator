@@ -12,6 +12,9 @@ interface ResultsPanelProps {
   totalInterest: number;
   totalRepayment: number;
   isLoading: boolean;
+  currencySymbol?: string;
+  currencyCode?: string;
+  formatAmount?: (amount: number) => string;
 }
 
 export default function ResultsPanel({
@@ -21,7 +24,10 @@ export default function ResultsPanel({
   totalInterestRate,
   totalInterest,
   totalRepayment,
-  isLoading
+  isLoading,
+  currencySymbol = "zł",
+  currencyCode = "PLN",
+  formatAmount = formatCurrency
 }: ResultsPanelProps) {
   const { language } = useLanguage();
   const t = useTranslations(language);
@@ -42,7 +48,7 @@ export default function ResultsPanel({
             <div className="grid grid-cols-2 gap-2">
               <div className="text-sm text-text-secondary">{t.loanAmount}</div>
               <div className="text-sm font-medium text-right">
-                PLN {formatCurrency(loanAmount)}
+                {currencyCode} {formatAmount(loanAmount)}
               </div>
               
               <div className="text-sm text-text-secondary">{t.monthlyPayment}:</div>
@@ -50,7 +56,7 @@ export default function ResultsPanel({
                 {isLoading ? (
                   <Skeleton className="h-6 w-24 ml-auto" />
                 ) : (
-                  `PLN ${formatCurrency(monthlyPayment)}`
+                  `${currencyCode} ${formatAmount(monthlyPayment)}`
                 )}
               </div>
               
@@ -74,7 +80,7 @@ export default function ResultsPanel({
               <div className="flex justify-between items-center">
                 <span className="text-sm">{t.loanAmount}</span>
                 <span className="text-sm font-medium">
-                  PLN {formatCurrency(loanAmount)}
+                  {currencyCode} {formatAmount(loanAmount)}
                 </span>
               </div>
               
@@ -84,7 +90,7 @@ export default function ResultsPanel({
                   <Skeleton className="h-5 w-24" />
                 ) : (
                   <span className="text-sm font-medium">
-                    PLN {formatCurrency(totalInterest)}
+                    {currencyCode} {formatAmount(totalInterest)}
                   </span>
                 )}
               </div>
@@ -95,7 +101,7 @@ export default function ResultsPanel({
                   <Skeleton className="h-6 w-28" />
                 ) : (
                   <span className="text-base font-medium">
-                    PLN {formatCurrency(totalRepayment)}
+                    {currencyCode} {formatAmount(totalRepayment)}
                   </span>
                 )}
               </div>

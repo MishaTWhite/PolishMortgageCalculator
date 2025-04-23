@@ -8,13 +8,19 @@ interface MonthlyPaymentSliderProps {
   onChange: (value: number) => void;
   min: number;
   max: number;
+  currencySymbol?: string;
+  currencyCode?: string;
+  formatAmount?: (amount: number) => string;
 }
 
 export default function MonthlyPaymentSlider({ 
   value, 
   onChange, 
   min, 
-  max 
+  max,
+  currencySymbol = "zł",
+  currencyCode = "PLN",
+  formatAmount = formatCurrency
 }: MonthlyPaymentSliderProps) {
   const { language } = useLanguage();
   const t = useTranslations(language);
@@ -30,7 +36,7 @@ export default function MonthlyPaymentSlider({
           {t.monthlyPayment}
         </label>
         <span className="text-sm font-medium">
-          PLN {formatCurrency(value)}
+          {currencyCode} {formatAmount(value)}
         </span>
       </div>
       <Slider
@@ -43,8 +49,8 @@ export default function MonthlyPaymentSlider({
         onValueChange={handleSliderChange}
       />
       <div className="flex justify-between text-xs text-text-tertiary mt-1">
-        <span>PLN {formatCurrency(min)}</span>
-        <span>PLN {formatCurrency(max)}</span>
+        <span>{currencyCode} {formatAmount(min)}</span>
+        <span>{currencyCode} {formatAmount(max)}</span>
       </div>
     </div>
   );

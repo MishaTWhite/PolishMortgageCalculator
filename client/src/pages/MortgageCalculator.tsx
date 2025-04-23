@@ -11,12 +11,30 @@ import InfoSection from "@/components/InfoSection";
 import LanguageSelector from "@/components/LanguageSelector";
 import CurrencyConverter from "@/components/CurrencyConverter";
 import SwipeableContainer from "@/components/SwipeableContainer";
-import { calculateMonthlyPayment, calculateLoanDuration } from "@/lib/mortgageCalculator";
+import { calculateMonthlyPayment, calculateLoanDuration, formatCurrency } from "@/lib/mortgageCalculator";
 import { apiRequest } from "@/lib/queryClient";
 import { useLanguage } from "@/context/LanguageContext";
 import { useTranslations } from "@/lib/translations";
 import { Button } from "@/components/ui/button";
-import { ArrowRight, DollarSign } from "lucide-react";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { ArrowRight, DollarSign, RefreshCwIcon } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
+
+// Array of supported currencies (same as in CurrencyConverter.tsx)
+const CURRENCIES = [
+  { code: "PLN", name: "Polish Złoty", flag: "🇵🇱" },
+  { code: "EUR", name: "Euro", flag: "🇪🇺" },
+  { code: "USD", name: "US Dollar", flag: "🇺🇸" },
+  { code: "UAH", name: "Ukrainian Hryvnia", flag: "🇺🇦" }
+];
+
+// Type for exchange rates response
+interface ExchangeRateData {
+  source: string;
+  base: string;
+  rates: Record<string, number>;
+  fetchDate: string;
+}
 
 export default function MortgageCalculator() {
   const { language } = useLanguage();
@@ -36,7 +54,8 @@ export default function MortgageCalculator() {
   const [monthlyPaymentMin, setMonthlyPaymentMin] = useState(1000);
   const [monthlyPaymentMax, setMonthlyPaymentMax] = useState(10000);
   
-  // State for showing currency converter
+  // Currency related states
+  const [selectedCurrency, setSelectedCurrency] = useState("PLN");
   const [showingConverter, setShowingConverter] = useState(false);
 
   // Define response type for interest rate API
@@ -53,6 +72,15 @@ export default function MortgageCalculator() {
     refetch: refetchInterestRate
   } = useQuery<InterestRateResponse>({
     queryKey: ['/api/interest-rate']
+  });
+  
+  // Fetch exchange rates
+  const { 
+    data: exchangeRates, 
+    isLoading: isLoadingRates,
+    refetch: refetchRates
+  } = useQuery<ExchangeRateData>({
+    queryKey: ['/api/exchange-rates']
   });
 
   // Calculate mortgage details
@@ -74,29 +102,68 @@ export default function MortgageCalculator() {
     enabled: false // Don't run automatically, we'll trigger manually
   });
 
+  // Conversion functions
+  // Convert a value from the base currency (PLN) to the selected currency
+  const convertFromPLN = (amount: number): number => {
+    if (!exchangeRates || !exchangeRates.rates || selectedCurrency === "PLN") {
+      return amount;
+    }
+    
+    // Get the exchange rate for the selected currency
+    const rate = exchangeRates.rates[selectedCurrency];
+    if (!rate) return amount;
+    
+    return amount * rate;
+  };
+  
+  // Convert a value from the selected currency to the base currency (PLN)
+  const convertToPLN = (amount: number): number => {
+    if (!exchangeRates || !exchangeRates.rates || selectedCurrency === "PLN") {
+      return amount;
+    }
+    
+    // Get the exchange rate for the selected currency
+    const rate = exchangeRates.rates[selectedCurrency];
+    if (!rate) return amount;
+    
+    return amount / rate;
+  };
+
   // Effect to calculate loan amount when property price or down payment changes
   useEffect(() => {
-    const downAmount = propertyPrice * (downPaymentPercent / 100);
-    const loan = propertyPrice - downAmount;
-    setDownPaymentAmount(downAmount);
-    setLoanAmount(loan);
+    // Calculate in PLN regardless of selected currency
+    const plnPropertyPrice = selectedCurrency === "PLN" 
+      ? propertyPrice 
+      : convertToPLN(propertyPrice);
+      
+    const downAmount = plnPropertyPrice * (downPaymentPercent / 100);
+    const loan = plnPropertyPrice - downAmount;
     
-    // Update monthly payment slider range
+    setDownPaymentAmount(selectedCurrency === "PLN" ? downAmount : convertFromPLN(downAmount));
+    setLoanAmount(selectedCurrency === "PLN" ? loan : convertFromPLN(loan));
+    
+    // Update monthly payment slider range - always calculated in base currency (PLN)
     const minPayment = Math.max(1000, Math.ceil(loan / (35 * 12) / 10) * 10);
     // Calculate standard max payment based on 5-year term
     const standardMaxPayment = Math.ceil(loan / (5 * 12) / 10) * 10;
     // Double the max payment (but cap at 20000 PLN) to allow for faster repayments
     const maxPayment = Math.min(20000, standardMaxPayment * 2);
-    setMonthlyPaymentMin(minPayment);
-    setMonthlyPaymentMax(maxPayment);
     
-    // Recalculate monthly payment based on new loan amount
-    const newMonthlyPayment = calculateMonthlyPayment(loan, totalInterestRate, loanDuration);
+    // Convert limits to selected currency
+    setMonthlyPaymentMin(selectedCurrency === "PLN" ? minPayment : convertFromPLN(minPayment));
+    setMonthlyPaymentMax(selectedCurrency === "PLN" ? maxPayment : convertFromPLN(maxPayment));
+    
+    // Recalculate monthly payment based on new loan amount - using PLN for calculation
+    const newMonthlyPaymentPLN = calculateMonthlyPayment(loan, totalInterestRate, loanDuration);
+    const newMonthlyPayment = selectedCurrency === "PLN" 
+      ? newMonthlyPaymentPLN
+      : convertFromPLN(newMonthlyPaymentPLN);
+      
     setMonthlyPayment(newMonthlyPayment);
     
     // Trigger recalculation
     recalculate();
-  }, [propertyPrice, downPaymentPercent, recalculate]);
+  }, [propertyPrice, downPaymentPercent, recalculate, selectedCurrency, exchangeRates]);
 
   // Effect to update interest rate when base rate or bank margin changes
   useEffect(() => {
@@ -114,8 +181,18 @@ export default function MortgageCalculator() {
   const handleMonthlyPaymentChange = (newMonthlyPayment: number) => {
     setMonthlyPayment(newMonthlyPayment);
     
+    // Convert monthly payment to PLN for calculation if needed
+    const monthlyPaymentPLN = selectedCurrency === "PLN" 
+      ? newMonthlyPayment 
+      : convertToPLN(newMonthlyPayment);
+      
+    // Calculate loan amount in PLN
+    const loanAmountPLN = selectedCurrency === "PLN" 
+      ? loanAmount 
+      : convertToPLN(loanAmount);
+    
     // Calculate new loan duration based on payment
-    const newDuration = calculateLoanDuration(loanAmount, totalInterestRate, newMonthlyPayment);
+    const newDuration = calculateLoanDuration(loanAmountPLN, totalInterestRate, monthlyPaymentPLN);
     setLoanDuration(newDuration);
     
     recalculate();
@@ -125,11 +202,93 @@ export default function MortgageCalculator() {
   const handleLoanDurationChange = (newLoanDuration: number) => {
     setLoanDuration(newLoanDuration);
     
+    // Convert loan amount to PLN for calculation if needed
+    const loanAmountPLN = selectedCurrency === "PLN" 
+      ? loanAmount 
+      : convertToPLN(loanAmount);
+    
     // Calculate new monthly payment based on duration
-    const newMonthlyPayment = calculateMonthlyPayment(loanAmount, totalInterestRate, newLoanDuration);
+    const newMonthlyPaymentPLN = calculateMonthlyPayment(loanAmountPLN, totalInterestRate, newLoanDuration);
+    
+    // Convert back to selected currency if needed
+    const newMonthlyPayment = selectedCurrency === "PLN" 
+      ? newMonthlyPaymentPLN 
+      : convertFromPLN(newMonthlyPaymentPLN);
+      
     setMonthlyPayment(newMonthlyPayment);
     
     recalculate();
+  };
+
+  // Handle currency change
+  const handleCurrencyChange = (currency: string) => {
+    if (currency === selectedCurrency) return;
+    
+    // Store current values in PLN
+    const currentPropertyPricePLN = selectedCurrency === "PLN" 
+      ? propertyPrice 
+      : convertToPLN(propertyPrice);
+      
+    const currentMonthlyPaymentPLN = selectedCurrency === "PLN" 
+      ? monthlyPayment 
+      : convertToPLN(monthlyPayment);
+    
+    // Set the new currency
+    setSelectedCurrency(currency);
+    
+    // Convert stored values to the new currency
+    if (currency === "PLN") {
+      setPropertyPrice(currentPropertyPricePLN);
+      setMonthlyPayment(currentMonthlyPaymentPLN);
+    } else if (exchangeRates && exchangeRates.rates && exchangeRates.rates[currency]) {
+      const rate = exchangeRates.rates[currency];
+      setPropertyPrice(currentPropertyPricePLN * rate);
+      setMonthlyPayment(currentMonthlyPaymentPLN * rate);
+    }
+  };
+
+  // Get currency symbol for display
+  const getCurrencySymbol = (code: string): string => {
+    switch (code) {
+      case "PLN": return "zł";
+      case "EUR": return "€";
+      case "USD": return "$";
+      case "UAH": return "₴";
+      default: return code;
+    }
+  };
+  
+  // Format amount with currency symbol
+  const formatAmount = (amount: number): string => {
+    let formatter;
+    
+    switch (selectedCurrency) {
+      case "EUR":
+        formatter = new Intl.NumberFormat('de-DE', { 
+          style: 'currency', 
+          currency: 'EUR',
+          maximumFractionDigits: 0
+        });
+        break;
+      case "USD":
+        formatter = new Intl.NumberFormat('en-US', { 
+          style: 'currency', 
+          currency: 'USD',
+          maximumFractionDigits: 0
+        });
+        break;
+      case "UAH":
+        formatter = new Intl.NumberFormat('uk-UA', { 
+          style: 'currency', 
+          currency: 'UAH',
+          maximumFractionDigits: 0
+        });
+        break;
+      default: // PLN
+        return formatCurrency(amount);
+    }
+    
+    return formatter.format(amount);
   };
 
   // Main content for mortgage calculator
@@ -140,27 +299,69 @@ export default function MortgageCalculator() {
           <div className="bg-white p-6 mb-6 rounded-lg shadow-sm">
             <div className="flex justify-between items-center mb-4">
               <h2 className="text-lg font-medium">{t.parametersTitle}</h2>
+              <div className="flex gap-2">
+                <Button 
+                  variant="outline" 
+                  size="sm" 
+                  onClick={() => setShowingConverter(true)}
+                  className="flex items-center gap-2"
+                >
+                  <DollarSign size={16} />
+                  <span className="hidden sm:inline">Currency Converter</span>
+                  <ArrowRight size={16} />
+                </Button>
+              </div>
+            </div>
+            
+            {/* Currency selection */}
+            <div className="mb-4 flex items-center gap-2">
+              <div className="flex-grow">
+                <Select defaultValue={selectedCurrency} onValueChange={handleCurrencyChange}>
+                  <SelectTrigger className="w-full">
+                    <SelectValue placeholder="Select Currency" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {CURRENCIES.map(currency => (
+                      <SelectItem key={currency.code} value={currency.code}>
+                        {currency.flag} {currency.code} - {currency.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              
+              {selectedCurrency !== "PLN" && (
+                <Badge variant="outline" className="ml-2">
+                  1 {selectedCurrency} = {exchangeRates?.rates ? 
+                    (1 / exchangeRates.rates[selectedCurrency]).toFixed(2) : '?'} PLN
+                </Badge>
+              )}
+              
               <Button 
-                variant="outline" 
+                variant="ghost" 
                 size="sm" 
-                onClick={() => setShowingConverter(true)}
-                className="flex items-center gap-2"
+                onClick={() => refetchRates()} 
+                disabled={isLoadingRates}
               >
-                <DollarSign size={16} />
-                <span className="hidden sm:inline">Currency Converter</span>
-                <ArrowRight size={16} />
+                <RefreshCwIcon size={16} className={isLoadingRates ? "animate-spin" : ""} />
               </Button>
             </div>
             
             <PropertyPriceInput 
               value={propertyPrice} 
-              onChange={setPropertyPrice} 
+              onChange={setPropertyPrice}
+              currencySymbol={getCurrencySymbol(selectedCurrency)}
+              currencyCode={selectedCurrency}
+              formatAmount={formatAmount}
             />
             
             <DownPaymentSlider 
               value={downPaymentPercent} 
               onChange={setDownPaymentPercent} 
-              downPaymentAmount={downPaymentAmount} 
+              downPaymentAmount={downPaymentAmount}
+              currencySymbol={getCurrencySymbol(selectedCurrency)}
+              currencyCode={selectedCurrency}
+              formatAmount={formatAmount}
             />
             
             <LoanDurationSlider 
@@ -173,6 +374,9 @@ export default function MortgageCalculator() {
               onChange={handleMonthlyPaymentChange} 
               min={monthlyPaymentMin}
               max={monthlyPaymentMax}
+              currencySymbol={getCurrencySymbol(selectedCurrency)}
+              currencyCode={selectedCurrency}
+              formatAmount={formatAmount}
             />
             
             <InterestRateSection 
@@ -192,9 +396,20 @@ export default function MortgageCalculator() {
           monthlyPayment={monthlyPayment}
           loanDuration={loanDuration} 
           totalInterestRate={totalInterestRate}
-          totalInterest={mortgageDetails?.totalInterest || 0}
-          totalRepayment={mortgageDetails?.totalRepayment || 0}
-          isLoading={isCalculating}
+          totalInterest={
+            selectedCurrency === "PLN" 
+              ? (mortgageDetails?.totalInterest || 0)
+              : convertFromPLN(mortgageDetails?.totalInterest || 0)
+          }
+          totalRepayment={
+            selectedCurrency === "PLN" 
+              ? (mortgageDetails?.totalRepayment || 0)
+              : convertFromPLN(mortgageDetails?.totalRepayment || 0)
+          }
+          isLoading={isCalculating || isLoadingRates}
+          currencySymbol={getCurrencySymbol(selectedCurrency)}
+          currencyCode={selectedCurrency}
+          formatAmount={formatAmount}
         />
       </div>
 

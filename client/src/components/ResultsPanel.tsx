@@ -117,7 +117,7 @@ export default function ResultsPanel({
                       style={{ width: `${principalPercent}%` }}
                     ></div>
                     <div 
-                      className="bg-error h-full" 
+                      className="bg-amber-500 h-full" 
                       style={{ width: `${interestPercent}%` }}
                     ></div>
                   </div>

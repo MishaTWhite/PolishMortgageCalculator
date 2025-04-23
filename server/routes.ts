@@ -183,15 +183,15 @@ async function fetchCachedRate() {
 // Helper function to fetch exchange rates from API
 async function fetchExchangeRates() {
   try {
-    // Using exchangerate.host API which is free and doesn't require API key
-    const response = await axios.get('https://api.exchangerate.host/latest?base=PLN&symbols=EUR,USD,UAH,PLN');
+    // Using exchangerate-api.com which is free and doesn't require API key
+    const response = await axios.get('https://open.er-api.com/v6/latest/PLN');
     
     if (response.data && response.data.rates) {
       return {
-        source: "exchangerate.host",
-        base: response.data.base,
+        source: "open.er-api.com",
+        base: "PLN",
         rates: response.data.rates,
-        fetchDate: response.data.date
+        fetchDate: format(new Date(response.data.time_last_update_utc), "dd.MM.yyyy")
       };
     } else {
       throw new Error("Invalid API response");

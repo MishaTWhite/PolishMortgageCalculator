@@ -3,6 +3,7 @@ import { createServer, type Server } from "http";
 import { storage } from "./storage";
 import axios from "axios";
 import { format } from "date-fns";
+import { exchangeRateResponseSchema } from "@/shared/schema";
 
 export async function registerRoutes(app: Express): Promise<Server> {
   // Get current NBP interest rate
@@ -39,6 +40,48 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.json({
         source: "NBP (fallback)",
         rate: 5.75,
+        fetchDate: format(new Date(), "dd.MM.yyyy")
+      });
+    }
+  });
+
+  // Get current exchange rates for multiple currencies
+  app.get("/api/exchange-rates", async (req, res) => {
+    try {
+      // First check if we have recently cached rates (less than 24 hours old)
+      const cachedRates = await fetchCachedExchangeRates();
+      
+      if (cachedRates) {
+        return res.json(cachedRates);
+      }
+      
+      // Otherwise fetch new rates
+      const exchangeRates = await fetchExchangeRates();
+      
+      // Format the date to Polish format (DD.MM.YYYY)
+      const currentDate = format(new Date(), "dd.MM.yyyy");
+      
+      // Store the new rates
+      await storage.createExchangeRate({
+        source: exchangeRates.source,
+        base: exchangeRates.base,
+        rates: exchangeRates.rates,
+        fetchDate: currentDate
+      });
+      
+      res.json(exchangeRates);
+    } catch (error) {
+      console.error("Error fetching exchange rates:", error);
+      // If we can't fetch live data, return fallback values
+      res.json({
+        source: "fallback",
+        base: "PLN",
+        rates: {
+          EUR: 0.23,
+          USD: 0.25,
+          UAH: 9.2,
+          PLN: 1
+        },
         fetchDate: format(new Date(), "dd.MM.yyyy")
       });
     }
@@ -114,7 +157,7 @@ async function fetchNBPRate(): Promise<number> {
   }
 }
 
-// Helper function to get cached rate if available
+// Helper function to get cached interest rate if available
 async function fetchCachedRate() {
   // Get the most recent rate from storage
   const latestRate = await storage.getLatestInterestRate();
@@ -130,6 +173,52 @@ async function fetchCachedRate() {
         source: latestRate.source,
         rate: parseFloat(latestRate.rate),
         fetchDate: latestRate.fetchDate
+      };
+    }
+  }
+  
+  return null;
+}
+
+// Helper function to fetch exchange rates from API
+async function fetchExchangeRates() {
+  try {
+    // Using exchangerate.host API which is free and doesn't require API key
+    const response = await axios.get('https://api.exchangerate.host/latest?base=PLN&symbols=EUR,USD,UAH,PLN');
+    
+    if (response.data && response.data.rates) {
+      return {
+        source: "exchangerate.host",
+        base: response.data.base,
+        rates: response.data.rates,
+        fetchDate: response.data.date
+      };
+    } else {
+      throw new Error("Invalid API response");
+    }
+  } catch (error) {
+    console.error("Error fetching exchange rates:", error);
+    throw error;
+  }
+}
+
+// Helper function to get cached exchange rates if available
+async function fetchCachedExchangeRates() {
+  // Get the most recent exchange rates from storage
+  const latestRates = await storage.getLatestExchangeRate();
+  
+  if (latestRates) {
+    // Check if the rates are still fresh (less than 24 hours old)
+    const fetchDate = new Date(latestRates.fetchDate.split('.').reverse().join('-'));
+    const now = new Date();
+    const hoursDifference = (now.getTime() - fetchDate.getTime()) / (1000 * 60 * 60);
+    
+    if (hoursDifference < 24) {
+      return {
+        source: latestRates.source,
+        base: latestRates.base,
+        rates: latestRates.rates,
+        fetchDate: latestRates.fetchDate
       };
     }
   }

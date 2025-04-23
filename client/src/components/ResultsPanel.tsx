@@ -1,0 +1,143 @@
+import { Card, CardContent } from "@/components/ui/card";
+import { Skeleton } from "@/components/ui/skeleton";
+import { formatCurrency, calculateLoanPercentages } from "@/lib/mortgageCalculator";
+
+interface ResultsPanelProps {
+  loanAmount: number;
+  monthlyPayment: number;
+  loanDuration: number;
+  totalInterestRate: number;
+  totalInterest: number;
+  totalRepayment: number;
+  isLoading: boolean;
+}
+
+export default function ResultsPanel({
+  loanAmount,
+  monthlyPayment,
+  loanDuration,
+  totalInterestRate,
+  totalInterest,
+  totalRepayment,
+  isLoading
+}: ResultsPanelProps) {
+  
+  const numberOfPayments = loanDuration * 12;
+  const { principalPercent, interestPercent } = calculateLoanPercentages(loanAmount, totalInterest);
+  
+  return (
+    <div className="lg:col-span-1">
+      <Card className="mb-6 sticky top-4">
+        <CardContent className="p-6">
+          <h2 className="text-lg font-medium mb-4">Wynik kalkulacji</h2>
+          
+          {/* Loan Summary */}
+          <div className="mb-6 p-4 bg-secondary rounded-md">
+            <h3 className="text-sm font-medium text-text-secondary mb-2">Podsumowanie kredytu</h3>
+            
+            <div className="grid grid-cols-2 gap-2">
+              <div className="text-sm text-text-secondary">Kwota kredytu:</div>
+              <div className="text-sm font-medium text-right">
+                PLN {formatCurrency(loanAmount)}
+              </div>
+              
+              <div className="text-sm text-text-secondary">Miesięczna rata:</div>
+              <div className="text-lg font-medium text-primary text-right">
+                {isLoading ? (
+                  <Skeleton className="h-6 w-24 ml-auto" />
+                ) : (
+                  `PLN ${formatCurrency(monthlyPayment)}`
+                )}
+              </div>
+              
+              <div className="text-sm text-text-secondary">Okres kredytowania:</div>
+              <div className="text-sm font-medium text-right">
+                {loanDuration} lat ({numberOfPayments} rat)
+              </div>
+              
+              <div className="text-sm text-text-secondary">Oprocentowanie:</div>
+              <div className="text-sm font-medium text-right">
+                {totalInterestRate.toFixed(2)}%
+              </div>
+            </div>
+          </div>
+          
+          {/* Detailed Breakdown */}
+          <div>
+            <h3 className="text-sm font-medium text-text-secondary mb-3">Całkowity koszt kredytu</h3>
+            
+            <div className="space-y-3">
+              <div className="flex justify-between items-center">
+                <span className="text-sm">Kwota kredytu:</span>
+                <span className="text-sm font-medium">
+                  PLN {formatCurrency(loanAmount)}
+                </span>
+              </div>
+              
+              <div className="flex justify-between items-center">
+                <span className="text-sm">Suma odsetek:</span>
+                {isLoading ? (
+                  <Skeleton className="h-5 w-24" />
+                ) : (
+                  <span className="text-sm font-medium">
+                    PLN {formatCurrency(totalInterest)}
+                  </span>
+                )}
+              </div>
+              
+              <div className="flex justify-between items-center pt-2 border-t">
+                <span className="text-sm font-medium">Całkowita kwota do spłaty:</span>
+                {isLoading ? (
+                  <Skeleton className="h-6 w-28" />
+                ) : (
+                  <span className="text-base font-medium">
+                    PLN {formatCurrency(totalRepayment)}
+                  </span>
+                )}
+              </div>
+            </div>
+          </div>
+          
+          {/* Visualization */}
+          <div className="mt-6">
+            <h3 className="text-sm font-medium text-text-secondary mb-3">Struktura kredytu</h3>
+            
+            <div className="h-[120px] bg-gray-50 p-2 rounded-md relative overflow-hidden">
+              {isLoading ? (
+                <Skeleton className="h-full w-full" />
+              ) : (
+                <>
+                  <div className="flex h-full">
+                    <div 
+                      className="bg-primary h-full" 
+                      style={{ width: `${principalPercent}%` }}
+                    ></div>
+                    <div 
+                      className="bg-error h-full" 
+                      style={{ width: `${interestPercent}%` }}
+                    ></div>
+                  </div>
+                  <div className="absolute inset-0 flex items-center justify-center">
+                    <div className="text-xs text-white px-2 text-center">
+                      <span className="font-medium">{principalPercent}%</span>
+                      <br />kapitał
+                    </div>
+                    <div className="text-xs text-white px-2 text-center">
+                      <span className="font-medium">{interestPercent}%</span>
+                      <br />odsetki
+                    </div>
+                  </div>
+                </>
+              )}
+            </div>
+          </div>
+          
+          {/* Disclaimer */}
+          <div className="mt-6 text-xs text-text-tertiary">
+            <p>Kalkulacja ma charakter orientacyjny i może różnić się od oferty banku. Rzeczywista rata i oprocentowanie zależą od indywidualnej oceny zdolności kredytowej.</p>
+          </div>
+        </CardContent>
+      </Card>
+    </div>
+  );
+}

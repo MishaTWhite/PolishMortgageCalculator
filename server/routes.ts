@@ -3,7 +3,7 @@ import { createServer, type Server } from "http";
 import { storage } from "./storage";
 import axios from "axios";
 import { format } from "date-fns";
-import { exchangeRateResponseSchema } from "@/shared/schema";
+import { exchangeRateResponseSchema } from "../shared/schema";
 
 export async function registerRoutes(app: Express): Promise<Server> {
   // Get current NBP interest rate

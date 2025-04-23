@@ -9,10 +9,14 @@ import InterestRateSection from "@/components/InterestRateSection";
 import ResultsPanel from "@/components/ResultsPanel";
 import InfoSection from "@/components/InfoSection";
 import LanguageSelector from "@/components/LanguageSelector";
+import CurrencyConverter from "@/components/CurrencyConverter";
+import SwipeableContainer from "@/components/SwipeableContainer";
 import { calculateMonthlyPayment, calculateLoanDuration } from "@/lib/mortgageCalculator";
 import { apiRequest } from "@/lib/queryClient";
 import { useLanguage } from "@/context/LanguageContext";
 import { useTranslations } from "@/lib/translations";
+import { Button } from "@/components/ui/button";
+import { ArrowRight, DollarSign } from "lucide-react";
 
 export default function MortgageCalculator() {
   const { language } = useLanguage();
@@ -31,6 +35,9 @@ export default function MortgageCalculator() {
   const [totalInterestRate, setTotalInterestRate] = useState(7.75);
   const [monthlyPaymentMin, setMonthlyPaymentMin] = useState(1000);
   const [monthlyPaymentMax, setMonthlyPaymentMax] = useState(10000);
+  
+  // State for showing currency converter
+  const [showingConverter, setShowingConverter] = useState(false);
 
   // Define response type for interest rate API
   interface InterestRateResponse {
@@ -125,6 +132,96 @@ export default function MortgageCalculator() {
     recalculate();
   };
 
+  // Main content for mortgage calculator
+  const MortgageContent = (
+    <>
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <div className="lg:col-span-2">
+          <div className="bg-white p-6 mb-6 rounded-lg shadow-sm">
+            <div className="flex justify-between items-center mb-4">
+              <h2 className="text-lg font-medium">{t.parametersTitle}</h2>
+              <Button 
+                variant="outline" 
+                size="sm" 
+                onClick={() => setShowingConverter(true)}
+                className="flex items-center gap-2"
+              >
+                <DollarSign size={16} />
+                <span className="hidden sm:inline">Currency Converter</span>
+                <ArrowRight size={16} />
+              </Button>
+            </div>
+            
+            <PropertyPriceInput 
+              value={propertyPrice} 
+              onChange={setPropertyPrice} 
+            />
+            
+            <DownPaymentSlider 
+              value={downPaymentPercent} 
+              onChange={setDownPaymentPercent} 
+              downPaymentAmount={downPaymentAmount} 
+            />
+            
+            <LoanDurationSlider 
+              value={loanDuration} 
+              onChange={handleLoanDurationChange} 
+            />
+            
+            <MonthlyPaymentSlider 
+              value={monthlyPayment} 
+              onChange={handleMonthlyPaymentChange} 
+              min={monthlyPaymentMin}
+              max={monthlyPaymentMax}
+            />
+            
+            <InterestRateSection 
+              baseRate={(interestRateData as InterestRateResponse | undefined)?.rate || 5.75} 
+              bankMargin={bankMargin} 
+              onBankMarginChange={setBankMargin} 
+              totalInterestRate={totalInterestRate}
+              lastUpdate={(interestRateData as InterestRateResponse | undefined)?.fetchDate || format(new Date(), "dd.MM.yyyy")}
+              onRefresh={refetchInterestRate}
+              isLoading={isLoadingRate}
+            />
+          </div>
+        </div>
+
+        <ResultsPanel 
+          loanAmount={loanAmount}
+          monthlyPayment={monthlyPayment}
+          loanDuration={loanDuration} 
+          totalInterestRate={totalInterestRate}
+          totalInterest={mortgageDetails?.totalInterest || 0}
+          totalRepayment={mortgageDetails?.totalRepayment || 0}
+          isLoading={isCalculating}
+        />
+      </div>
+
+      <InfoSection />
+    </>
+  );
+
+  // Content for currency converter page
+  const ConverterContent = (
+    <div className="mb-6">
+      <div className="flex justify-between items-center mb-4">
+        <h2 className="text-lg font-medium">Currency Converter</h2>
+        <Button 
+          variant="outline" 
+          size="sm" 
+          onClick={() => setShowingConverter(false)}
+          className="flex items-center gap-2"
+        >
+          <ArrowRight size={16} className="rotate-180" />
+          <span>Back to Mortgage Calculator</span>
+        </Button>
+      </div>
+      
+      <CurrencyConverter />
+    </div>
+  );
+
   return (
     <div className="bg-gray-100 font-sans text-text-primary">
       <div className="container mx-auto px-4 py-8 max-w-4xl">
@@ -138,58 +235,16 @@ export default function MortgageCalculator() {
           </div>
         </header>
 
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          <div className="lg:col-span-2">
-            <div className="bg-white p-6 mb-6 rounded-lg shadow-sm">
-              <h2 className="text-lg font-medium mb-4">{t.parametersTitle}</h2>
-              
-              <PropertyPriceInput 
-                value={propertyPrice} 
-                onChange={setPropertyPrice} 
-              />
-              
-              <DownPaymentSlider 
-                value={downPaymentPercent} 
-                onChange={setDownPaymentPercent} 
-                downPaymentAmount={downPaymentAmount} 
-              />
-              
-              <LoanDurationSlider 
-                value={loanDuration} 
-                onChange={handleLoanDurationChange} 
-              />
-              
-              <MonthlyPaymentSlider 
-                value={monthlyPayment} 
-                onChange={handleMonthlyPaymentChange} 
-                min={monthlyPaymentMin}
-                max={monthlyPaymentMax}
-              />
-              
-              <InterestRateSection 
-                baseRate={(interestRateData as InterestRateResponse | undefined)?.rate || 5.75} 
-                bankMargin={bankMargin} 
-                onBankMarginChange={setBankMargin} 
-                totalInterestRate={totalInterestRate}
-                lastUpdate={(interestRateData as InterestRateResponse | undefined)?.fetchDate || format(new Date(), "dd.MM.yyyy")}
-                onRefresh={refetchInterestRate}
-                isLoading={isLoadingRate}
-              />
-            </div>
-          </div>
-
-          <ResultsPanel 
-            loanAmount={loanAmount}
-            monthlyPayment={monthlyPayment}
-            loanDuration={loanDuration} 
-            totalInterestRate={totalInterestRate}
-            totalInterest={mortgageDetails?.totalInterest || 0}
-            totalRepayment={mortgageDetails?.totalRepayment || 0}
-            isLoading={isCalculating}
-          />
-        </div>
-
-        <InfoSection />
+        <SwipeableContainer 
+          showArrows={false}
+          showIndicators={false}
+        >
+          {/* The main mortgage calculator content */}
+          {showingConverter ? ConverterContent : MortgageContent}
+          
+          {/* The currency converter content - dynamically shown/hidden instead of as second slide */}
+          {!showingConverter && <div></div>}
+        </SwipeableContainer>
         
         <footer className="text-center text-text-tertiary text-sm mt-6">
           <p>© {new Date().getFullYear()} {t.footerText} {format(new Date(), "dd.MM.yyyy")}</p>

@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { ArrowsUpDownIcon, RefreshCwIcon } from "lucide-react";
+import { ArrowUpDownIcon, RefreshCwIcon } from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useLanguage } from "@/context/LanguageContext";
@@ -136,7 +136,7 @@ export default function CurrencyConverter() {
                 ))}
               </select>
               <div className="absolute inset-y-0 right-0 flex items-center pr-2 pointer-events-none">
-                <ArrowsUpDownIcon size={16} />
+                <ArrowUpDownIcon size={16} />
               </div>
             </div>
           </div>

@@ -8,6 +8,7 @@ import MonthlyPaymentSlider from "@/components/MonthlyPaymentSlider";
 import InterestRateSection from "@/components/InterestRateSection";
 import ResultsPanel from "@/components/ResultsPanel";
 import InfoSection from "@/components/InfoSection";
+import AcceleratedRepaymentModule from "@/components/AcceleratedRepaymentModule";
 import LanguageSelector from "@/components/LanguageSelector";
 import CurrencyConverter from "@/components/CurrencyConverter";
 import SwipeableContainer from "@/components/SwipeableContainer";
@@ -413,6 +414,17 @@ export default function MortgageCalculator() {
         />
       </div>
 
+      {/* Accelerated Repayment Module */}
+      <AcceleratedRepaymentModule 
+        loanAmount={loanAmount}
+        monthlyPayment={monthlyPayment}
+        loanDuration={loanDuration}
+        totalInterestRate={totalInterestRate}
+        currencySymbol={getCurrencySymbol(selectedCurrency)}
+        currencyCode={selectedCurrency}
+        formatAmount={formatAmount}
+      />
+      
       <InfoSection />
     </>
   );

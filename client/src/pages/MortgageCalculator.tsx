@@ -11,7 +11,6 @@ import InfoSection from "@/components/InfoSection";
 import AcceleratedRepaymentModule from "@/components/AcceleratedRepaymentModule";
 import LanguageSelector from "@/components/LanguageSelector";
 import CurrencyConverter from "@/components/CurrencyConverter";
-import SwipeableContainer from "@/components/SwipeableContainer";
 import { calculateMonthlyPayment, calculateLoanDuration, formatCurrency } from "@/lib/mortgageCalculator";
 import { apiRequest } from "@/lib/queryClient";
 import { useLanguage } from "@/context/LanguageContext";
@@ -462,16 +461,8 @@ export default function MortgageCalculator() {
           </div>
         </header>
 
-        <SwipeableContainer 
-          showArrows={false}
-          showIndicators={false}
-        >
-          {/* The main mortgage calculator content */}
-          {showingConverter ? ConverterContent : MortgageContent}
-          
-          {/* The currency converter content - dynamically shown/hidden instead of as second slide */}
-          {!showingConverter && <div></div>}
-        </SwipeableContainer>
+        {/* Display either mortgage calculator or currency converter based on state */}
+        {showingConverter ? ConverterContent : MortgageContent}
         
         <footer className="text-center text-text-tertiary text-sm mt-6">
           <p>© {new Date().getFullYear()} {t.footerText} {format(new Date(), "dd.MM.yyyy")}</p>

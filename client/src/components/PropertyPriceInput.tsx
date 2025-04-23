@@ -1,5 +1,7 @@
 import { useState } from "react";
 import { Input } from "@/components/ui/input";
+import { useLanguage } from "@/context/LanguageContext";
+import { useTranslations } from "@/lib/translations";
 
 interface PropertyPriceInputProps {
   value: number;
@@ -7,6 +9,8 @@ interface PropertyPriceInputProps {
 }
 
 export default function PropertyPriceInput({ value, onChange }: PropertyPriceInputProps) {
+  const { language } = useLanguage();
+  const t = useTranslations(language);
   const [inputValue, setInputValue] = useState(value.toString());
   
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -37,7 +41,7 @@ export default function PropertyPriceInput({ value, onChange }: PropertyPriceInp
   return (
     <div className="mb-6">
       <label className="block text-text-secondary text-sm mb-1" htmlFor="property-price">
-        Cena nieruchomości
+        {t.propertyPrice}
       </label>
       <div className="relative mt-1 rounded-md shadow-sm">
         <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">

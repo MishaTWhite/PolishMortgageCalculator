@@ -8,10 +8,16 @@ import MonthlyPaymentSlider from "@/components/MonthlyPaymentSlider";
 import InterestRateSection from "@/components/InterestRateSection";
 import ResultsPanel from "@/components/ResultsPanel";
 import InfoSection from "@/components/InfoSection";
+import LanguageSelector from "@/components/LanguageSelector";
 import { calculateMonthlyPayment, calculateLoanDuration } from "@/lib/mortgageCalculator";
 import { apiRequest } from "@/lib/queryClient";
+import { useLanguage } from "@/context/LanguageContext";
+import { useTranslations } from "@/lib/translations";
 
 export default function MortgageCalculator() {
+  const { language } = useLanguage();
+  const t = useTranslations(language);
+  
   // State for calculator inputs
   const [propertyPrice, setPropertyPrice] = useState(500000);
   const [downPaymentPercent, setDownPaymentPercent] = useState(20);
@@ -26,17 +32,22 @@ export default function MortgageCalculator() {
   const [monthlyPaymentMin, setMonthlyPaymentMin] = useState(1000);
   const [monthlyPaymentMax, setMonthlyPaymentMax] = useState(10000);
 
+  // Define response type for interest rate API
+  interface InterestRateResponse {
+    rate: number;
+    fetchDate: string;
+    source: string;
+  }
+  
   // Fetch base interest rate from API
   const { 
     data: interestRateData, 
     isLoading: isLoadingRate,
     refetch: refetchInterestRate
-  } = useQuery({
+  } = useQuery<InterestRateResponse>({
     queryKey: ['/api/interest-rate'],
-    onSuccess: (data) => {
-      if (data && data.rate) {
-        setTotalInterestRate(parseFloat(data.rate) + bankMargin);
-      }
+    onSuccess: (data: InterestRateResponse) => {
+      setTotalInterestRate(data.rate + bankMargin);
     }
   });
 
@@ -114,15 +125,20 @@ export default function MortgageCalculator() {
   return (
     <div className="bg-gray-100 font-sans text-text-primary">
       <div className="container mx-auto px-4 py-8 max-w-4xl">
-        <header className="mb-6">
-          <h1 className="text-2xl md:text-3xl font-medium text-primary">Polski Kalkulator Kredytu Hipotecznego</h1>
-          <p className="text-text-secondary">Oblicz swoje miesięczne raty i całkowity koszt kredytu</p>
+        <header className="mb-6 flex flex-col md:flex-row md:justify-between md:items-center">
+          <div>
+            <h1 className="text-2xl md:text-3xl font-medium text-primary">{t.appTitle}</h1>
+            <p className="text-text-secondary">{t.appDescription}</p>
+          </div>
+          <div className="mt-4 md:mt-0">
+            <LanguageSelector />
+          </div>
         </header>
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           <div className="lg:col-span-2">
             <div className="bg-white p-6 mb-6 rounded-lg shadow-sm">
-              <h2 className="text-lg font-medium mb-4">Parametry kredytu</h2>
+              <h2 className="text-lg font-medium mb-4">{t.parametersTitle}</h2>
               
               <PropertyPriceInput 
                 value={propertyPrice} 
@@ -173,7 +189,7 @@ export default function MortgageCalculator() {
         <InfoSection />
         
         <footer className="text-center text-text-tertiary text-sm mt-6">
-          <p>© {new Date().getFullYear()} Polski Kalkulator Kredytu Hipotecznego | Dane aktualne na dzień: {format(new Date(), "dd.MM.yyyy")}</p>
+          <p>© {new Date().getFullYear()} {t.footerText} {format(new Date(), "dd.MM.yyyy")}</p>
         </footer>
       </div>
     </div>

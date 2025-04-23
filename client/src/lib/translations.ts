@@ -1,0 +1,251 @@
+import { Language } from "@/context/LanguageContext";
+
+type TranslationKeys = {
+  // Application title and header
+  appTitle: string;
+  appDescription: string;
+  
+  // Calculator parameters section
+  parametersTitle: string;
+  propertyPrice: string;
+  downPayment: string;
+  loanDuration: string;
+  monthlyPayment: string;
+  years: string;
+  
+  // Interest rate section
+  interestRateTitle: string;
+  baseRate: string;
+  baseRateAutoUpdate: string;
+  bankMargin: string;
+  totalInterestRate: string;
+  lastUpdate: string;
+  
+  // Results panel
+  resultsTitle: string;
+  loanSummary: string;
+  loanAmount: string;
+  duration: string;
+  payments: string;
+  interestRate: string;
+  totalCost: string;
+  totalInterest: string;
+  totalRepayment: string;
+  loanStructure: string;
+  principal: string;
+  interest: string;
+  disclaimer: string;
+  
+  // Info section
+  howItWorksTitle: string;
+  inputDataTitle: string;
+  enterPropertyPrice: string;
+  setDownPayment: string;
+  chooseLoanPeriod: string;
+  baseRateInfo: string;
+  adjustBankMargin: string;
+  formulaTitle: string;
+  formulaDescription: string;
+  formulaWhere: string;
+  formulaMonthlyPayment: string;
+  formulaLoanAmount: string;
+  formulaAnnualRate: string;
+  formulaPaymentsNumber: string;
+  
+  // Footer
+  footerText: string;
+  currentDate: string;
+  
+  // Language selector
+  language: string;
+};
+
+type Translations = {
+  [key in Language]: TranslationKeys;
+};
+
+export const translations: Translations = {
+  pl: {
+    // Application title and header
+    appTitle: "Polski Kalkulator Kredytu Hipotecznego",
+    appDescription: "Oblicz swoje miesięczne raty i całkowity koszt kredytu",
+    
+    // Calculator parameters section
+    parametersTitle: "Parametry kredytu",
+    propertyPrice: "Cena nieruchomości",
+    downPayment: "Wkład własny",
+    loanDuration: "Okres kredytowania",
+    monthlyPayment: "Miesięczna rata",
+    years: "lat",
+    
+    // Interest rate section
+    interestRateTitle: "Oprocentowanie",
+    baseRate: "Stopa bazowa NBP",
+    baseRateAutoUpdate: "(aktualizowana automatycznie)",
+    bankMargin: "Marża banku",
+    totalInterestRate: "Łączne oprocentowanie:",
+    lastUpdate: "Ostatnia aktualizacja:",
+    
+    // Results panel
+    resultsTitle: "Wynik kalkulacji",
+    loanSummary: "Podsumowanie kredytu",
+    loanAmount: "Kwota kredytu:",
+    duration: "Okres kredytowania:",
+    payments: "rat",
+    interestRate: "Oprocentowanie:",
+    totalCost: "Całkowity koszt kredytu",
+    totalInterest: "Suma odsetek:",
+    totalRepayment: "Całkowita kwota do spłaty:",
+    loanStructure: "Struktura kredytu",
+    principal: "kapitał",
+    interest: "odsetki",
+    disclaimer: "Kalkulacja ma charakter orientacyjny i może różnić się od oferty banku. Rzeczywista rata i oprocentowanie zależą od indywidualnej oceny zdolności kredytowej.",
+    
+    // Info section
+    howItWorksTitle: "Jak działa kalkulator?",
+    inputDataTitle: "Dane wejściowe",
+    enterPropertyPrice: "Wprowadź cenę nieruchomości",
+    setDownPayment: "Ustaw wysokość wkładu własnego (minimum 10%)",
+    chooseLoanPeriod: "Wybierz okres kredytowania lub wysokość raty miesięcznej",
+    baseRateInfo: "Stopa bazowa NBP pobierana jest automatycznie",
+    adjustBankMargin: "Marżę banku możesz dostosować wg aktualnych ofert",
+    formulaTitle: "Formuła obliczeniowa",
+    formulaDescription: "Kalkulator wykorzystuje standardowy model obliczeniowy stosowany przez polskie banki:",
+    formulaWhere: "gdzie:",
+    formulaMonthlyPayment: "R - rata miesięczna",
+    formulaLoanAmount: "K - kwota kredytu",
+    formulaAnnualRate: "r - oprocentowanie roczne",
+    formulaPaymentsNumber: "n - liczba rat (okres kredytowania w miesiącach)",
+    
+    // Footer
+    footerText: "Polski Kalkulator Kredytu Hipotecznego | Dane aktualne na dzień:",
+    currentDate: "",
+    
+    // Language selector
+    language: "Język",
+  },
+  
+  en: {
+    // Application title and header
+    appTitle: "Polish Mortgage Calculator",
+    appDescription: "Calculate your monthly payments and total loan cost",
+    
+    // Calculator parameters section
+    parametersTitle: "Loan Parameters",
+    propertyPrice: "Property Price",
+    downPayment: "Down Payment",
+    loanDuration: "Loan Duration",
+    monthlyPayment: "Monthly Payment",
+    years: "years",
+    
+    // Interest rate section
+    interestRateTitle: "Interest Rate",
+    baseRate: "NBP Base Rate",
+    baseRateAutoUpdate: "(automatically updated)",
+    bankMargin: "Bank Margin",
+    totalInterestRate: "Total Interest Rate:",
+    lastUpdate: "Last update:",
+    
+    // Results panel
+    resultsTitle: "Calculation Results",
+    loanSummary: "Loan Summary",
+    loanAmount: "Loan Amount:",
+    duration: "Loan Duration:",
+    payments: "payments",
+    interestRate: "Interest Rate:",
+    totalCost: "Total Loan Cost",
+    totalInterest: "Total Interest:",
+    totalRepayment: "Total Repayment Amount:",
+    loanStructure: "Loan Structure",
+    principal: "principal",
+    interest: "interest",
+    disclaimer: "This calculation is for informational purposes only and may differ from bank offers. The actual payment and interest rate depend on individual creditworthiness assessment.",
+    
+    // Info section
+    howItWorksTitle: "How does the calculator work?",
+    inputDataTitle: "Input Data",
+    enterPropertyPrice: "Enter property price",
+    setDownPayment: "Set down payment amount (minimum 10%)",
+    chooseLoanPeriod: "Choose loan duration or monthly payment amount",
+    baseRateInfo: "NBP base rate is fetched automatically",
+    adjustBankMargin: "Bank margin can be adjusted according to current offers",
+    formulaTitle: "Calculation Formula",
+    formulaDescription: "The calculator uses the standard calculation model used by Polish banks:",
+    formulaWhere: "where:",
+    formulaMonthlyPayment: "R - monthly payment",
+    formulaLoanAmount: "K - loan amount",
+    formulaAnnualRate: "r - annual interest rate",
+    formulaPaymentsNumber: "n - number of payments (loan term in months)",
+    
+    // Footer
+    footerText: "Polish Mortgage Calculator | Data current as of:",
+    currentDate: "",
+    
+    // Language selector
+    language: "Language",
+  },
+  
+  ua: {
+    // Application title and header
+    appTitle: "Польський калькулятор іпотеки",
+    appDescription: "Розрахуйте свої щомісячні платежі та загальну вартість кредиту",
+    
+    // Calculator parameters section
+    parametersTitle: "Параметри кредиту",
+    propertyPrice: "Ціна нерухомості",
+    downPayment: "Перший внесок",
+    loanDuration: "Термін кредиту",
+    monthlyPayment: "Щомісячний платіж",
+    years: "років",
+    
+    // Interest rate section
+    interestRateTitle: "Процентна ставка",
+    baseRate: "Базова ставка НБП",
+    baseRateAutoUpdate: "(оновлюється автоматично)",
+    bankMargin: "Маржа банку",
+    totalInterestRate: "Загальна процентна ставка:",
+    lastUpdate: "Останнє оновлення:",
+    
+    // Results panel
+    resultsTitle: "Результати розрахунку",
+    loanSummary: "Загальна інформація",
+    loanAmount: "Сума кредиту:",
+    duration: "Термін кредиту:",
+    payments: "платежів",
+    interestRate: "Процентна ставка:",
+    totalCost: "Загальна вартість кредиту",
+    totalInterest: "Сума відсотків:",
+    totalRepayment: "Загальна сума до сплати:",
+    loanStructure: "Структура кредиту",
+    principal: "основна сума",
+    interest: "відсотки",
+    disclaimer: "Цей розрахунок має орієнтовний характер і може відрізнятися від пропозиції банку. Фактичний платіж та процентна ставка залежать від індивідуальної оцінки кредитоспроможності.",
+    
+    // Info section
+    howItWorksTitle: "Як працює калькулятор?",
+    inputDataTitle: "Вхідні дані",
+    enterPropertyPrice: "Введіть ціну нерухомості",
+    setDownPayment: "Встановіть розмір першого внеску (мінімум 10%)",
+    chooseLoanPeriod: "Виберіть термін кредиту або розмір щомісячного платежу",
+    baseRateInfo: "Базова ставка НБП завантажується автоматично",
+    adjustBankMargin: "Маржу банку можна налаштувати відповідно до поточних пропозицій",
+    formulaTitle: "Формула розрахунку",
+    formulaDescription: "Калькулятор використовує стандартну модель розрахунку, яка застосовується польськими банками:",
+    formulaWhere: "де:",
+    formulaMonthlyPayment: "R - щомісячний платіж",
+    formulaLoanAmount: "K - сума кредиту",
+    formulaAnnualRate: "r - річна процентна ставка",
+    formulaPaymentsNumber: "n - кількість платежів (термін кредиту в місяцях)",
+    
+    // Footer
+    footerText: "Польський калькулятор іпотеки | Дані актуальні на:",
+    currentDate: "",
+    
+    // Language selector
+    language: "Мова",
+  }
+};
+
+export function useTranslations(language: Language) {
+  return translations[language];
+}

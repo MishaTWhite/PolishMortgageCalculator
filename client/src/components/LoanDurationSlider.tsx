@@ -1,4 +1,6 @@
 import { Slider } from "@/components/ui/slider";
+import { useLanguage } from "@/context/LanguageContext";
+import { useTranslations } from "@/lib/translations";
 
 interface LoanDurationSliderProps {
   value: number;
@@ -6,6 +8,8 @@ interface LoanDurationSliderProps {
 }
 
 export default function LoanDurationSlider({ value, onChange }: LoanDurationSliderProps) {
+  const { language } = useLanguage();
+  const t = useTranslations(language);
   
   const handleSliderChange = (values: number[]) => {
     onChange(values[0]);
@@ -15,10 +19,10 @@ export default function LoanDurationSlider({ value, onChange }: LoanDurationSlid
     <div className="mb-6">
       <div className="flex justify-between items-center mb-1">
         <label className="block text-text-secondary text-sm" htmlFor="loan-duration">
-          Okres kredytowania
+          {t.loanDuration}
         </label>
         <span className="text-sm font-medium">
-          {value} lat
+          {value} {t.years}
         </span>
       </div>
       <Slider
@@ -31,8 +35,8 @@ export default function LoanDurationSlider({ value, onChange }: LoanDurationSlid
         onValueChange={handleSliderChange}
       />
       <div className="flex justify-between text-xs text-text-tertiary mt-1">
-        <span>5 lat</span>
-        <span>35 lat</span>
+        <span>5 {t.years}</span>
+        <span>35 {t.years}</span>
       </div>
     </div>
   );

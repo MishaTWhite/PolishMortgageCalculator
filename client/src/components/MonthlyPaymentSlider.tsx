@@ -1,5 +1,7 @@
 import { Slider } from "@/components/ui/slider";
 import { formatCurrency } from "@/lib/mortgageCalculator";
+import { useLanguage } from "@/context/LanguageContext";
+import { useTranslations } from "@/lib/translations";
 
 interface MonthlyPaymentSliderProps {
   value: number;
@@ -14,6 +16,8 @@ export default function MonthlyPaymentSlider({
   min, 
   max 
 }: MonthlyPaymentSliderProps) {
+  const { language } = useLanguage();
+  const t = useTranslations(language);
   
   const handleSliderChange = (values: number[]) => {
     onChange(values[0]);
@@ -23,7 +27,7 @@ export default function MonthlyPaymentSlider({
     <div className="mb-6">
       <div className="flex justify-between items-center mb-1">
         <label className="block text-text-secondary text-sm" htmlFor="monthly-payment">
-          Miesięczna rata
+          {t.monthlyPayment}
         </label>
         <span className="text-sm font-medium">
           PLN {formatCurrency(value)}

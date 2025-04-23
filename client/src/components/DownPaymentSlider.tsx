@@ -1,5 +1,7 @@
 import { Slider } from "@/components/ui/slider";
 import { formatCurrency } from "@/lib/mortgageCalculator";
+import { useLanguage } from "@/context/LanguageContext";
+import { useTranslations } from "@/lib/translations";
 
 interface DownPaymentSliderProps {
   value: number;
@@ -12,6 +14,8 @@ export default function DownPaymentSlider({
   onChange, 
   downPaymentAmount 
 }: DownPaymentSliderProps) {
+  const { language } = useLanguage();
+  const t = useTranslations(language);
   
   const handleSliderChange = (values: number[]) => {
     onChange(values[0]);
@@ -21,7 +25,7 @@ export default function DownPaymentSlider({
     <div className="mb-6">
       <div className="flex justify-between items-center mb-1">
         <label className="block text-text-secondary text-sm" htmlFor="down-payment-percent">
-          Wkład własny
+          {t.downPayment}
         </label>
         <span className="text-sm font-medium">
           PLN {formatCurrency(downPaymentAmount)} ({value}%)

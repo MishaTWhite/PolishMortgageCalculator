@@ -45,10 +45,7 @@ export default function MortgageCalculator() {
     isLoading: isLoadingRate,
     refetch: refetchInterestRate
   } = useQuery<InterestRateResponse>({
-    queryKey: ['/api/interest-rate'],
-    onSuccess: (data: InterestRateResponse) => {
-      setTotalInterestRate(data.rate + bankMargin);
-    }
+    queryKey: ['/api/interest-rate']
   });
 
   // Calculate mortgage details
@@ -79,7 +76,10 @@ export default function MortgageCalculator() {
     
     // Update monthly payment slider range
     const minPayment = Math.max(1000, Math.ceil(loan / (35 * 12) / 10) * 10);
-    const maxPayment = Math.min(10000, Math.ceil(loan / (5 * 12) / 10) * 10);
+    // Calculate standard max payment based on 5-year term
+    const standardMaxPayment = Math.ceil(loan / (5 * 12) / 10) * 10;
+    // Double the max payment (but cap at 20000 PLN) to allow for faster repayments
+    const maxPayment = Math.min(20000, standardMaxPayment * 2);
     setMonthlyPaymentMin(minPayment);
     setMonthlyPaymentMax(maxPayment);
     
@@ -93,10 +93,13 @@ export default function MortgageCalculator() {
 
   // Effect to update interest rate when base rate or bank margin changes
   useEffect(() => {
-    if (interestRateData?.rate) {
-      const newTotalRate = parseFloat(interestRateData.rate) + bankMargin;
-      setTotalInterestRate(newTotalRate);
-      recalculate();
+    if (interestRateData) {
+      const typedData = interestRateData as InterestRateResponse;
+      if (typedData.rate) {
+        const newTotalRate = typedData.rate + bankMargin;
+        setTotalInterestRate(newTotalRate);
+        recalculate();
+      }
     }
   }, [interestRateData, bankMargin, recalculate]);
 
@@ -164,11 +167,11 @@ export default function MortgageCalculator() {
               />
               
               <InterestRateSection 
-                baseRate={interestRateData?.rate || 5.75} 
+                baseRate={(interestRateData as InterestRateResponse | undefined)?.rate || 5.75} 
                 bankMargin={bankMargin} 
                 onBankMarginChange={setBankMargin} 
                 totalInterestRate={totalInterestRate}
-                lastUpdate={interestRateData?.fetchDate || format(new Date(), "dd.MM.yyyy")}
+                lastUpdate={(interestRateData as InterestRateResponse | undefined)?.fetchDate || format(new Date(), "dd.MM.yyyy")}
                 onRefresh={refetchInterestRate}
                 isLoading={isLoadingRate}
               />

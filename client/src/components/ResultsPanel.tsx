@@ -1,6 +1,8 @@
 import { Card, CardContent } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { formatCurrency, calculateLoanPercentages } from "@/lib/mortgageCalculator";
+import { useLanguage } from "@/context/LanguageContext";
+import { useTranslations } from "@/lib/translations";
 
 interface ResultsPanelProps {
   loanAmount: number;
@@ -21,6 +23,8 @@ export default function ResultsPanel({
   totalRepayment,
   isLoading
 }: ResultsPanelProps) {
+  const { language } = useLanguage();
+  const t = useTranslations(language);
   
   const numberOfPayments = loanDuration * 12;
   const { principalPercent, interestPercent } = calculateLoanPercentages(loanAmount, totalInterest);
@@ -29,19 +33,19 @@ export default function ResultsPanel({
     <div className="lg:col-span-1">
       <Card className="mb-6 sticky top-4">
         <CardContent className="p-6">
-          <h2 className="text-lg font-medium mb-4">Wynik kalkulacji</h2>
+          <h2 className="text-lg font-medium mb-4">{t.resultsTitle}</h2>
           
           {/* Loan Summary */}
           <div className="mb-6 p-4 bg-secondary rounded-md">
-            <h3 className="text-sm font-medium text-text-secondary mb-2">Podsumowanie kredytu</h3>
+            <h3 className="text-sm font-medium text-text-secondary mb-2">{t.loanSummary}</h3>
             
             <div className="grid grid-cols-2 gap-2">
-              <div className="text-sm text-text-secondary">Kwota kredytu:</div>
+              <div className="text-sm text-text-secondary">{t.loanAmount}</div>
               <div className="text-sm font-medium text-right">
                 PLN {formatCurrency(loanAmount)}
               </div>
               
-              <div className="text-sm text-text-secondary">Miesięczna rata:</div>
+              <div className="text-sm text-text-secondary">{t.monthlyPayment}:</div>
               <div className="text-lg font-medium text-primary text-right">
                 {isLoading ? (
                   <Skeleton className="h-6 w-24 ml-auto" />
@@ -50,12 +54,12 @@ export default function ResultsPanel({
                 )}
               </div>
               
-              <div className="text-sm text-text-secondary">Okres kredytowania:</div>
+              <div className="text-sm text-text-secondary">{t.duration}</div>
               <div className="text-sm font-medium text-right">
-                {loanDuration} lat ({numberOfPayments} rat)
+                {loanDuration} {t.years} ({numberOfPayments} {t.payments})
               </div>
               
-              <div className="text-sm text-text-secondary">Oprocentowanie:</div>
+              <div className="text-sm text-text-secondary">{t.interestRate}</div>
               <div className="text-sm font-medium text-right">
                 {totalInterestRate.toFixed(2)}%
               </div>
@@ -64,18 +68,18 @@ export default function ResultsPanel({
           
           {/* Detailed Breakdown */}
           <div>
-            <h3 className="text-sm font-medium text-text-secondary mb-3">Całkowity koszt kredytu</h3>
+            <h3 className="text-sm font-medium text-text-secondary mb-3">{t.totalCost}</h3>
             
             <div className="space-y-3">
               <div className="flex justify-between items-center">
-                <span className="text-sm">Kwota kredytu:</span>
+                <span className="text-sm">{t.loanAmount}</span>
                 <span className="text-sm font-medium">
                   PLN {formatCurrency(loanAmount)}
                 </span>
               </div>
               
               <div className="flex justify-between items-center">
-                <span className="text-sm">Suma odsetek:</span>
+                <span className="text-sm">{t.totalInterest}</span>
                 {isLoading ? (
                   <Skeleton className="h-5 w-24" />
                 ) : (
@@ -86,7 +90,7 @@ export default function ResultsPanel({
               </div>
               
               <div className="flex justify-between items-center pt-2 border-t">
-                <span className="text-sm font-medium">Całkowita kwota do spłaty:</span>
+                <span className="text-sm font-medium">{t.totalRepayment}</span>
                 {isLoading ? (
                   <Skeleton className="h-6 w-28" />
                 ) : (
@@ -100,7 +104,7 @@ export default function ResultsPanel({
           
           {/* Visualization */}
           <div className="mt-6">
-            <h3 className="text-sm font-medium text-text-secondary mb-3">Struktura kredytu</h3>
+            <h3 className="text-sm font-medium text-text-secondary mb-3">{t.loanStructure}</h3>
             
             <div className="h-[120px] bg-gray-50 p-2 rounded-md relative overflow-hidden">
               {isLoading ? (
@@ -120,11 +124,11 @@ export default function ResultsPanel({
                   <div className="absolute inset-0 flex items-center justify-center">
                     <div className="text-xs text-white px-2 text-center">
                       <span className="font-medium">{principalPercent}%</span>
-                      <br />kapitał
+                      <br />{t.principal}
                     </div>
                     <div className="text-xs text-white px-2 text-center">
                       <span className="font-medium">{interestPercent}%</span>
-                      <br />odsetki
+                      <br />{t.interest}
                     </div>
                   </div>
                 </>
@@ -134,7 +138,7 @@ export default function ResultsPanel({
           
           {/* Disclaimer */}
           <div className="mt-6 text-xs text-text-tertiary">
-            <p>Kalkulacja ma charakter orientacyjny i może różnić się od oferty banku. Rzeczywista rata i oprocentowanie zależą od indywidualnej oceny zdolności kredytowej.</p>
+            <p>{t.disclaimer}</p>
           </div>
         </CardContent>
       </Card>

@@ -1,6 +1,8 @@
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { RefreshCw } from "lucide-react";
+import { useLanguage } from "@/context/LanguageContext";
+import { useTranslations } from "@/lib/translations";
 
 interface InterestRateSectionProps {
   baseRate: number;
@@ -21,6 +23,8 @@ export default function InterestRateSection({
   onRefresh,
   isLoading
 }: InterestRateSectionProps) {
+  const { language } = useLanguage();
+  const t = useTranslations(language);
   
   const handleBankMarginChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const value = parseFloat(e.target.value);
@@ -31,14 +35,14 @@ export default function InterestRateSection({
   
   return (
     <div className="mb-6">
-      <h3 className="text-md font-medium mb-3">Oprocentowanie</h3>
+      <h3 className="text-md font-medium mb-3">{t.interestRateTitle}</h3>
       
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         {/* Base Interest Rate */}
         <div>
           <label className="block text-text-secondary text-sm mb-1" htmlFor="base-rate">
-            Stopa bazowa NBP
-            <span className="text-xs text-primary ml-1">(aktualizowana automatycznie)</span>
+            {t.baseRate}
+            <span className="text-xs text-primary ml-1">{t.baseRateAutoUpdate}</span>
           </label>
           <div className="relative rounded-md shadow-sm">
             <Input
@@ -56,13 +60,13 @@ export default function InterestRateSection({
               <RefreshCw size={16} className={isLoading ? "animate-spin" : ""} />
             </Button>
           </div>
-          <p className="text-xs text-text-tertiary mt-1">Ostatnia aktualizacja: {lastUpdate}</p>
+          <p className="text-xs text-text-tertiary mt-1">{t.lastUpdate} {lastUpdate}</p>
         </div>
         
         {/* Bank Margin */}
         <div>
           <label className="block text-text-secondary text-sm mb-1" htmlFor="bank-margin">
-            Marża banku
+            {t.bankMargin}
           </label>
           <div className="relative rounded-md shadow-sm">
             <Input
@@ -86,7 +90,7 @@ export default function InterestRateSection({
       {/* Total Interest Rate */}
       <div className="mt-4 p-3 bg-gray-50 rounded-md">
         <div className="flex justify-between items-center">
-          <span className="text-sm">Łączne oprocentowanie:</span>
+          <span className="text-sm">{t.totalInterestRate}</span>
           <span className="text-lg font-medium text-primary">{totalInterestRate.toFixed(2)}%</span>
         </div>
       </div>

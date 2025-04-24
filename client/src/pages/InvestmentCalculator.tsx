@@ -161,7 +161,7 @@ export default function InvestmentCalculator() {
         {/* Desktop layout: Parameters, Graph, Summary then Table */}
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
           {/* Input parameters - 4 columns on desktop, first on mobile */}
-          <div className="lg:col-span-4 order-1">
+          <div className="lg:col-span-4 lg:row-start-1 lg:col-start-1 order-1">
             <Card>
               <CardContent className="p-6">
                 <h2 className="text-lg font-medium mb-4">{t.investmentParameters}</h2>
@@ -313,7 +313,7 @@ export default function InvestmentCalculator() {
           </div>
           
           {/* Chart - 8 columns on desktop, third on mobile */}
-          <div className="lg:col-span-8 order-3">
+          <div className="lg:col-span-8 lg:row-start-1 lg:col-start-5 order-3">
             <Card>
               <CardContent className="p-6">
                 <h2 className="text-lg font-medium mb-4">{t.capitalGrowth}</h2>
@@ -396,8 +396,8 @@ export default function InvestmentCalculator() {
             </Card>
           </div>
           
-          {/* Summary box - 4 columns on desktop, positioned below the parameters box on mobile */}
-          <div className="lg:col-span-4 lg:order-3 order-2">
+          {/* Summary box - 4 columns on desktop, positioned below the chart box on desktop, second on mobile */}
+          <div className="lg:col-span-4 lg:row-start-2 lg:col-start-5 order-2">
             <Card>
               <CardContent className="p-6">
                 <h2 className="text-lg font-medium mb-4">{t.summary}</h2>
@@ -442,7 +442,7 @@ export default function InvestmentCalculator() {
           </div>
           
           {/* Table - Full width (12 columns) on desktop */}
-          <div className="lg:col-span-12 order-4">
+          <div className="lg:col-span-12 lg:row-start-3 order-4">
             <Card>
               <CardContent className="p-6">
                 <h2 className="text-lg font-medium mb-4">{t.yearlyData}</h2>

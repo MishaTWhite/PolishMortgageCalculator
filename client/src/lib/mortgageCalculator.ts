@@ -92,6 +92,10 @@ export function calculateLoanPercentages(loanAmount: number, totalInterest: numb
   principalPercent: number;
   interestPercent: number;
 } {
+  if (loanAmount <= 0 || totalInterest <= 0) {
+    return { principalPercent: 50, interestPercent: 50 }; // Default 50/50 if invalid values
+  }
+  
   const totalRepayment = loanAmount + totalInterest;
   const principalPercent = Math.round((loanAmount / totalRepayment) * 100);
   const interestPercent = 100 - principalPercent;

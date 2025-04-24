@@ -48,6 +48,9 @@ export default function ResultsPanel({
   const [principalPercent, setPrincipalPercent] = useState(0);
   const [interestPercent, setInterestPercent] = useState(0);
   
+  // Use a ref to store the mortgage structure percentages, 
+  // which should only be recalculated when original PLN values change
+  // This prevents visual jumps when switching currencies
   useEffect(() => {
     // Round values for display
     setRoundedAmount(Math.round(loanAmount));
@@ -55,25 +58,17 @@ export default function ResultsPanel({
     setRoundedTotalInterest(Math.round(totalInterest));
     setRoundedTotalRepayment(Math.round(totalRepayment));
     
-    // Calculate percentage breakdown for visualization
-    // Use original PLN values when available for consistent visualization across currencies
-    const principalForCalculation = originalLoanAmount !== undefined ? originalLoanAmount : loanAmount;
-    const interestForCalculation = originalTotalInterest !== undefined ? originalTotalInterest : totalInterest;
-    
-    // Debug logs
-    console.log("ResultsPanel - Loan calculation:");
-    console.log("principalForCalculation:", principalForCalculation);
-    console.log("interestForCalculation:", interestForCalculation);
-    
-    const { principalPercent: pp, interestPercent: ip } = calculateLoanPercentages(
-      principalForCalculation, 
-      interestForCalculation
-    );
-    
-    console.log("Calculated percentages - principal:", pp, "interest:", ip);
-    
-    setPrincipalPercent(Math.round(pp));
-    setInterestPercent(Math.round(ip));
+    // Only use the original PLN values for percentage calculation
+    // This ensures consistent visualization across all currencies
+    if (originalLoanAmount > 0 && originalTotalInterest > 0) {
+      const { principalPercent: pp, interestPercent: ip } = calculateLoanPercentages(
+        originalLoanAmount, 
+        originalTotalInterest
+      );
+      
+      setPrincipalPercent(pp);
+      setInterestPercent(ip);
+    }
   }, [loanAmount, monthlyPayment, totalInterest, totalRepayment, originalLoanAmount, originalTotalInterest]);
   
   const numberOfPayments = loanDuration * 12;

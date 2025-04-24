@@ -31,7 +31,9 @@ export default function InvestmentCalculator() {
   // State for input values
   const [startingAge, setStartingAge] = useState(30);
   const [initialCapital, setInitialCapital] = useState(10000);
+  const [initialCapitalInput, setInitialCapitalInput] = useState("10000");
   const [monthlyInvestment, setMonthlyInvestment] = useState(100);
+  const [monthlyInvestmentInput, setMonthlyInvestmentInput] = useState("100");
   const [annualReturn, setAnnualReturn] = useState(7);
   const [inflation, setInflation] = useState(2.5);
   const [considerInflation, setConsiderInflation] = useState(false);
@@ -148,6 +150,17 @@ export default function InvestmentCalculator() {
   const inflationAdjustedCapital = yearlyData.length > 0 ? yearlyData[investmentPeriod]?.inflationAdjustedCapital : 0;
   const inflationAdjustedIncome = yearlyData.length > 0 ? yearlyData[investmentPeriod]?.inflationAdjustedIncome : 0;
   
+  // Обработчики для обновления слайдеров, которые также обновляют строковые значения
+  const handleInitialCapitalChange = (value: number) => {
+    setInitialCapital(value);
+    setInitialCapitalInput(value.toString());
+  };
+  
+  const handleMonthlyInvestmentChange = (value: number) => {
+    setMonthlyInvestment(value);
+    setMonthlyInvestmentInput(value.toString());
+  };
+  
   return (
     <div className="bg-gray-100 font-sans text-text-primary">
       <div className="container mx-auto px-4 py-8 max-w-4xl">
@@ -202,19 +215,21 @@ export default function InvestmentCalculator() {
                     <Label htmlFor="initialCapital">{t.initialCapital}</Label>
                     <Input 
                       id="initialCapital"
-                      type="number" 
-                      value={initialCapital} 
+                      type="text" 
+                      value={initialCapitalInput} 
                       onChange={(e) => {
-                        // Разрешаем пустое значение для очистки поля
-                        if (e.target.value === '') {
+                        const newValue = e.target.value;
+                        setInitialCapitalInput(newValue);
+                        // Обновляем числовое значение только если ввод не пустой
+                        if (newValue === '') {
                           setInitialCapital(0);
-                          // Устанавливаем пустое поле в value, но после ухода с фокуса оно становится 0
-                          e.target.value = '';
                         } else {
-                          setInitialCapital(parseFloat(e.target.value) || 0);
+                          const parsed = parseFloat(newValue);
+                          if (!isNaN(parsed)) {
+                            setInitialCapital(parsed);
+                          }
                         }
                       }}
-                      min={0}
                       className="w-full"
                     />
                   </div>
@@ -223,19 +238,21 @@ export default function InvestmentCalculator() {
                     <Label htmlFor="monthlyInvestment">{t.monthlyInvestment}</Label>
                     <Input 
                       id="monthlyInvestment"
-                      type="number" 
-                      value={monthlyInvestment} 
+                      type="text" 
+                      value={monthlyInvestmentInput} 
                       onChange={(e) => {
-                        // Разрешаем пустое значение для очистки поля
-                        if (e.target.value === '') {
+                        const newValue = e.target.value;
+                        setMonthlyInvestmentInput(newValue);
+                        // Обновляем числовое значение только если ввод не пустой
+                        if (newValue === '') {
                           setMonthlyInvestment(0);
-                          // Устанавливаем пустое поле в value, но после ухода с фокуса оно становится 0
-                          e.target.value = '';
                         } else {
-                          setMonthlyInvestment(parseFloat(e.target.value) || 0);
+                          const parsed = parseFloat(newValue);
+                          if (!isNaN(parsed)) {
+                            setMonthlyInvestment(parsed);
+                          }
                         }
                       }}
-                      min={0}
                       className="w-full"
                     />
                   </div>

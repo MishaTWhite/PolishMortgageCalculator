@@ -31,7 +31,7 @@ export default function InvestmentCalculator() {
   // State for input values
   const [startingAge, setStartingAge] = useState(30);
   const [initialCapital, setInitialCapital] = useState(10000);
-  const [monthlyInvestment, setMonthlyInvestment] = useState(1000);
+  const [monthlyInvestment, setMonthlyInvestment] = useState(100);
   const [annualReturn, setAnnualReturn] = useState(7);
   const [inflation, setInflation] = useState(2.5);
   const [considerInflation, setConsiderInflation] = useState(false);

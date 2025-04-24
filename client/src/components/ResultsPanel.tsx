@@ -60,10 +60,17 @@ export default function ResultsPanel({
     const principalForCalculation = originalLoanAmount !== undefined ? originalLoanAmount : loanAmount;
     const interestForCalculation = originalTotalInterest !== undefined ? originalTotalInterest : totalInterest;
     
+    // Debug logs
+    console.log("ResultsPanel - Loan calculation:");
+    console.log("principalForCalculation:", principalForCalculation);
+    console.log("interestForCalculation:", interestForCalculation);
+    
     const { principalPercent: pp, interestPercent: ip } = calculateLoanPercentages(
       principalForCalculation, 
       interestForCalculation
     );
+    
+    console.log("Calculated percentages - principal:", pp, "interest:", ip);
     
     setPrincipalPercent(Math.round(pp));
     setInterestPercent(Math.round(ip));

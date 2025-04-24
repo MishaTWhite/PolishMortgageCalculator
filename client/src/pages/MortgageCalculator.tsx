@@ -391,6 +391,14 @@ export default function MortgageCalculator() {
           </div>
         </div>
 
+        {/* Add debug logs inside an invisible element */}
+        <div style={{ display: 'none' }}>
+          Debug info - current currency: {selectedCurrency},
+          Original loan amount (PLN): {selectedCurrency === "PLN" ? loanAmount : propertyPrice - downPaymentAmount},
+          Displayed loan amount: {loanAmount},
+          Original total interest (PLN): {mortgageDetails?.totalInterest || 0}
+        </div>
+        
         <ResultsPanel 
           loanAmount={loanAmount}
           monthlyPayment={monthlyPayment}
@@ -406,9 +414,10 @@ export default function MortgageCalculator() {
               ? (mortgageDetails?.totalRepayment || 0)
               : convertFromPLN(mortgageDetails?.totalRepayment || 0)
           }
-          // This is the key fix: we pass the original PLN values for percentage calculation,
-          // ensuring the loan structure visualization remains consistent across currencies
-          originalLoanAmount={selectedCurrency === "PLN" ? loanAmount : convertToPLN(loanAmount)}
+          // This is key for fixing the visualization consistency across currencies:
+          // Always use the original PLN values for calculating percentage breakdown
+          // We store the true base loan amount in PLN - not the converted version
+          originalLoanAmount={mortgageDetails?.loanAmount || 0} 
           originalTotalInterest={mortgageDetails?.totalInterest || 0}
           isLoading={isCalculating || isLoadingRates}
           currencySymbol={getCurrencySymbol(selectedCurrency)}

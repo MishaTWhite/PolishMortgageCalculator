@@ -56,7 +56,11 @@ export default function ResultsPanel({
     setRoundedAmount(Math.round(loanAmount));
     setRoundedMonthlyPayment(Math.round(monthlyPayment * 100) / 100);
     setRoundedTotalInterest(Math.round(totalInterest));
-    setRoundedTotalRepayment(Math.round(totalRepayment));
+    
+    // Проверяем и корректируем общую сумму выплат
+    // Общая сумма должна быть суммой займа и процентов
+    const correctTotalRepayment = loanAmount + totalInterest;
+    setRoundedTotalRepayment(Math.round(correctTotalRepayment));
     
     // Only use the original PLN values for percentage calculation
     // This ensures consistent visualization across all currencies

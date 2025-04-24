@@ -406,6 +406,10 @@ export default function MortgageCalculator() {
               ? (mortgageDetails?.totalRepayment || 0)
               : convertFromPLN(mortgageDetails?.totalRepayment || 0)
           }
+          // This is the key fix: we pass the original PLN values for percentage calculation,
+          // ensuring the loan structure visualization remains consistent across currencies
+          originalLoanAmount={selectedCurrency === "PLN" ? loanAmount : convertToPLN(loanAmount)}
+          originalTotalInterest={mortgageDetails?.totalInterest || 0}
           isLoading={isCalculating || isLoadingRates}
           currencySymbol={getCurrencySymbol(selectedCurrency)}
           currencyCode={selectedCurrency}

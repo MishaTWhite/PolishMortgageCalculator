@@ -12,6 +12,9 @@ interface ResultsPanelProps {
   totalInterestRate: number;
   totalInterest: number;
   totalRepayment: number;
+  // Original PLN values for consistent percentage calculation
+  originalLoanAmount?: number;
+  originalTotalInterest?: number;
   isLoading: boolean;
   currencySymbol?: string;
   currencyCode?: string;
@@ -25,6 +28,8 @@ export default function ResultsPanel({
   totalInterestRate,
   totalInterest,
   totalRepayment,
+  originalLoanAmount,
+  originalTotalInterest,
   isLoading,
   currencySymbol = "zł",
   currencyCode = "PLN",
@@ -51,11 +56,18 @@ export default function ResultsPanel({
     setRoundedTotalRepayment(Math.round(totalRepayment));
     
     // Calculate percentage breakdown for visualization
-    // Using actual values for calculation but store rounded percentages
-    const { principalPercent: pp, interestPercent: ip } = calculateLoanPercentages(loanAmount, totalInterest);
+    // Use original PLN values when available for consistent visualization across currencies
+    const principalForCalculation = originalLoanAmount !== undefined ? originalLoanAmount : loanAmount;
+    const interestForCalculation = originalTotalInterest !== undefined ? originalTotalInterest : totalInterest;
+    
+    const { principalPercent: pp, interestPercent: ip } = calculateLoanPercentages(
+      principalForCalculation, 
+      interestForCalculation
+    );
+    
     setPrincipalPercent(Math.round(pp));
     setInterestPercent(Math.round(ip));
-  }, [loanAmount, monthlyPayment, totalInterest, totalRepayment]);
+  }, [loanAmount, monthlyPayment, totalInterest, totalRepayment, originalLoanAmount, originalTotalInterest]);
   
   const numberOfPayments = loanDuration * 12;
   

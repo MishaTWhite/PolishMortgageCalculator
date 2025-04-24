@@ -102,6 +102,7 @@ type TranslationKeys = {
   annualReturn: string;
   inflation: string;
   considerInflation: string;
+  reinvestIncomeInProjection: string;
   endAge: string;
   summary: string;
   investmentPeriod: string;
@@ -228,6 +229,7 @@ export const translations: Translations = {
     annualReturn: "Roczna stopa zwrotu (%)",
     inflation: "Roczna inflacja (%)",
     considerInflation: "Uwzględnij inflację",
+    reinvestIncomeInProjection: "Reinwestuj dochód w okresie projekcji",
     endAge: "Wiek końcowy tworzenia kapitału",
     summary: "Podsumowanie",
     investmentPeriod: "Okres inwestycji",
@@ -243,7 +245,7 @@ export const translations: Translations = {
     yearlyInvestment: "Inwestycje za rok",
     capitalGrowthAmount: "Wzrost kapitału",
     inflationAdjusted: "z uwzględnieniem inflacji",
-    projectionNote: "Uwaga: Linia przerywana po wieku zakończenia pokazuje przewidywany wzrost kapitału bez nowych inwestycji.",
+    projectionNote: "Uwaga: Linia przerywana po wieku zakończenia pokazuje przewidywany wzrost kapitału. Użyj opcji \"Reinwestuj dochód\" aby zobaczyć różnicę między ponownym inwestowaniem a wydatkowaniem dochodów pasywnych.",
     calculationNote: "Wszystkie obliczenia wykonane na podstawie rocznego naliczania odsetek składanych. Podatki i prowizje nie są uwzględniane."
   },
   
@@ -349,6 +351,7 @@ export const translations: Translations = {
     annualReturn: "Annual Return (%)",
     inflation: "Annual Inflation (%)",
     considerInflation: "Consider Inflation",
+    reinvestIncomeInProjection: "Reinvest income in projection period",
     endAge: "End Capital Formation Age",
     summary: "Summary",
     investmentPeriod: "Investment Period",
@@ -470,6 +473,7 @@ export const translations: Translations = {
     annualReturn: "Річна прибутковість (%)",
     inflation: "Річна інфляція (%)",
     considerInflation: "Враховувати інфляцію",
+    reinvestIncomeInProjection: "Реінвестувати дохід у період проекції",
     endAge: "Кінцевий вік формування капіталу",
     summary: "Підсумок",
     investmentPeriod: "Період інвестування",

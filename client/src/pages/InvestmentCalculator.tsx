@@ -35,6 +35,7 @@ export default function InvestmentCalculator() {
   const [annualReturn, setAnnualReturn] = useState(7);
   const [inflation, setInflation] = useState(2.5);
   const [considerInflation, setConsiderInflation] = useState(false);
+  const [reinvestIncome, setReinvestIncome] = useState(true);
   const [endAge, setEndAge] = useState(60);
   
   // Derived state
@@ -67,11 +68,21 @@ export default function InvestmentCalculator() {
       const totalForYear = projectedCapital + yearlyInvestmentAmount;
       const yearlyGrowth = totalForYear * (annualReturn / 100);
       
-      // Update capital for next year
-      const endCapital = totalForYear + yearlyGrowth;
+      // Update capital for next year based on whether we reinvest passive income in projection period
+      let endCapital;
+      if (!isActiveInvestment && !reinvestIncome) {
+        // In projection period with income spent (not reinvested):
+        // Capital remains the same, growth is not added to capital for next year
+        // When spending passive income, capital stays constant
+        endCapital = totalForYear; // Only yearly investment (which is 0 here) is added, no growth
+      } else {
+        // During active investment or in projection period with reinvested income:
+        // Capital grows with compound interest
+        endCapital = totalForYear + yearlyGrowth;
+      }
       
       // Calculate monthly passive income
-      const monthlyIncomeValue = endCapital * (annualReturn / 100) / 12;
+      const monthlyIncomeValue = totalForYear * (annualReturn / 100) / 12;
       
       // Inflation adjustment factor for all previous years
       const inflationFactor = Math.pow(1 + inflation / 100, -year);
@@ -118,7 +129,7 @@ export default function InvestmentCalculator() {
     
     setYearlyData(data);
     setChartData(chartPoints);
-  }, [startingAge, initialCapital, monthlyInvestment, annualReturn, inflation, considerInflation, endAge]);
+  }, [startingAge, initialCapital, monthlyInvestment, annualReturn, inflation, considerInflation, reinvestIncome, endAge]);
   
   // Format currency for display
   const formatCurrency = (value: number): string => {
@@ -272,6 +283,18 @@ export default function InvestmentCalculator() {
                     />
                     <Label htmlFor="considerInflation" className="text-sm font-normal cursor-pointer">
                       {t.considerInflation}
+                    </Label>
+                  </div>
+                  
+                  <div className="flex items-center space-x-2">
+                    <Checkbox 
+                      id="reinvestIncome" 
+                      checked={reinvestIncome}
+                      onCheckedChange={(checked) => 
+                        setReinvestIncome(checked === true)}
+                    />
+                    <Label htmlFor="reinvestIncome" className="text-sm font-normal cursor-pointer">
+                      {t.reinvestIncomeInProjection || "Reinvest income in projection period"}
                     </Label>
                   </div>
                   

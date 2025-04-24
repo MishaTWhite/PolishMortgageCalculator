@@ -344,7 +344,7 @@ export default function InvestmentCalculator() {
                         connectNulls
                       />
                       
-                      {inflation > 0 && (
+                      {(inflation > 0 && considerInflation) && (
                         <Line 
                           name={t.inflationAdjustedCapital}
                           type="monotone" 
@@ -371,7 +371,7 @@ export default function InvestmentCalculator() {
                         legendType="none"
                       />
                       
-                      {inflation > 0 && (
+                      {(inflation > 0 && considerInflation) && (
                         <Line 
                           name={`${t.inflationAdjustedCapital} (projection)`}
                           type="monotone" 
@@ -396,8 +396,8 @@ export default function InvestmentCalculator() {
             </Card>
           </div>
           
-          {/* Summary box - 4 columns on desktop, positioned below the chart box on desktop, second on mobile */}
-          <div className="lg:col-span-4 lg:row-start-2 lg:col-start-5 order-2">
+          {/* Summary box - 8 columns on desktop (same width as chart), positioned below the chart box on desktop, second on mobile */}
+          <div className="lg:col-span-8 lg:row-start-2 lg:col-start-5 order-2">
             <Card>
               <CardContent className="p-6">
                 <h2 className="text-lg font-medium mb-4">{t.summary}</h2>
@@ -423,7 +423,7 @@ export default function InvestmentCalculator() {
                     <span className="font-medium">{formatCurrency(monthlyPassiveIncome)}</span>
                   </div>
                   
-                  {inflation > 0 && (
+                  {(inflation > 0 && considerInflation) && (
                     <>
                       <div className="flex justify-between">
                         <span className="text-sm">{t.inflationAdjustedCapital}:</span>
@@ -456,7 +456,7 @@ export default function InvestmentCalculator() {
                         <TableHead>{t.yearlyInvestment}</TableHead>
                         <TableHead>{t.capitalGrowthAmount}</TableHead>
                         <TableHead>{t.monthlyPassiveIncome}</TableHead>
-                        {inflation > 0 && (
+                        {(inflation > 0 && considerInflation) && (
                           <>
                             <TableHead>{`${t.finalCapital} (${t.inflationAdjusted})`}</TableHead>
                             <TableHead>{`${t.monthlyPassiveIncome} (${t.inflationAdjusted})`}</TableHead>
@@ -472,7 +472,7 @@ export default function InvestmentCalculator() {
                           <TableCell>{formatCurrency(year.yearlyInvestment)}</TableCell>
                           <TableCell>{formatCurrency(year.capitalGrowth)}</TableCell>
                           <TableCell>{formatCurrency(year.monthlyIncome)}</TableCell>
-                          {inflation > 0 && (
+                          {(inflation > 0 && considerInflation) && (
                             <>
                               <TableCell>{formatCurrency(year.inflationAdjustedCapital)}</TableCell>
                               <TableCell>{formatCurrency(year.inflationAdjustedIncome)}</TableCell>

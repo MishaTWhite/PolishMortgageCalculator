@@ -158,16 +158,16 @@ export default function AcceleratedRepaymentModule({
   return (
     <Card className="mb-6">
       <CardContent className="p-6">
-        <h2 className="text-lg font-medium mb-4">Accelerated Repayment</h2>
+        <h2 className="text-lg font-medium mb-4">{t.acceleratedRepayment}</h2>
         <p className="text-sm text-text-secondary mb-6">
-          See how making extra payments for a certain period can reduce your loan term or future monthly payments.
+          {t.acceleratedRepaymentDescription}
         </p>
         
         {/* Accelerated period slider */}
         <div className="mb-6">
           <div className="flex justify-between items-center mb-1">
             <label className="block text-text-secondary text-sm" htmlFor="accelerated-duration">
-              Duration of accelerated repayment
+              {t.durationOfAcceleratedRepayment}
             </label>
             <span className="text-sm font-medium">
               {formatMonthsAsYearsAndMonths(acceleratedDuration)}
@@ -183,8 +183,8 @@ export default function AcceleratedRepaymentModule({
             onValueChange={handleAcceleratedDurationChange}
           />
           <div className="flex justify-between text-xs text-text-tertiary mt-1">
-            <span>1 month</span>
-            <span>5 years</span>
+            <span>1 {t.month}</span>
+            <span>5 {t.repaymentYears}</span>
           </div>
         </div>
         
@@ -192,7 +192,7 @@ export default function AcceleratedRepaymentModule({
         <div className="mb-6">
           <div className="flex justify-between items-center mb-1">
             <label className="block text-text-secondary text-sm" htmlFor="payment-multiplier">
-              Payment multiplier
+              {t.paymentMultiplier}
             </label>
             <span className="text-sm font-medium">
               {paymentMultiplier.toFixed(1)}x ({currencyCode} {formatAmount(monthlyPayment * paymentMultiplier)})
@@ -215,37 +215,37 @@ export default function AcceleratedRepaymentModule({
         
         {/* Results section */}
         <div className="mt-6 bg-secondary p-4 rounded-md">
-          <h3 className="text-md font-medium mb-3">Results</h3>
+          <h3 className="text-md font-medium mb-3">{t.resultsLabel}</h3>
           
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             {/* Term reduction */}
             <div className="p-4 bg-white shadow-sm rounded-md">
-              <h4 className="text-sm text-text-secondary mb-1">Loan Term Reduction</h4>
+              <h4 className="text-sm text-text-secondary mb-1">{t.loanTermReduction}</h4>
               <div className="flex items-center gap-2 mb-2">
                 <span className="text-xl font-medium">
-                  {termReduction.years} {termReduction.years === 1 ? 'year' : 'years'} {termReduction.months} {termReduction.months === 1 ? 'month' : 'months'}
+                  {termReduction.years} {termReduction.years === 1 ? t.year : t.repaymentYears} {termReduction.months} {termReduction.months === 1 ? t.month : t.months}
                 </span>
               </div>
               <p className="text-xs text-text-tertiary">
-                If you make {paymentMultiplier.toFixed(1)}x payments for {formatMonthsAsYearsAndMonths(acceleratedDuration)} and then return to normal payments
+                {t.acceleratedPaymentDescription1} {paymentMultiplier.toFixed(1)}{t.paymentMultiplierWithAmount} {t.acceleratedPaymentDescription2} {formatMonthsAsYearsAndMonths(acceleratedDuration)}
               </p>
             </div>
             
             {/* New monthly payment */}
             <div className="p-4 bg-white shadow-sm rounded-md">
-              <h4 className="text-sm text-text-secondary mb-1">New Monthly Payment</h4>
+              <h4 className="text-sm text-text-secondary mb-1">{t.newMonthlyPayment}</h4>
               <div className="flex items-center gap-2 mb-2">
                 <span className="text-xl font-medium">
                   {currencyCode} {formatAmount(newMonthlyPayment)}
                 </span>
                 {newMonthlyPayment < monthlyPayment && (
                   <Badge className="bg-green-100 text-green-800 text-xs">
-                    Save {formatAmount(monthlyPayment - newMonthlyPayment)}/month
+                    {t.save} {formatAmount(monthlyPayment - newMonthlyPayment)}/{t.perMonth}
                   </Badge>
                 )}
               </div>
               <p className="text-xs text-text-tertiary">
-                After making {paymentMultiplier.toFixed(1)}x payments for {formatMonthsAsYearsAndMonths(acceleratedDuration)}, keeping the original loan term
+                {t.acceleratedPaymentDescription1} {paymentMultiplier.toFixed(1)}{t.paymentMultiplierWithAmount} {t.acceleratedPaymentDescription2} {formatMonthsAsYearsAndMonths(acceleratedDuration)}
               </p>
             </div>
           </div>

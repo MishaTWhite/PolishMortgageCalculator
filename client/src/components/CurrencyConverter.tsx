@@ -92,7 +92,7 @@ export default function CurrencyConverter() {
     <Card className="mb-6">
       <CardContent className="p-6">
         <div className="flex justify-between items-center mb-4">
-          <h2 className="text-lg font-medium">Currency Converter</h2>
+          <h2 className="text-lg font-medium">{t.currencyConverter}</h2>
           <Button 
             variant="outline" 
             size="sm" 
@@ -100,7 +100,7 @@ export default function CurrencyConverter() {
             disabled={isLoading}
           >
             <RefreshCwIcon size={16} className={isLoading ? "animate-spin mr-2" : "mr-2"} />
-            Refresh Rates
+            {t.refreshRates}
           </Button>
         </div>
         
@@ -109,13 +109,13 @@ export default function CurrencyConverter() {
           {isLoading ? (
             <Skeleton className="h-4 w-64" />
           ) : (
-            `Exchange rates from ${exchangeRates?.source || 'unknown source'}: last updated ${exchangeRates?.fetchDate || 'unknown'}`
+            `${t.exchangeRatesFrom} ${exchangeRates?.source || 'unknown source'}: ${t.lastUpdated} ${exchangeRates?.fetchDate || 'unknown'}`
           )}
         </p>
         
         {/* Amount input */}
         <div className="mb-6">
-          <label className="block text-text-secondary text-sm mb-1">Amount</label>
+          <label className="block text-text-secondary text-sm mb-1">{t.amount}</label>
           <div className="flex gap-2">
             <Input
               type="number"
@@ -178,7 +178,7 @@ export default function CurrencyConverter() {
         
         {/* Exchange rate table */}
         <div className="mt-6">
-          <h3 className="text-md font-medium mb-2">Exchange Rate Table</h3>
+          <h3 className="text-md font-medium mb-2">{t.exchangeRateTable}</h3>
           <div className="overflow-x-auto">
             <table className="w-full border-collapse">
               <thead>
@@ -197,7 +197,7 @@ export default function CurrencyConverter() {
                     <td colSpan={CURRENCIES.length + 1} className="py-4 text-center">
                       <div className="flex flex-col items-center gap-2">
                         <RefreshCwIcon size={20} className="animate-spin" />
-                        <span>Loading exchange rates...</span>
+                        <span>{t.loading}</span>
                       </div>
                     </td>
                   </tr>
@@ -222,7 +222,7 @@ export default function CurrencyConverter() {
                 ) : (
                   <tr>
                     <td colSpan={CURRENCIES.length + 1} className="py-4 text-center">
-                      Failed to load exchange rates
+                      {t.failedToLoad}
                     </td>
                   </tr>
                 )}

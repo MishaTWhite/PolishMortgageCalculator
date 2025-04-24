@@ -58,6 +58,36 @@ type TranslationKeys = {
   
   // Language selector
   language: string;
+  
+  // Currency converter
+  currencyConverter: string;
+  currencyConverterDescription: string;
+  amount: string;
+  refreshRates: string;
+  exchangeRatesFrom: string;
+  lastUpdated: string;
+  exchangeRateTable: string;
+  loading: string;
+  failedToLoad: string;
+  
+  // Accelerated repayment
+  acceleratedRepayment: string;
+  acceleratedRepaymentDescription: string;
+  durationOfAcceleratedRepayment: string;
+  month: string;
+  months: string;
+  year: string;
+  repaymentYears: string;
+  andText: string;
+  paymentMultiplier: string;
+  resultsLabel: string;
+  loanTermReduction: string;
+  newMonthlyPayment: string;
+  save: string;
+  perMonth: string;
+  acceleratedPaymentDescription1: string;
+  acceleratedPaymentDescription2: string;
+  paymentMultiplierWithAmount: string;
 };
 
 type Translations = {
@@ -123,6 +153,36 @@ export const translations: Translations = {
     
     // Language selector
     language: "Język",
+    
+    // Currency converter
+    currencyConverter: "Przelicznik walut",
+    currencyConverterDescription: "Przelicz wartości między różnymi walutami",
+    amount: "Kwota",
+    refreshRates: "Odśwież kursy",
+    exchangeRatesFrom: "Kursy walut z",
+    lastUpdated: "ostatnia aktualizacja",
+    exchangeRateTable: "Tabela kursów wymiany",
+    loading: "Ładowanie kursów walut...",
+    failedToLoad: "Nie udało się załadować kursów walut",
+    
+    // Accelerated repayment
+    acceleratedRepayment: "Przyspieszona spłata",
+    acceleratedRepaymentDescription: "Zobacz, jak dokonywanie dodatkowych wpłat przez określony czas może zmniejszyć okres kredytowania lub przyszłe raty miesięczne.",
+    durationOfAcceleratedRepayment: "Czas przyspieszonej spłaty",
+    month: "miesiąc",
+    months: "miesięcy",
+    year: "rok",
+    repaymentYears: "lat",
+    andText: "i",
+    paymentMultiplier: "Mnożnik wpłaty",
+    resultsLabel: "Wyniki",
+    loanTermReduction: "Skrócenie okresu kredytowania",
+    newMonthlyPayment: "Nowa rata miesięczna",
+    save: "Oszczędzasz",
+    perMonth: "miesięcznie",
+    acceleratedPaymentDescription1: "Jeśli dokonasz",
+    acceleratedPaymentDescription2: "płatności przez",
+    paymentMultiplierWithAmount: "x płatności"
   },
   
   en: {
@@ -183,6 +243,36 @@ export const translations: Translations = {
     
     // Language selector
     language: "Language",
+    
+    // Currency converter
+    currencyConverter: "Currency Converter",
+    currencyConverterDescription: "Convert values between different currencies",
+    amount: "Amount",
+    refreshRates: "Refresh Rates",
+    exchangeRatesFrom: "Exchange rates from",
+    lastUpdated: "last updated",
+    exchangeRateTable: "Exchange Rate Table",
+    loading: "Loading exchange rates...",
+    failedToLoad: "Failed to load exchange rates",
+    
+    // Accelerated repayment
+    acceleratedRepayment: "Accelerated Repayment",
+    acceleratedRepaymentDescription: "See how making extra payments for a specific period can reduce your loan term or future monthly payments.",
+    durationOfAcceleratedRepayment: "Duration of accelerated repayment",
+    month: "month",
+    months: "months",
+    year: "year",
+    repaymentYears: "years",
+    andText: "and",
+    paymentMultiplier: "Payment multiplier",
+    resultsLabel: "Results",
+    loanTermReduction: "Loan term reduction",
+    newMonthlyPayment: "New monthly payment",
+    save: "You save",
+    perMonth: "per month",
+    acceleratedPaymentDescription1: "If you make",
+    acceleratedPaymentDescription2: "payments for",
+    paymentMultiplierWithAmount: "x payment"
   },
   
   ua: {
@@ -243,6 +333,36 @@ export const translations: Translations = {
     
     // Language selector
     language: "Мова",
+    
+    // Currency converter
+    currencyConverter: "Конвертер валют",
+    currencyConverterDescription: "Конвертуйте значення між різними валютами",
+    amount: "Сума",
+    refreshRates: "Оновити курси",
+    exchangeRatesFrom: "Курси валют з",
+    lastUpdated: "останнє оновлення",
+    exchangeRateTable: "Таблиця курсів валют",
+    loading: "Завантаження курсів валют...",
+    failedToLoad: "Не вдалося завантажити курси валют",
+    
+    // Accelerated repayment
+    acceleratedRepayment: "Прискорене погашення",
+    acceleratedRepaymentDescription: "Подивіться, як додаткові платежі протягом певного періоду можуть скоротити термін кредиту або зменшити майбутні щомісячні платежі.",
+    durationOfAcceleratedRepayment: "Тривалість прискореного погашення",
+    month: "місяць",
+    months: "місяці",
+    year: "рік",
+    repaymentYears: "років",
+    andText: "і",
+    paymentMultiplier: "Множник платежу",
+    resultsLabel: "Результати",
+    loanTermReduction: "Скорочення терміну кредиту",
+    newMonthlyPayment: "Новий щомісячний платіж",
+    save: "Ви заощаджуєте",
+    perMonth: "на місяць",
+    acceleratedPaymentDescription1: "Якщо ви здійсните",
+    acceleratedPaymentDescription2: "платежів протягом",
+    paymentMultiplierWithAmount: "x платіж"
   }
 };
 

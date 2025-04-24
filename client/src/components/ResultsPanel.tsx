@@ -3,6 +3,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { formatCurrency, calculateLoanPercentages } from "@/lib/mortgageCalculator";
 import { useLanguage } from "@/context/LanguageContext";
 import { useTranslations } from "@/lib/translations";
+import { useEffect, useState } from "react";
 
 interface ResultsPanelProps {
   loanAmount: number;
@@ -32,8 +33,31 @@ export default function ResultsPanel({
   const { language } = useLanguage();
   const t = useTranslations(language);
   
+  // Store rounded values to prevent display issues
+  const [roundedAmount, setRoundedAmount] = useState(Math.round(loanAmount));
+  const [roundedMonthlyPayment, setRoundedMonthlyPayment] = useState(Math.round(monthlyPayment * 100) / 100);
+  const [roundedTotalInterest, setRoundedTotalInterest] = useState(Math.round(totalInterest));
+  const [roundedTotalRepayment, setRoundedTotalRepayment] = useState(Math.round(totalRepayment));
+  
+  // Store percentages to ensure visualization remains stable during currency changes
+  const [principalPercent, setPrincipalPercent] = useState(0);
+  const [interestPercent, setInterestPercent] = useState(0);
+  
+  useEffect(() => {
+    // Round values for display
+    setRoundedAmount(Math.round(loanAmount));
+    setRoundedMonthlyPayment(Math.round(monthlyPayment * 100) / 100);
+    setRoundedTotalInterest(Math.round(totalInterest));
+    setRoundedTotalRepayment(Math.round(totalRepayment));
+    
+    // Calculate percentage breakdown for visualization
+    // Using actual values for calculation but store rounded percentages
+    const { principalPercent: pp, interestPercent: ip } = calculateLoanPercentages(loanAmount, totalInterest);
+    setPrincipalPercent(Math.round(pp));
+    setInterestPercent(Math.round(ip));
+  }, [loanAmount, monthlyPayment, totalInterest, totalRepayment]);
+  
   const numberOfPayments = loanDuration * 12;
-  const { principalPercent, interestPercent } = calculateLoanPercentages(loanAmount, totalInterest);
   
   return (
     <div className="lg:col-span-1">
@@ -48,7 +72,7 @@ export default function ResultsPanel({
             <div className="grid grid-cols-2 gap-2">
               <div className="text-sm text-text-secondary">{t.loanAmount}</div>
               <div className="text-sm font-medium text-right">
-                {currencyCode} {formatAmount(loanAmount)}
+                {currencyCode} {formatAmount(roundedAmount)}
               </div>
               
               <div className="text-sm text-text-secondary">{t.monthlyPayment}:</div>
@@ -56,7 +80,7 @@ export default function ResultsPanel({
                 {isLoading ? (
                   <Skeleton className="h-6 w-24 ml-auto" />
                 ) : (
-                  `${currencyCode} ${formatAmount(monthlyPayment)}`
+                  `${currencyCode} ${formatAmount(roundedMonthlyPayment)}`
                 )}
               </div>
               
@@ -80,7 +104,7 @@ export default function ResultsPanel({
               <div className="flex justify-between items-center">
                 <span className="text-sm">{t.loanAmount}</span>
                 <span className="text-sm font-medium">
-                  {currencyCode} {formatAmount(loanAmount)}
+                  {currencyCode} {formatAmount(roundedAmount)}
                 </span>
               </div>
               
@@ -90,7 +114,7 @@ export default function ResultsPanel({
                   <Skeleton className="h-5 w-24" />
                 ) : (
                   <span className="text-sm font-medium">
-                    {currencyCode} {formatAmount(totalInterest)}
+                    {currencyCode} {formatAmount(roundedTotalInterest)}
                   </span>
                 )}
               </div>
@@ -101,7 +125,7 @@ export default function ResultsPanel({
                   <Skeleton className="h-6 w-28" />
                 ) : (
                   <span className="text-base font-medium">
-                    {currencyCode} {formatAmount(totalRepayment)}
+                    {currencyCode} {formatAmount(roundedTotalRepayment)}
                   </span>
                 )}
               </div>

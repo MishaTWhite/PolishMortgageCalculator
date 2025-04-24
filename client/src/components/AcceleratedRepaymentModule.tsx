@@ -141,17 +141,17 @@ export default function AcceleratedRepaymentModule({
     setPaymentMultiplier(values[0]);
   };
   
-  // Helper to format months as years and months
+  // Helper to format months as years and months using translations
   const formatMonthsAsYearsAndMonths = (months: number) => {
     const years = Math.floor(months / 12);
     const remainingMonths = months % 12;
     
     if (years === 0) {
-      return `${remainingMonths} ${remainingMonths === 1 ? 'month' : 'months'}`;
+      return `${remainingMonths} ${remainingMonths === 1 ? t.month : t.months}`;
     } else if (remainingMonths === 0) {
-      return `${years} ${years === 1 ? 'year' : 'years'}`;
+      return `${years} ${years === 1 ? t.year : t.repaymentYears}`;
     } else {
-      return `${years} ${years === 1 ? 'year' : 'years'} and ${remainingMonths} ${remainingMonths === 1 ? 'month' : 'months'}`;
+      return `${years} ${years === 1 ? t.year : t.repaymentYears} ${t.andText} ${remainingMonths} ${remainingMonths === 1 ? t.month : t.months}`;
     }
   };
   

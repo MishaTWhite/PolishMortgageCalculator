@@ -2,8 +2,7 @@ import { useState, useEffect } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { ArrowUpDownIcon, RefreshCwIcon } from "lucide-react";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { ArrowUpDownIcon, RefreshCwIcon, ArrowUpIcon } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useLanguage } from "@/context/LanguageContext";
 import { useTranslations } from "@/lib/translations";
@@ -26,13 +25,25 @@ interface ExchangeRateData {
   fetchDate: string;
 }
 
+interface CurrencyAmount {
+  value: string;
+  baseCurrencyValue: number; // Value converted to base currency (PLN)
+}
+
 export default function CurrencyConverter() {
   const { language } = useLanguage();
   const t = useTranslations(language);
   
-  // State for amount and selected currencies
-  const [amount, setAmount] = useState<number>(1000);
-  const [selectedCurrency, setSelectedCurrency] = useState<string>("PLN");
+  // State for currency amounts
+  const [currencyAmounts, setCurrencyAmounts] = useState<Record<string, CurrencyAmount>>(
+    CURRENCIES.reduce((acc, curr) => ({
+      ...acc,
+      [curr.code]: { value: curr.code === "PLN" ? "1000" : "", baseCurrencyValue: 0 }
+    }), {})
+  );
+  
+  // Keep track of which currency was last modified
+  const [lastModifiedCurrency, setLastModifiedCurrency] = useState<string>("PLN");
   
   // Fetch exchange rates
   const { 
@@ -43,50 +54,53 @@ export default function CurrencyConverter() {
     queryKey: ['/api/exchange-rates']
   });
   
-  // Handle input change
-  const handleAmountChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const value = parseFloat(e.target.value);
-    if (!isNaN(value) && value > 0) {
-      setAmount(value);
-    }
-  };
-  
-  // Convert from selected currency to all currencies
-  const convertFromCurrency = (amount: number, fromCurrency: string) => {
-    if (!exchangeRates || !exchangeRates.rates) return {};
+  // Convert all currencies based on the input
+  useEffect(() => {
+    if (!exchangeRates || !exchangeRates.rates) return;
     
-    // If the base currency is already PLN
-    if (exchangeRates.base === "PLN") {
-      // Special case: From PLN to other currencies
-      if (fromCurrency === "PLN") {
-        return Object.fromEntries(
-          CURRENCIES.map(currency => [
-            currency.code, 
-            amount * (exchangeRates.rates[currency.code] || 0)
-          ])
-        );
-      }
-      
-      // From other currency to all currencies
-      // First convert to PLN, then to other currencies
-      const toPLN = amount / exchangeRates.rates[fromCurrency];
-      return Object.fromEntries(
-        CURRENCIES.map(currency => [
-          currency.code, 
-          toPLN * (exchangeRates.rates[currency.code] || 0)
-        ])
-      );
+    // Get the modified currency and its value
+    const modifiedCurrValue = parseFloat(currencyAmounts[lastModifiedCurrency].value);
+    if (isNaN(modifiedCurrValue) || modifiedCurrValue <= 0) return;
+    
+    // Calculate base value in PLN
+    let baseValue: number;
+    if (lastModifiedCurrency === "PLN") {
+      baseValue = modifiedCurrValue;
     } else {
-      // If the base currency is not PLN, this would require more conversion logic
-      // but since we're using PLN as base in our API this shouldn't happen
-      return {};
+      baseValue = modifiedCurrValue / exchangeRates.rates[lastModifiedCurrency];
     }
-  };
+    
+    // Update all other currencies
+    const newAmounts = { ...currencyAmounts };
+    CURRENCIES.forEach(currency => {
+      if (currency.code === lastModifiedCurrency) {
+        newAmounts[currency.code] = { 
+          value: currencyAmounts[currency.code].value,
+          baseCurrencyValue: baseValue
+        };
+      } else {
+        const convertedValue = baseValue * exchangeRates.rates[currency.code];
+        newAmounts[currency.code] = { 
+          value: convertedValue.toFixed(2),
+          baseCurrencyValue: baseValue
+        };
+      }
+    });
+    
+    setCurrencyAmounts(newAmounts);
+  }, [exchangeRates, lastModifiedCurrency, currencyAmounts[lastModifiedCurrency].value]);
   
-  // Calculate converted amounts
-  const convertedAmounts = exchangeRates 
-    ? convertFromCurrency(amount, selectedCurrency)
-    : {};
+  // Handle input change for any currency
+  const handleAmountChange = (currencyCode: string, value: string) => {
+    setLastModifiedCurrency(currencyCode);
+    setCurrencyAmounts(prev => ({
+      ...prev,
+      [currencyCode]: {
+        ...prev[currencyCode],
+        value: value
+      }
+    }));
+  };
   
   return (
     <Card className="mb-6">
@@ -113,65 +127,30 @@ export default function CurrencyConverter() {
           )}
         </p>
         
-        {/* Amount input */}
-        <div className="mb-6">
-          <label className="block text-text-secondary text-sm mb-1">{t.amount}</label>
-          <div className="flex gap-2">
-            <Input
-              type="number"
-              value={amount}
-              onChange={handleAmountChange}
-              className="flex-1"
-            />
-            <div className="relative w-1/3">
-              <select
-                className="w-full h-full border rounded-md px-3 py-2 appearance-none bg-white"
-                value={selectedCurrency}
-                onChange={(e) => setSelectedCurrency(e.target.value)}
-              >
-                {CURRENCIES.map(currency => (
-                  <option key={currency.code} value={currency.code}>
-                    {currency.flag} {currency.code}
-                  </option>
-                ))}
-              </select>
-              <div className="absolute inset-y-0 right-0 flex items-center pr-2 pointer-events-none">
-                <ArrowUpDownIcon size={16} />
+        {/* Currency input fields */}
+        <div className="mb-6 space-y-4">
+          {CURRENCIES.map(currency => (
+            <div key={currency.code} className="flex items-center gap-4">
+              <div className="flex-none w-12 text-center">
+                <span className="text-2xl">{currency.flag}</span>
               </div>
-            </div>
-          </div>
-        </div>
-        
-        {/* Converted amount cards */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-          {CURRENCIES.filter(currency => currency.code !== selectedCurrency).map(currency => (
-            <div 
-              key={currency.code} 
-              className="bg-secondary bg-opacity-50 rounded-md p-4"
-            >
-              <div className="flex justify-between items-center">
-                <div>
-                  <div className="text-xl font-medium">
-                    {isLoading ? (
-                      <Skeleton className="h-6 w-24" />
-                    ) : (
-                      formatCurrency(convertedAmounts[currency.code] || 0)
-                    )}
-                  </div>
-                  <div className="text-sm text-text-secondary">
-                    {currency.flag} {currency.code} - {currency.name}
-                  </div>
-                </div>
-                <div className="text-text-tertiary text-sm">
-                  {isLoading ? (
-                    <Skeleton className="h-4 w-16" />
-                  ) : (
-                    `1 ${selectedCurrency} = ${exchangeRates?.rates?.[currency.code] 
-                      ? (exchangeRates.rates[currency.code] / exchangeRates.rates[selectedCurrency]).toFixed(4) 
-                      : '?'} ${currency.code}`
-                  )}
-                </div>
+              <div className="flex-1">
+                <label className="block text-text-secondary text-sm mb-1">
+                  {currency.code} - {currency.name}
+                </label>
+                <Input
+                  type="number"
+                  value={currencyAmounts[currency.code].value}
+                  onChange={(e) => handleAmountChange(currency.code, e.target.value)}
+                  className="w-full"
+                  placeholder="0.00"
+                />
               </div>
+              {currency.code === lastModifiedCurrency && (
+                <div className="flex-none w-8">
+                  <ArrowUpIcon size={20} className="text-primary" />
+                </div>
+              )}
             </div>
           ))}
         </div>

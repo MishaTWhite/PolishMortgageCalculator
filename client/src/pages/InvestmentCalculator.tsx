@@ -342,14 +342,10 @@ export default function InvestmentCalculator() {
                       <CartesianGrid strokeDasharray="3 3" />
                       <XAxis 
                         dataKey="age" 
-                        label={{ value: t.age, position: 'bottom', offset: 15 }}
-                        tickFormatter={(value) => {
-                          // Display all labels but with reasonable spacing
-                          // For shorter investment periods, show more ticks
-                          const tickInterval = investmentPeriod <= 15 ? 2 : 3;
-                          return value % tickInterval === 0 ? value : '';
-                        }}
-                        tickMargin={8} // Add more space for ticks
+                        label={{ value: t.age, position: 'bottom', offset: 25 }}
+                        // Показываем все возрасты на оси X
+                        tick={{ fontSize: 10 }} 
+                        tickMargin={10} // Больше места для подписей
                       />
                       <YAxis />
                       <Tooltip 
@@ -363,12 +359,19 @@ export default function InvestmentCalculator() {
                         }}
                       />
                       <Legend 
-                        wrapperStyle={{ paddingTop: '10px' }}
+                        wrapperStyle={{ 
+                          paddingTop: '10px',
+                          paddingBottom: '10px' 
+                        }}
                         iconType="circle" 
                         layout="horizontal"
-                        verticalAlign="bottom"
+                        verticalAlign="top" // Переместим легенду вверх
                         align="center"
                         iconSize={10}
+                        formatter={(value) => {
+                          // Добавляем дополнительные пробелы между элементами легенды
+                          return <span style={{ marginRight: '20px', marginLeft: '20px' }}>{value}</span>;
+                        }}
                       />
                       {/* Active investment period - solid lines */}
                       <Line 

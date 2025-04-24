@@ -55,8 +55,8 @@ export default function InvestmentCalculator() {
     let projectedCapital = initialCapital;
     let currentMonthlyInvestment = monthlyInvestment;
     
-    // Calculate for investment period and limited projection period
-    const projectionYears = Math.max(5, Math.floor(investmentPeriod * 0.25)); // ~25% projection period
+    // Calculate for investment period and extended projection period
+    const projectionYears = Math.max(8, Math.floor(investmentPeriod * 0.33)); // ~33% projection period
     for (let year = 0; year <= investmentPeriod + projectionYears; year++) {
       const age = startingAge + year;
       const isActiveInvestment = year <= investmentPeriod;
@@ -342,7 +342,13 @@ export default function InvestmentCalculator() {
                       <CartesianGrid strokeDasharray="3 3" />
                       <XAxis 
                         dataKey="age" 
-                        label={{ value: t.age, position: 'bottom', offset: 0 }} 
+                        label={{ value: t.age, position: 'bottom', offset: 0 }}
+                        tickFormatter={(value) => {
+                          // Display fewer age labels by only showing every 3-5 years
+                          // For shorter investment periods, show more ticks
+                          const tickInterval = investmentPeriod <= 15 ? 3 : 5;
+                          return value % tickInterval === 0 ? value : '';
+                        }}
                       />
                       <YAxis />
                       <Tooltip 
@@ -357,8 +363,8 @@ export default function InvestmentCalculator() {
                         dataKey="capital" 
                         stroke="#8884d8" 
                         strokeWidth={2}
-                        dot={false}
-                        activeDot={{ r: 8 }}
+                        dot={{ r: 0 }} // Hide regular dots by using very small dots
+                        activeDot={{ r: 6 }}
                         connectNulls
                       />
                       
@@ -383,7 +389,8 @@ export default function InvestmentCalculator() {
                         stroke="#8884d8" 
                         strokeWidth={2}
                         strokeDasharray="5 5"
-                        dot={false}
+                        dot={{ r: 0 }} // Hide regular dots
+                        isAnimationActive={false} // Disable animation for better performance
                         activeDot={{ r: 8 }}
                         connectNulls
                         legendType="none"

@@ -367,7 +367,7 @@ export const translations: Translations = {
     yearlyInvestment: "Yearly Investment",
     capitalGrowthAmount: "Capital Growth",
     inflationAdjusted: "inflation adjusted",
-    projectionNote: "Note: Dashed line after end age shows projected capital growth without new investments.",
+    projectionNote: "Note: Dashed line after end age shows projected capital growth. Use the \"Reinvest income\" option to see the difference between reinvesting passive income or spending it.",
     calculationNote: "All calculations are based on annual compound interest. Taxes and fees are not taken into account."
   },
   
@@ -489,7 +489,7 @@ export const translations: Translations = {
     yearlyInvestment: "Річні інвестиції",
     capitalGrowthAmount: "Приріст капіталу",
     inflationAdjusted: "з урахуванням інфляції",
-    projectionNote: "Примітка: Пунктирна лінія після кінцевого віку показує прогнозоване зростання капіталу без нових інвестицій.",
+    projectionNote: "Примітка: Пунктирна лінія після кінцевого віку показує прогнозоване зростання капіталу. Використовуйте опцію \"Реінвестувати дохід\" щоб побачити різницю між реінвестуванням пасивного доходу і його витрачанням.",
     calculationNote: "Всі розрахунки базуються на річному складному відсотку. Податки та комісії не враховуються."
   }
 };

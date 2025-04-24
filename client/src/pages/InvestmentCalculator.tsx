@@ -12,6 +12,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Table, TableBody, TableCaption, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { Separator } from "@/components/ui/separator";
 import { ArrowLeft } from "lucide-react";
 
 interface YearData {
@@ -389,18 +390,14 @@ export default function InvestmentCalculator() {
                   </ResponsiveContainer>
                 </div>
                 
-                <p className="text-xs text-text-secondary mt-2">
+                <p className="text-xs text-text-secondary mt-2 mb-6">
                   {t.projectionNote}
                 </p>
-              </CardContent>
-            </Card>
-          </div>
-          
-          {/* Summary box - 8 columns on desktop (same width as chart), positioned below the chart box on desktop, second on mobile */}
-          <div className="lg:col-span-8 lg:row-start-2 lg:col-start-5 order-2">
-            <Card>
-              <CardContent className="p-6">
-                <h2 className="text-lg font-medium mb-4">{t.summary}</h2>
+
+                {/* Summary inside the chart card */}
+                <Separator className="my-4" />
+                
+                <h2 className="text-lg font-medium my-4">{t.summary}</h2>
                 
                 <div className="space-y-3">
                   <div className="flex justify-between">
@@ -440,6 +437,9 @@ export default function InvestmentCalculator() {
               </CardContent>
             </Card>
           </div>
+          
+          {/* Empty space for mobile layout */}
+          <div className="hidden lg:hidden order-2"></div>
           
           {/* Table - Full width (12 columns) on desktop */}
           <div className="lg:col-span-12 lg:row-start-3 order-4">

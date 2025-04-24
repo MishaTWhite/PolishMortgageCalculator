@@ -349,7 +349,18 @@ export default function InvestmentCalculator() {
                       />
                       <YAxis />
                       <Tooltip 
-                        formatter={(value: number) => [formatCurrency(value)]}
+                        formatter={(value: number, name: string, props: any) => {
+                          // Добавляем правильные подписи для всех типов данных
+                          const dataKey = props.dataKey;
+                          
+                          if (dataKey === "projectedCapital") {
+                            return [`${formatCurrency(value)} (${t.finalCapital})`];
+                          } else if (dataKey === "projectedAdjustedCapital") {
+                            return [`${formatCurrency(value)} (${t.inflationAdjustedCapital})`];
+                          }
+                          
+                          return [formatCurrency(value)];
+                        }}
                         labelFormatter={(value) => {
                           // Highlight key ages in tooltip
                           if (value === endAge) {

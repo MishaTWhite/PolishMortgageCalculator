@@ -204,7 +204,16 @@ export default function InvestmentCalculator() {
                       id="initialCapital"
                       type="number" 
                       value={initialCapital} 
-                      onChange={(e) => setInitialCapital(parseFloat(e.target.value) || 0)}
+                      onChange={(e) => {
+                        // Разрешаем пустое значение для очистки поля
+                        if (e.target.value === '') {
+                          setInitialCapital(0);
+                          // Устанавливаем пустое поле в value, но после ухода с фокуса оно становится 0
+                          e.target.value = '';
+                        } else {
+                          setInitialCapital(parseFloat(e.target.value) || 0);
+                        }
+                      }}
                       min={0}
                       className="w-full"
                     />
@@ -216,7 +225,16 @@ export default function InvestmentCalculator() {
                       id="monthlyInvestment"
                       type="number" 
                       value={monthlyInvestment} 
-                      onChange={(e) => setMonthlyInvestment(parseFloat(e.target.value) || 0)}
+                      onChange={(e) => {
+                        // Разрешаем пустое значение для очистки поля
+                        if (e.target.value === '') {
+                          setMonthlyInvestment(0);
+                          // Устанавливаем пустое поле в value, но после ухода с фокуса оно становится 0
+                          e.target.value = '';
+                        } else {
+                          setMonthlyInvestment(parseFloat(e.target.value) || 0);
+                        }
+                      }}
                       min={0}
                       className="w-full"
                     />

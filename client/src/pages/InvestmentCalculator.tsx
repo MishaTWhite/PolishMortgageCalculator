@@ -1,11 +1,10 @@
 import { useState, useEffect } from "react";
-import { Link } from "wouter";
 import { useLanguage } from "@/context/LanguageContext";
 import { useTranslations } from "@/lib/translations";
 import LanguageSelector from "@/components/LanguageSelector";
+import CalcNavigation from "@/components/CalcNavigation";
 import { format } from "date-fns";
 import { LineChart, XAxis, YAxis, CartesianGrid, Tooltip, Legend, Line, ResponsiveContainer } from "recharts";
-import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Slider } from "@/components/ui/slider";
 import { Input } from "@/components/ui/input";
@@ -13,7 +12,6 @@ import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Table, TableBody, TableCaption, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Separator } from "@/components/ui/separator";
-import { ArrowLeft } from "lucide-react";
 
 interface YearData {
   age: number;

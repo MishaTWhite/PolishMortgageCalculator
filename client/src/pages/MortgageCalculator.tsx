@@ -1,7 +1,6 @@
 import { useState, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { format } from "date-fns";
-import { Link } from "wouter";
 import PropertyPriceInput from "@/components/PropertyPriceInput";
 import DownPaymentSlider from "@/components/DownPaymentSlider";
 import LoanDurationSlider from "@/components/LoanDurationSlider";
@@ -11,14 +10,16 @@ import ResultsPanel from "@/components/ResultsPanel";
 import InfoSection from "@/components/InfoSection";
 import AcceleratedRepaymentModule from "@/components/AcceleratedRepaymentModule";
 import LanguageSelector from "@/components/LanguageSelector";
-import CurrencyConverter from "@/components/CurrencyConverter";
+import CalcNavigation from "@/components/CalcNavigation";
 import { calculateMonthlyPayment, calculateLoanDuration, formatCurrency } from "@/lib/mortgageCalculator";
 import { apiRequest } from "@/lib/queryClient";
 import { useLanguage } from "@/context/LanguageContext";
 import { useTranslations } from "@/lib/translations";
-import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Button } from "@/components/ui/button";
 import { ArrowRight, DollarSign, RefreshCwIcon } from "lucide-react";
+import { Link } from "wouter";
+import CurrencyConverter from "@/components/CurrencyConverter";
 import { Badge } from "@/components/ui/badge";
 
 // Array of supported currencies (same as in CurrencyConverter.tsx)
@@ -57,7 +58,6 @@ export default function MortgageCalculator() {
   
   // Currency related states
   const [selectedCurrency, setSelectedCurrency] = useState("PLN");
-  const [showingConverter, setShowingConverter] = useState(false);
 
   // Define response type for interest rate API
   interface InterestRateResponse {
@@ -306,18 +306,6 @@ export default function MortgageCalculator() {
           <div className="bg-white p-6 mb-6 rounded-lg shadow-sm">
             <div className="flex justify-between items-center mb-4">
               <h2 className="text-lg font-medium">{t.parametersTitle}</h2>
-              <div className="flex gap-2">
-                <Button 
-                  variant="outline" 
-                  size="sm" 
-                  onClick={() => setShowingConverter(true)}
-                  className="flex items-center gap-2"
-                >
-                  <DollarSign size={16} />
-                  <span className="hidden sm:inline">Currency Converter</span>
-                  <ArrowRight size={16} />
-                </Button>
-              </div>
             </div>
             
             {/* Currency selection */}
@@ -448,49 +436,26 @@ export default function MortgageCalculator() {
     </>
   );
 
-  // Content for currency converter page
-  const ConverterContent = (
-    <div className="mb-6">
-      <div className="flex justify-between items-center mb-4">
-        <h2 className="text-lg font-medium">Currency Converter</h2>
-        <Button 
-          variant="outline" 
-          size="sm" 
-          onClick={() => setShowingConverter(false)}
-          className="flex items-center gap-2"
-        >
-          <ArrowRight size={16} className="rotate-180" />
-          <span>Back to Mortgage Calculator</span>
-        </Button>
-      </div>
-      
-      <CurrencyConverter />
-    </div>
-  );
+
 
   return (
     <div className="bg-gray-100 font-sans text-text-primary">
       <div className="container mx-auto px-4 py-8 max-w-4xl">
-        <header className="mb-6 flex flex-col md:flex-row md:justify-between md:items-center">
+        <header className="mb-6">
           <div>
             <h1 className="text-2xl md:text-3xl font-medium text-primary">{t.appTitle}</h1>
             <p className="text-text-secondary">{t.appDescription}</p>
           </div>
-          <div className="mt-4 md:mt-0 flex flex-col sm:flex-row items-end gap-3">
-            <Link href="/investment">
-              <Button variant="outline" className="mb-2 sm:mb-0 flex items-center gap-2 whitespace-nowrap">
-                {language === 'ua' ? 'Інвестиційний калькулятор' : 
-                 language === 'pl' ? 'Kalkulator inwestycyjny' : 
-                 'Investment Calculator'}
-                <ArrowRight size={16} />
-              </Button>
-            </Link>
-            <LanguageSelector />
-          </div>
         </header>
 
-        {/* Display either mortgage calculator or currency converter based on state */}
-        {showingConverter ? ConverterContent : MortgageContent}
+        <CalcNavigation />
+        
+        <div className="flex justify-end mt-4 mb-6">
+          <LanguageSelector />
+        </div>
+
+        {/* Display mortgage calculator content */}
+        {MortgageContent}
         
         <footer className="text-center text-text-tertiary text-sm mt-6">
           <p>© {new Date().getFullYear()} {t.footerText} {format(new Date(), "dd.MM.yyyy")}</p>

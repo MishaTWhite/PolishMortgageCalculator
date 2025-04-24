@@ -54,8 +54,9 @@ export default function InvestmentCalculator() {
     let projectedCapital = initialCapital;
     let currentMonthlyInvestment = monthlyInvestment;
     
-    // Calculate for investment period
-    for (let year = 0; year <= investmentPeriod + 20; year++) {
+    // Calculate for investment period and limited projection period
+    const projectionYears = Math.max(5, Math.floor(investmentPeriod * 0.25)); // ~25% projection period
+    for (let year = 0; year <= investmentPeriod + projectionYears; year++) {
       const age = startingAge + year;
       const isActiveInvestment = year <= investmentPeriod;
       
@@ -79,8 +80,8 @@ export default function InvestmentCalculator() {
       const inflationAdjustedCapitalValue = endCapital * inflationFactor;
       const inflationAdjustedIncomeValue = monthlyIncomeValue * inflationFactor;
       
-      // Only add to detailed table data for the investment period
-      if (year <= investmentPeriod + 5) {
+      // Include all active investment years plus just a couple years of projection in the table
+      if (year <= investmentPeriod || (year > investmentPeriod && year <= investmentPeriod + 2)) {
         // Store data for table
         const yearData: YearData = {
           age,

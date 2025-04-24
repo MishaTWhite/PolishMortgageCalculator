@@ -10,6 +10,7 @@ import { Slider } from "@/components/ui/slider";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
+import { Button } from "@/components/ui/button";
 import { Table, TableBody, TableCaption, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Separator } from "@/components/ui/separator";
 
@@ -139,23 +140,18 @@ export default function InvestmentCalculator() {
   return (
     <div className="bg-gray-100 font-sans text-text-primary">
       <div className="container mx-auto px-4 py-8 max-w-4xl">
-        <header className="mb-6 flex flex-col md:flex-row md:justify-between md:items-center">
+        <header className="mb-6">
           <div>
             <h1 className="text-2xl md:text-3xl font-medium text-primary">{t.investmentCalculator}</h1>
             <p className="text-text-secondary">{t.investmentCalculatorDescription}</p>
           </div>
-          <div className="mt-4 md:mt-0 flex flex-col sm:flex-row items-end gap-3">
-            <Link href="/">
-              <Button variant="outline" className="mb-2 sm:mb-0 flex items-center gap-2 whitespace-nowrap">
-                <ArrowLeft size={16} />
-                {language === 'ua' ? 'Іпотечний калькулятор' : 
-                 language === 'pl' ? 'Kalkulator hipoteczny' : 
-                 'Mortgage Calculator'}
-              </Button>
-            </Link>
-            <LanguageSelector />
-          </div>
         </header>
+
+        <CalcNavigation />
+        
+        <div className="flex justify-end mt-4 mb-6">
+          <LanguageSelector />
+        </div>
         
         {/* Desktop layout: Parameters, Graph, Summary then Table */}
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">

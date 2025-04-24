@@ -1,9 +1,9 @@
-import { Link } from "wouter";
+import { useState } from "react";
 import { useLanguage } from "@/context/LanguageContext";
 import { useTranslations } from "@/lib/translations";
 import LanguageSelector from "@/components/LanguageSelector";
-import CurrencyConverterComponent from "@/components/CurrencyConverter";
 import CalcNavigation from "@/components/CalcNavigation";
+import CurrencyConverter from "@/components/CurrencyConverter";
 import { format } from "date-fns";
 
 export default function CurrencyConverterPage() {
@@ -22,14 +22,12 @@ export default function CurrencyConverterPage() {
 
         <CalcNavigation />
         
-        <div className="grid grid-cols-1 gap-6">
-          <div className="w-full">
-            <CurrencyConverterComponent />
-          </div>
+        <div className="flex justify-end mt-4 mb-6">
+          <LanguageSelector />
         </div>
         
-        <div className="flex justify-end mt-4">
-          <LanguageSelector />
+        <div className="bg-white p-6 rounded-lg shadow-sm mb-6">
+          <CurrencyConverter />
         </div>
         
         <footer className="text-center text-text-tertiary text-sm mt-6">

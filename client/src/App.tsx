@@ -6,6 +6,7 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import NotFound from "@/pages/not-found";
 import MortgageCalculator from "@/pages/MortgageCalculator";
 import InvestmentCalculator from "@/pages/InvestmentCalculator";
+import CurrencyConverterPage from "@/pages/CurrencyConverter";
 import { LanguageProvider } from "@/context/LanguageContext";
 
 function Router() {
@@ -13,6 +14,7 @@ function Router() {
     <Switch>
       <Route path="/" component={MortgageCalculator} />
       <Route path="/investment" component={InvestmentCalculator} />
+      <Route path="/converter" component={CurrencyConverterPage} />
       <Route component={NotFound} />
     </Switch>
   );

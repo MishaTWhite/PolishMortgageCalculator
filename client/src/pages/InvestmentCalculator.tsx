@@ -336,19 +336,20 @@ export default function InvestmentCalculator() {
               <CardContent className="p-6">
                 <h2 className="text-lg font-medium mb-4">{t.capitalGrowth}</h2>
                 
-                <div className="h-80">
+                <div className="h-96">
                   <ResponsiveContainer width="100%" height="100%">
                     <LineChart data={chartData}>
                       <CartesianGrid strokeDasharray="3 3" />
                       <XAxis 
                         dataKey="age" 
-                        label={{ value: t.age, position: 'bottom', offset: 0 }}
+                        label={{ value: t.age, position: 'bottom', offset: 15 }}
                         tickFormatter={(value) => {
-                          // Display fewer age labels by only showing every 3-5 years
+                          // Display all labels but with reasonable spacing
                           // For shorter investment periods, show more ticks
-                          const tickInterval = investmentPeriod <= 15 ? 3 : 5;
+                          const tickInterval = investmentPeriod <= 15 ? 2 : 3;
                           return value % tickInterval === 0 ? value : '';
                         }}
+                        tickMargin={8} // Add more space for ticks
                       />
                       <YAxis />
                       <Tooltip 
@@ -361,7 +362,14 @@ export default function InvestmentCalculator() {
                           return `${t.age}: ${value}`;
                         }}
                       />
-                      <Legend />
+                      <Legend 
+                        wrapperStyle={{ paddingTop: '10px' }}
+                        iconType="circle" 
+                        layout="horizontal"
+                        verticalAlign="bottom"
+                        align="center"
+                        iconSize={10}
+                      />
                       {/* Active investment period - solid lines */}
                       <Line 
                         name={t.finalCapital}

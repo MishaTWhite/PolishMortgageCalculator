@@ -1,17 +1,19 @@
 import { useState, useEffect } from "react";
+import { Link } from "wouter";
+import { useLanguage } from "@/context/LanguageContext";
+import { useTranslations } from "@/lib/translations";
+import LanguageSelector from "@/components/LanguageSelector";
+import { format } from "date-fns";
+import { LineChart, XAxis, YAxis, CartesianGrid, Tooltip, Legend, Line, ResponsiveContainer } from "recharts";
+import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Slider } from "@/components/ui/slider";
 import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
-import { Button } from "@/components/ui/button";
-import { useLanguage } from "@/context/LanguageContext";
-import { useTranslations } from "@/lib/translations";
-import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from "recharts";
-import { cn } from "@/lib/utils";
+import { Table, TableBody, TableCaption, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { ArrowLeft } from "lucide-react";
-import { Link } from "wouter";
 
-// Определение типа для данных года
 interface YearData {
   age: number;
   startingCapital: number;
@@ -26,379 +28,319 @@ export default function InvestmentCalculator() {
   const { language } = useLanguage();
   const t = useTranslations(language);
   
-  // Входные параметры
-  const [startAge, setStartAge] = useState(30);
-  const [initialCapital, setInitialCapital] = useState(0);
-  const [monthlyInvestment, setMonthlyInvestment] = useState(500);
-  const [annualReturn, setAnnualReturn] = useState(10.5);
+  // State for input values
+  const [startingAge, setStartingAge] = useState(30);
+  const [initialCapital, setInitialCapital] = useState(10000);
+  const [monthlyInvestment, setMonthlyInvestment] = useState(1000);
+  const [annualReturn, setAnnualReturn] = useState(7);
   const [inflation, setInflation] = useState(2.5);
   const [considerInflation, setConsiderInflation] = useState(false);
-  const [endAge, setEndAge] = useState(65);
+  const [endAge, setEndAge] = useState(60);
   
-  // Данные для расчетов и графика
+  // Derived state
   const [yearlyData, setYearlyData] = useState<YearData[]>([]);
   const [chartData, setChartData] = useState<any[]>([]);
   
-  // Расчет всех данных при изменении любого параметра
+  // Calculate investment results
   useEffect(() => {
-    calculateInvestment();
-  }, [startAge, initialCapital, monthlyInvestment, annualReturn, inflation, considerInflation, endAge]);
-  
-  // Основная функция расчета
-  const calculateInvestment = () => {
-    const years = endAge - startAge + 1;
+    // Investment period in years
+    const investmentPeriod = endAge - startingAge;
+    if (investmentPeriod <= 0) return;
+    
+    // Calculate yearly data
     const data: YearData[] = [];
-    const chartDataArray: any[] = [];
+    const chartPoints: any[] = [];
     
-    let capital = initialCapital;
-    let yearlyInvestmentAmount = monthlyInvestment * 12;
-    let inflationFactor = 1;
+    let projectedCapital = initialCapital;
+    let currentMonthlyInvestment = monthlyInvestment;
     
-    for (let i = 0; i < years + 20; i++) {
-      const age = startAge + i;
-      const isAccumulationPhase = i < years;
+    // Calculate for investment period
+    for (let year = 0; year <= investmentPeriod + 20; year++) {
+      const age = startingAge + year;
+      const isActiveInvestment = year <= investmentPeriod;
       
-      // Расчет с учетом инфляции, если опция включена
-      if (considerInflation && i > 0) {
-        inflationFactor *= (1 + inflation / 100);
-        if (isAccumulationPhase) {
-          yearlyInvestmentAmount = monthlyInvestment * 12 * inflationFactor;
-        }
-      }
+      // Yearly investment is monthly * 12
+      const yearlyInvestmentAmount = isActiveInvestment ? currentMonthlyInvestment * 12 : 0;
       
-      // Если период накопления закончился, больше не инвестируем
-      const currentYearInvestment = isAccumulationPhase ? yearlyInvestmentAmount : 0;
+      // Calculate capital growth based on total amount
+      const totalForYear = projectedCapital + yearlyInvestmentAmount;
+      const yearlyGrowth = totalForYear * (annualReturn / 100);
       
-      // Рост капитала (начисляется на весь капитал и новые инвестиции)
-      const growth = (capital + currentYearInvestment) * (annualReturn / 100);
+      // Update capital for next year
+      const endCapital = totalForYear + yearlyGrowth;
       
-      // Новый капитал с учетом инвестиций и роста
-      const newCapital = capital + currentYearInvestment + growth;
+      // Calculate monthly passive income
+      const monthlyIncomeValue = endCapital * (annualReturn / 100) / 12;
       
-      // Ежемесячный доход от инвестиций
-      const monthlyIncome = newCapital * (annualReturn / 100) / 12;
+      // Inflation adjustment factor for all previous years
+      const inflationFactor = Math.pow(1 + inflation / 100, -year);
       
-      // Расчет с учетом инфляции
-      const realCapital = newCapital / inflationFactor;
-      const realMonthlyIncome = monthlyIncome / inflationFactor;
+      // Inflation adjusted values
+      const inflationAdjustedCapitalValue = endCapital * inflationFactor;
+      const inflationAdjustedIncomeValue = monthlyIncomeValue * inflationFactor;
       
-      // Добавляем данные за год
-      if (i < years || i % 5 === 0) { // Для графика после периода накопления берем точки каждые 5 лет
+      // Only add to detailed table data for the investment period
+      if (year <= investmentPeriod + 5) {
+        // Store data for table
         const yearData: YearData = {
           age,
-          startingCapital: Math.round(capital),
-          yearlyInvestment: Math.round(currentYearInvestment),
-          capitalGrowth: Math.round(growth),
-          monthlyIncome: Math.round(monthlyIncome),
-          inflationAdjustedCapital: Math.round(realCapital),
-          inflationAdjustedIncome: Math.round(realMonthlyIncome)
+          startingCapital: Math.round(projectedCapital),
+          yearlyInvestment: isActiveInvestment ? Math.round(yearlyInvestmentAmount) : 0,
+          capitalGrowth: Math.round(yearlyGrowth),
+          monthlyIncome: Math.round(monthlyIncomeValue),
+          inflationAdjustedCapital: Math.round(inflationAdjustedCapitalValue),
+          inflationAdjustedIncome: Math.round(inflationAdjustedIncomeValue)
         };
-        
-        // Для таблицы добавляем только период накопления
-        if (i < years) {
-          data.push(yearData);
-        }
-        
-        // Для графика добавляем все данные
-        chartDataArray.push({
-          age,
-          capital: Math.round(newCapital),
-          realCapital: Math.round(realCapital),
-          isProjection: !isAccumulationPhase
-        });
+        data.push(yearData);
       }
       
-      // Устанавливаем новый капитал для следующего года
-      capital = newCapital;
+      // Store data for chart (including projection after investment period)
+      chartPoints.push({
+        age,
+        capital: Math.round(endCapital),
+        adjustedCapital: Math.round(inflationAdjustedCapitalValue),
+        isProjection: !isActiveInvestment
+      });
+      
+      // Update for next year
+      projectedCapital = endCapital;
+      
+      // Increase monthly investment with inflation if enabled
+      if (considerInflation && isActiveInvestment) {
+        currentMonthlyInvestment *= (1 + inflation / 100);
+      }
     }
     
     setYearlyData(data);
-    setChartData(chartDataArray);
+    setChartData(chartPoints);
+  }, [startingAge, initialCapital, monthlyInvestment, annualReturn, inflation, considerInflation, endAge]);
+  
+  // Format currency for display
+  const formatCurrency = (value: number): string => {
+    return new Intl.NumberFormat(language === 'pl' ? 'pl-PL' : language === 'ua' ? 'uk-UA' : 'en-US', {
+      style: 'decimal',
+      minimumFractionDigits: 0,
+      maximumFractionDigits: 0
+    }).format(value);
   };
   
-  // Функция форматирования чисел
-  const formatNumber = (num: number): string => {
-    return new Intl.NumberFormat(language === 'pl' ? 'pl-PL' : language === 'ua' ? 'uk-UA' : 'en-US', {
-      maximumFractionDigits: 0
-    }).format(num);
-  };
-
+  // Calculate summary data
+  const investmentPeriod = endAge - startingAge;
+  const totalInvestment = initialCapital + (monthlyInvestment * 12 * investmentPeriod);
+  const finalCapital = yearlyData.length > 0 ? yearlyData[investmentPeriod]?.startingCapital + yearlyData[investmentPeriod]?.yearlyInvestment + yearlyData[investmentPeriod]?.capitalGrowth : 0;
+  const monthlyPassiveIncome = yearlyData.length > 0 ? yearlyData[investmentPeriod]?.monthlyIncome : 0;
+  const inflationAdjustedCapital = yearlyData.length > 0 ? yearlyData[investmentPeriod]?.inflationAdjustedCapital : 0;
+  const inflationAdjustedIncome = yearlyData.length > 0 ? yearlyData[investmentPeriod]?.inflationAdjustedIncome : 0;
+  
   return (
     <div className="bg-gray-100 font-sans text-text-primary">
       <div className="container mx-auto px-4 py-8 max-w-4xl">
-        <header className="mb-6 flex justify-between items-center">
+        <header className="mb-6 flex flex-col md:flex-row md:justify-between md:items-center">
           <div>
-            <h1 className="text-2xl md:text-3xl font-medium text-primary">
-              {language === 'ua' ? 'Інвестиційний калькулятор' : 
-               language === 'pl' ? 'Kalkulator inwestycyjny' : 
-               'Investment Calculator'}
-            </h1>
-            <p className="text-text-secondary">
-              {language === 'ua' ? 'Розрахунок накопичень і пасивного доходу до пенсійного віку' : 
-               language === 'pl' ? 'Obliczenie oszczędności i pasywnego dochodu do wieku emerytalnego' : 
-               'Calculate savings and passive income by retirement age'}
-            </p>
+            <h1 className="text-2xl md:text-3xl font-medium text-primary">{t.investmentCalculator}</h1>
+            <p className="text-text-secondary">{t.investmentCalculatorDescription}</p>
           </div>
-          <Link href="/">
-            <Button variant="outline" className="flex items-center gap-2">
-              <ArrowLeft size={16} />
-              {language === 'ua' ? 'Назад до калькулятора іпотеки' : 
-               language === 'pl' ? 'Powrót do kalkulatora hipotecznego' : 
-               'Back to Mortgage Calculator'}
-            </Button>
-          </Link>
+          <div className="mt-4 md:mt-0 flex flex-col sm:flex-row items-end gap-3">
+            <Link href="/">
+              <Button variant="outline" className="mb-2 sm:mb-0 flex items-center gap-2 whitespace-nowrap">
+                <ArrowLeft size={16} />
+                {language === 'ua' ? 'Іпотечний калькулятор' : 
+                 language === 'pl' ? 'Kalkulator hipoteczny' : 
+                 'Mortgage Calculator'}
+              </Button>
+            </Link>
+            <LanguageSelector />
+          </div>
         </header>
         
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           {/* Input parameters */}
-          <div className="lg:col-span-4">
-            <Card className="mb-6">
+          <div className="lg:col-span-1">
+            <Card>
               <CardContent className="p-6">
-                <h2 className="text-lg font-medium mb-4">
-                  {language === 'ua' ? 'Параметри інвестицій' : 
-                   language === 'pl' ? 'Parametry inwestycji' : 
-                   'Investment Parameters'}
-                </h2>
+                <h2 className="text-lg font-medium mb-4">{t.investmentParameters}</h2>
                 
-                {/* Age at start */}
-                <div className="mb-4">
-                  <label className="block text-sm mb-1">
-                    {language === 'ua' ? 'Вік початку інвестицій' : 
-                     language === 'pl' ? 'Wiek rozpoczęcia inwestycji' : 
-                     'Starting Age'}
-                  </label>
-                  <div className="flex gap-4">
-                    <Input 
-                      type="number" 
-                      min={18} 
-                      max={64} 
-                      value={startAge}
-                      onChange={(e) => setStartAge(Number(e.target.value))} 
-                      className="w-24"
-                    />
-                    <Slider
-                      value={[startAge]}
-                      min={18}
-                      max={64}
-                      step={1}
-                      className="flex-1"
-                      onValueChange={(value) => setStartAge(value[0])}
-                    />
+                <div className="space-y-6">
+                  <div className="space-y-2">
+                    <Label htmlFor="startingAge">{t.startingAge}</Label>
+                    <div className="flex gap-4">
+                      <Slider 
+                        id="startingAge"
+                        value={[startingAge]} 
+                        min={18} 
+                        max={64} 
+                        step={1}
+                        className="flex-1"
+                        onValueChange={(value) => setStartingAge(value[0])}
+                      />
+                      <div className="w-16 flex items-center justify-end">
+                        <Input 
+                          type="number" 
+                          value={startingAge} 
+                          onChange={(e) => setStartingAge(parseInt(e.target.value) || 18)}
+                          min={18}
+                          max={64}
+                          className="w-full text-right"
+                        />
+                      </div>
+                    </div>
                   </div>
-                </div>
-                
-                {/* Initial capital */}
-                <div className="mb-4">
-                  <label className="block text-sm mb-1">
-                    {language === 'ua' ? 'Початковий капітал' : 
-                     language === 'pl' ? 'Kapitał początkowy' : 
-                     'Initial Capital'}
-                  </label>
-                  <Input 
-                    type="number" 
-                    min={0} 
-                    value={initialCapital}
-                    onChange={(e) => setInitialCapital(Number(e.target.value))} 
-                  />
-                </div>
-                
-                {/* Monthly investment */}
-                <div className="mb-4">
-                  <label className="block text-sm mb-1">
-                    {language === 'ua' ? 'Щомісячні інвестиції' : 
-                     language === 'pl' ? 'Miesięczna inwestycja' : 
-                     'Monthly Investment'}
-                  </label>
-                  <Input 
-                    type="number" 
-                    min={0} 
-                    value={monthlyInvestment}
-                    onChange={(e) => setMonthlyInvestment(Number(e.target.value))} 
-                  />
-                </div>
-                
-                {/* Annual return */}
-                <div className="mb-4">
-                  <label className="block text-sm mb-1">
-                    {language === 'ua' ? 'Річна дохідність (%)' : 
-                     language === 'pl' ? 'Roczna stopa zwrotu (%)' : 
-                     'Annual Return (%)'}
-                  </label>
-                  <div className="flex gap-4">
+                  
+                  <div className="space-y-2">
+                    <Label htmlFor="initialCapital">{t.initialCapital}</Label>
                     <Input 
+                      id="initialCapital"
                       type="number" 
-                      min={0} 
-                      max={30} 
-                      step={0.1}
-                      value={annualReturn}
-                      onChange={(e) => setAnnualReturn(Number(e.target.value))} 
-                      className="w-24"
-                    />
-                    <Slider
-                      value={[annualReturn]}
+                      value={initialCapital} 
+                      onChange={(e) => setInitialCapital(parseFloat(e.target.value) || 0)}
                       min={0}
-                      max={30}
-                      step={0.5}
-                      className="flex-1"
-                      onValueChange={(value) => setAnnualReturn(value[0])}
+                      className="w-full"
                     />
                   </div>
-                </div>
-                
-                {/* Inflation rate */}
-                <div className="mb-4">
-                  <label className="block text-sm mb-1">
-                    {language === 'ua' ? 'Річна інфляція (%)' : 
-                     language === 'pl' ? 'Roczna inflacja (%)' : 
-                     'Annual Inflation (%)'}
-                  </label>
-                  <div className="flex gap-4">
+                  
+                  <div className="space-y-2">
+                    <Label htmlFor="monthlyInvestment">{t.monthlyInvestment}</Label>
                     <Input 
+                      id="monthlyInvestment"
                       type="number" 
-                      min={0} 
-                      max={20} 
-                      step={0.1}
-                      value={inflation}
-                      onChange={(e) => setInflation(Number(e.target.value))} 
-                      className="w-24"
-                    />
-                    <Slider
-                      value={[inflation]}
+                      value={monthlyInvestment} 
+                      onChange={(e) => setMonthlyInvestment(parseFloat(e.target.value) || 0)}
                       min={0}
-                      max={20}
-                      step={0.5}
-                      className="flex-1"
-                      onValueChange={(value) => setInflation(value[0])}
+                      className="w-full"
                     />
                   </div>
-                </div>
-                
-                {/* Consider inflation checkbox */}
-                <div className="mb-4 flex items-center space-x-2">
-                  <Checkbox 
-                    id="inflation-checkbox" 
-                    checked={considerInflation}
-                    onCheckedChange={(checked) => setConsiderInflation(checked === true)}
-                  />
-                  <label 
-                    htmlFor="inflation-checkbox" 
-                    className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
-                  >
-                    {language === 'ua' ? 'Враховувати інфляцію' : 
-                     language === 'pl' ? 'Uwzględnij inflację' : 
-                     'Consider Inflation'}
-                  </label>
-                </div>
-                
-                {/* End age */}
-                <div className="mb-4">
-                  <label className="block text-sm mb-1">
-                    {language === 'ua' ? 'Вік закінчення накопичень' : 
-                     language === 'pl' ? 'Wiek zakończenia oszczędzania' : 
-                     'End Age'}
-                  </label>
-                  <div className="flex gap-4">
-                    <Input 
-                      type="number" 
-                      min={startAge + 1} 
-                      max={65} 
-                      value={endAge}
-                      onChange={(e) => setEndAge(Number(e.target.value))} 
-                      className="w-24"
+                  
+                  <div className="space-y-2">
+                    <Label htmlFor="annualReturn">{t.annualReturn}</Label>
+                    <div className="flex gap-4">
+                      <Slider 
+                        id="annualReturn"
+                        value={[annualReturn]} 
+                        min={1} 
+                        max={30} 
+                        step={0.5}
+                        className="flex-1"
+                        onValueChange={(value) => setAnnualReturn(value[0])}
+                      />
+                      <div className="w-16 flex items-center justify-end">
+                        <Input 
+                          type="number" 
+                          value={annualReturn} 
+                          onChange={(e) => setAnnualReturn(parseFloat(e.target.value) || 1)}
+                          min={1}
+                          max={30}
+                          step={0.5}
+                          className="w-full text-right"
+                        />
+                      </div>
+                    </div>
+                  </div>
+                  
+                  <div className="space-y-2">
+                    <Label htmlFor="inflation">{t.inflation}</Label>
+                    <div className="flex gap-4">
+                      <Slider 
+                        id="inflation"
+                        value={[inflation]} 
+                        min={0} 
+                        max={10} 
+                        step={0.1}
+                        className="flex-1"
+                        onValueChange={(value) => setInflation(value[0])}
+                      />
+                      <div className="w-16 flex items-center justify-end">
+                        <Input 
+                          type="number" 
+                          value={inflation} 
+                          onChange={(e) => setInflation(parseFloat(e.target.value) || 0)}
+                          min={0}
+                          max={10}
+                          step={0.1}
+                          className="w-full text-right"
+                        />
+                      </div>
+                    </div>
+                  </div>
+                  
+                  <div className="flex items-center space-x-2">
+                    <Checkbox 
+                      id="considerInflation" 
+                      checked={considerInflation}
+                      onCheckedChange={(checked) => 
+                        setConsiderInflation(checked === true)}
                     />
-                    <Slider
-                      value={[endAge]}
-                      min={startAge + 1}
-                      max={65}
-                      step={1}
-                      className="flex-1"
-                      onValueChange={(value) => setEndAge(value[0])}
-                    />
+                    <Label htmlFor="considerInflation" className="text-sm font-normal cursor-pointer">
+                      {t.considerInflation}
+                    </Label>
+                  </div>
+                  
+                  <div className="space-y-2">
+                    <Label htmlFor="endAge">{t.endAge}</Label>
+                    <div className="flex gap-4">
+                      <Slider 
+                        id="endAge"
+                        value={[endAge]} 
+                        min={Math.min(65, startingAge + 1)} 
+                        max={65} 
+                        step={1}
+                        className="flex-1"
+                        onValueChange={(value) => setEndAge(value[0])}
+                      />
+                      <div className="w-16 flex items-center justify-end">
+                        <Input 
+                          type="number" 
+                          value={endAge} 
+                          onChange={(e) => {
+                            const value = parseInt(e.target.value) || startingAge + 1;
+                            setEndAge(Math.max(startingAge + 1, Math.min(65, value)));
+                          }}
+                          min={startingAge + 1}
+                          max={65}
+                          className="w-full text-right"
+                        />
+                      </div>
+                    </div>
                   </div>
                 </div>
               </CardContent>
             </Card>
             
-            {/* Summary card */}
-            <Card>
+            {/* Summary box */}
+            <Card className="mt-6">
               <CardContent className="p-6">
-                <h2 className="text-lg font-medium mb-4">
-                  {language === 'ua' ? 'Підсумок' : 
-                   language === 'pl' ? 'Podsumowanie' : 
-                   'Summary'}
-                </h2>
+                <h2 className="text-lg font-medium mb-4">{t.summary}</h2>
                 
                 <div className="space-y-3">
-                  <div className="grid grid-cols-2 gap-2">
-                    <div className="text-sm text-text-secondary">
-                      {language === 'ua' ? 'Загальний період інвестування' : 
-                       language === 'pl' ? 'Okres inwestycji' : 
-                       'Investment Period'}
-                    </div>
-                    <div className="text-sm font-medium text-right">
-                      {endAge - startAge} {language === 'ua' ? 'років' : 
-                                           language === 'pl' ? 'lat' : 
-                                           'years'}
-                    </div>
+                  <div className="flex justify-between">
+                    <span className="text-sm">{t.investmentPeriod}:</span>
+                    <span className="font-medium">{investmentPeriod} {t.years}</span>
                   </div>
                   
-                  <div className="grid grid-cols-2 gap-2">
-                    <div className="text-sm text-text-secondary">
-                      {language === 'ua' ? 'Загальна сума інвестицій' : 
-                       language === 'pl' ? 'Suma inwestycji' : 
-                       'Total Investment'}
-                    </div>
-                    <div className="text-sm font-medium text-right">
-                      {formatNumber(yearlyData.reduce((sum, year) => sum + year.yearlyInvestment, initialCapital))}
-                    </div>
+                  <div className="flex justify-between">
+                    <span className="text-sm">{t.totalInvestment}:</span>
+                    <span className="font-medium">{formatCurrency(totalInvestment)}</span>
                   </div>
                   
-                  <div className="grid grid-cols-2 gap-2">
-                    <div className="text-sm text-text-secondary">
-                      {language === 'ua' ? 'Капітал на кінець періоду' : 
-                       language === 'pl' ? 'Kapitał na koniec okresu' : 
-                       'Final Capital'}
-                    </div>
-                    <div className="text-lg font-medium text-right text-primary">
-                      {yearlyData.length > 0 ? formatNumber(yearlyData[yearlyData.length - 1].startingCapital + 
-                                                          yearlyData[yearlyData.length - 1].yearlyInvestment + 
-                                                          yearlyData[yearlyData.length - 1].capitalGrowth) : 0}
-                    </div>
+                  <div className="flex justify-between">
+                    <span className="text-sm">{t.finalCapital}:</span>
+                    <span className="font-medium">{formatCurrency(finalCapital)}</span>
                   </div>
                   
-                  <div className="grid grid-cols-2 gap-2">
-                    <div className="text-sm text-text-secondary">
-                      {language === 'ua' ? 'Щомісячний пасивний дохід' : 
-                       language === 'pl' ? 'Miesięczny dochód pasywny' : 
-                       'Monthly Passive Income'}
-                    </div>
-                    <div className="text-base font-medium text-right text-secondary">
-                      {yearlyData.length > 0 ? formatNumber(yearlyData[yearlyData.length - 1].monthlyIncome) : 0}
-                    </div>
+                  <div className="flex justify-between">
+                    <span className="text-sm">{t.monthlyPassiveIncome}:</span>
+                    <span className="font-medium">{formatCurrency(monthlyPassiveIncome)}</span>
                   </div>
                   
-                  {considerInflation && (
+                  {inflation > 0 && (
                     <>
-                      <div className="grid grid-cols-2 gap-2 border-t pt-2">
-                        <div className="text-sm text-text-secondary">
-                          {language === 'ua' ? 'Капітал з урахуванням інфляції' : 
-                           language === 'pl' ? 'Kapitał z uwzględnieniem inflacji' : 
-                           'Inflation-adjusted Capital'}
-                        </div>
-                        <div className="text-sm font-medium text-right">
-                          {yearlyData.length > 0 ? formatNumber(yearlyData[yearlyData.length - 1].inflationAdjustedCapital) : 0}
-                        </div>
+                      <div className="flex justify-between">
+                        <span className="text-sm">{t.inflationAdjustedCapital}:</span>
+                        <span className="font-medium">{formatCurrency(inflationAdjustedCapital)}</span>
                       </div>
                       
-                      <div className="grid grid-cols-2 gap-2">
-                        <div className="text-sm text-text-secondary">
-                          {language === 'ua' ? 'Дохід з урахуванням інфляції' : 
-                           language === 'pl' ? 'Dochód z uwzględnieniem inflacji' : 
-                           'Inflation-adjusted Income'}
-                        </div>
-                        <div className="text-sm font-medium text-right">
-                          {yearlyData.length > 0 ? formatNumber(yearlyData[yearlyData.length - 1].inflationAdjustedIncome) : 0}
-                        </div>
+                      <div className="flex justify-between">
+                        <span className="text-sm">{t.inflationAdjustedIncome}:</span>
+                        <span className="font-medium">{formatCurrency(inflationAdjustedIncome)}</span>
                       </div>
                     </>
                   )}
@@ -407,188 +349,139 @@ export default function InvestmentCalculator() {
             </Card>
           </div>
           
-          {/* Results panel */}
-          <div className="lg:col-span-8">
-            {/* Chart */}
+          {/* Chart and Table */}
+          <div className="lg:col-span-2">
             <Card className="mb-6">
               <CardContent className="p-6">
-                <h2 className="text-lg font-medium mb-4">
-                  {language === 'ua' ? 'Зростання капіталу' : 
-                   language === 'pl' ? 'Wzrost kapitału' : 
-                   'Capital Growth'}
-                </h2>
+                <h2 className="text-lg font-medium mb-4">{t.capitalGrowth}</h2>
                 
-                <div className="h-[400px]">
+                <div className="h-80">
                   <ResponsiveContainer width="100%" height="100%">
-                    <LineChart
-                      data={chartData}
-                      margin={{
-                        top: 5,
-                        right: 30,
-                        left: 20,
-                        bottom: 5,
-                      }}
-                    >
+                    <LineChart data={chartData}>
                       <CartesianGrid strokeDasharray="3 3" />
-                      <XAxis dataKey="age" label={{ value: language === 'ua' ? 'Вік' : 
-                                                            language === 'pl' ? 'Wiek' : 
-                                                            'Age', 
-                                                  position: 'insideBottomRight', 
-                                                  offset: -5 }} />
-                      <YAxis tickFormatter={(value) => `${(value / 1000).toFixed(0)}k`} />
+                      <XAxis 
+                        dataKey="age" 
+                        label={{ value: t.age, position: 'bottom', offset: 0 }} 
+                      />
+                      <YAxis />
                       <Tooltip 
-                        formatter={(value) => [`${formatNumber(Number(value))}`, '']}
-                        labelFormatter={(label) => `${language === 'ua' ? 'Вік' : 
-                                                      language === 'pl' ? 'Wiek' : 
-                                                      'Age'}: ${label}`}
+                        formatter={(value: number) => [formatCurrency(value)]}
+                        labelFormatter={(value) => `${t.age}: ${value}`}
                       />
                       <Legend />
                       <Line 
+                        name={t.finalCapital}
                         type="monotone" 
                         dataKey="capital" 
-                        name={language === 'ua' ? 'Капітал' : 
-                              language === 'pl' ? 'Kapitał' : 
-                              'Capital'} 
                         stroke="#8884d8" 
-                        activeDot={{ r: 8 }}
                         strokeWidth={2}
+                        dot={false}
+                        activeDot={{ r: 8 }}
+                        connectNulls
                       />
-                      {considerInflation && (
+                      
+                      {inflation > 0 && (
                         <Line 
+                          name={t.inflationAdjustedCapital}
                           type="monotone" 
-                          dataKey="realCapital" 
-                          name={language === 'ua' ? 'Капітал з урахуванням інфляції' : 
-                                language === 'pl' ? 'Kapitał z uwzględnieniem inflacji' : 
-                                'Inflation-adjusted Capital'} 
+                          dataKey="adjustedCapital" 
                           stroke="#82ca9d" 
                           strokeWidth={2}
+                          dot={false}
+                          activeDot={{ r: 6 }}
+                          connectNulls
                         />
                       )}
-                      {chartData.map((entry, index) => {
-                        if (entry.isProjection && index > 0 && !chartData[index - 1].isProjection) {
-                          return (
-                            <Line 
-                              key={`projection-start-${index}`}
-                              type="monotone" 
-                              data={[chartData[index - 1], entry]} 
-                              dataKey="capital"
-                              name={language === 'ua' ? 'Початок прогнозу' : 
-                                    language === 'pl' ? 'Początek prognozy' : 
-                                    'Projection Start'} 
-                              stroke="#FF5733" 
-                              strokeWidth={1}
-                              strokeDasharray="5 5"
-                            />
-                          );
-                        }
-                        return null;
-                      })}
+                      
+                      {/* Create duplicate lines with different styles for projection */}
+                      <Line 
+                        name={`${t.finalCapital} (projection)`}
+                        type="monotone" 
+                        dataKey={(dataPoint) => dataPoint.isProjection ? dataPoint.capital : null}
+                        stroke="#8884d8" 
+                        strokeWidth={2}
+                        strokeDasharray="5 5"
+                        dot={false}
+                        activeDot={{ r: 8 }}
+                        connectNulls
+                        legendType="none"
+                      />
+                      
+                      {inflation > 0 && (
+                        <Line 
+                          name={`${t.inflationAdjustedCapital} (projection)`}
+                          type="monotone" 
+                          dataKey={(dataPoint) => dataPoint.isProjection ? dataPoint.adjustedCapital : null}
+                          stroke="#82ca9d" 
+                          strokeWidth={2}
+                          strokeDasharray="5 5"
+                          dot={false}
+                          activeDot={{ r: 6 }}
+                          connectNulls
+                          legendType="none"
+                        />
+                      )}
                     </LineChart>
                   </ResponsiveContainer>
                 </div>
                 
-                <div className="mt-2 text-xs text-text-tertiary">
-                  <p>
-                    {language === 'ua' ? 
-                      'Примітка: Пунктирна лінія після віку завершення показує прогнозоване зростання капіталу без нових інвестицій.' : 
-                     language === 'pl' ? 
-                      'Uwaga: Linia przerywana po wieku zakończenia pokazuje przewidywany wzrost kapitału bez nowych inwestycji.' : 
-                      'Note: Dashed line after end age shows projected capital growth without new investments.'}
-                  </p>
-                </div>
+                <p className="text-xs text-text-secondary mt-2">
+                  {t.projectionNote}
+                </p>
               </CardContent>
             </Card>
             
-            {/* Yearly data table */}
             <Card>
               <CardContent className="p-6">
-                <h2 className="text-lg font-medium mb-4">
-                  {language === 'ua' ? 'Дані за роками' : 
-                   language === 'pl' ? 'Dane roczne' : 
-                   'Yearly Data'}
-                </h2>
+                <h2 className="text-lg font-medium mb-4">{t.yearlyData}</h2>
                 
                 <div className="overflow-x-auto">
-                  <table className="w-full border-collapse">
-                    <thead>
-                      <tr className="bg-muted/50">
-                        <th className="px-4 py-2 text-left font-medium text-sm">
-                          {language === 'ua' ? 'Вік' : 
-                           language === 'pl' ? 'Wiek' : 
-                           'Age'}
-                        </th>
-                        <th className="px-4 py-2 text-right font-medium text-sm">
-                          {language === 'ua' ? 'Початковий капітал' : 
-                           language === 'pl' ? 'Kapitał początkowy' : 
-                           'Starting Capital'}
-                        </th>
-                        <th className="px-4 py-2 text-right font-medium text-sm">
-                          {language === 'ua' ? 'Інвестиції за рік' : 
-                           language === 'pl' ? 'Inwestycje za rok' : 
-                           'Yearly Investment'}
-                        </th>
-                        <th className="px-4 py-2 text-right font-medium text-sm">
-                          {language === 'ua' ? 'Приріст капіталу' : 
-                           language === 'pl' ? 'Wzrost kapitału' : 
-                           'Capital Growth'}
-                        </th>
-                        <th className="px-4 py-2 text-right font-medium text-sm">
-                          {language === 'ua' ? 'Щомісячний дохід' : 
-                           language === 'pl' ? 'Dochód miesięczny' : 
-                           'Monthly Income'}
-                        </th>
-                        {considerInflation && (
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead className="w-20">{t.age}</TableHead>
+                        <TableHead>{t.startingCapital}</TableHead>
+                        <TableHead>{t.yearlyInvestment}</TableHead>
+                        <TableHead>{t.capitalGrowthAmount}</TableHead>
+                        <TableHead>{t.monthlyPassiveIncome}</TableHead>
+                        {inflation > 0 && (
                           <>
-                            <th className="px-4 py-2 text-right font-medium text-sm">
-                              {language === 'ua' ? 'Капітал (інфл.)' : 
-                               language === 'pl' ? 'Kapitał (infl.)' : 
-                               'Capital (infl.)'}
-                            </th>
-                            <th className="px-4 py-2 text-right font-medium text-sm">
-                              {language === 'ua' ? 'Дохід (інфл.)' : 
-                               language === 'pl' ? 'Dochód (infl.)' : 
-                               'Income (infl.)'}
-                            </th>
+                            <TableHead>{`${t.finalCapital} (${t.inflationAdjusted})`}</TableHead>
+                            <TableHead>{`${t.monthlyPassiveIncome} (${t.inflationAdjusted})`}</TableHead>
                           </>
                         )}
-                      </tr>
-                    </thead>
-                    <tbody>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
                       {yearlyData.map((year, index) => (
-                        <tr key={index} className={cn("border-b", index % 2 === 0 ? "bg-white" : "bg-muted/20")}>
-                          <td className="px-4 py-2 text-left">{year.age}</td>
-                          <td className="px-4 py-2 text-right">{formatNumber(year.startingCapital)}</td>
-                          <td className="px-4 py-2 text-right">{formatNumber(year.yearlyInvestment)}</td>
-                          <td className="px-4 py-2 text-right">{formatNumber(year.capitalGrowth)}</td>
-                          <td className="px-4 py-2 text-right">{formatNumber(year.monthlyIncome)}</td>
-                          {considerInflation && (
+                        <TableRow key={index} className={year.age === endAge ? "bg-primary/10" : ""}>
+                          <TableCell className="font-medium">{year.age}</TableCell>
+                          <TableCell>{formatCurrency(year.startingCapital)}</TableCell>
+                          <TableCell>{formatCurrency(year.yearlyInvestment)}</TableCell>
+                          <TableCell>{formatCurrency(year.capitalGrowth)}</TableCell>
+                          <TableCell>{formatCurrency(year.monthlyIncome)}</TableCell>
+                          {inflation > 0 && (
                             <>
-                              <td className="px-4 py-2 text-right">{formatNumber(year.inflationAdjustedCapital)}</td>
-                              <td className="px-4 py-2 text-right">{formatNumber(year.inflationAdjustedIncome)}</td>
+                              <TableCell>{formatCurrency(year.inflationAdjustedCapital)}</TableCell>
+                              <TableCell>{formatCurrency(year.inflationAdjustedIncome)}</TableCell>
                             </>
                           )}
-                        </tr>
+                        </TableRow>
                       ))}
-                    </tbody>
-                  </table>
+                    </TableBody>
+                  </Table>
                 </div>
                 
-                <div className="mt-4 text-xs text-text-tertiary">
-                  <p>
-                    {language === 'ua' ? 
-                      'Всі розрахунки виконуються на основі річного нарахування складних відсотків. Податки та комісії не враховуються.' : 
-                     language === 'pl' ? 
-                      'Wszystkie obliczenia wykonane na podstawie rocznego naliczania odsetek składanych. Podatki i prowizje nie są uwzględniane.' : 
-                      'All calculations are based on annual compound interest. Taxes and fees are not taken into account.'}
-                  </p>
-                </div>
+                <p className="text-xs text-text-tertiary mt-4">
+                  {t.calculationNote}
+                </p>
               </CardContent>
             </Card>
           </div>
         </div>
         
         <footer className="text-center text-text-tertiary text-sm mt-6">
-          <p>© {new Date().getFullYear()} {t.footerText}</p>
+          <p>© {new Date().getFullYear()} {t.footerText} {format(new Date(), "dd.MM.yyyy")}</p>
         </footer>
       </div>
     </div>

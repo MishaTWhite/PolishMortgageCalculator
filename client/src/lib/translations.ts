@@ -328,7 +328,35 @@ export const translations: Translations = {
     perMonth: "per month",
     acceleratedPaymentDescription1: "If you make",
     acceleratedPaymentDescription2: "payments for",
-    paymentMultiplierWithAmount: "x payment"
+    paymentMultiplierWithAmount: "x payment",
+    
+    // Investment calculator
+    investmentCalculator: "Investment Calculator",
+    investmentCalculatorDescription: "Calculate savings and passive income by retirement age",
+    investmentParameters: "Investment Parameters",
+    startingAge: "Starting Age",
+    initialCapital: "Initial Capital",
+    monthlyInvestment: "Monthly Investment",
+    annualReturn: "Annual Return (%)",
+    inflation: "Annual Inflation (%)",
+    considerInflation: "Consider Inflation",
+    endAge: "End Age",
+    summary: "Summary",
+    investmentPeriod: "Investment Period",
+    totalInvestment: "Total Investment",
+    finalCapital: "Final Capital",
+    monthlyPassiveIncome: "Monthly Passive Income",
+    inflationAdjustedCapital: "Inflation-adjusted Capital",
+    inflationAdjustedIncome: "Inflation-adjusted Income",
+    capitalGrowth: "Capital Growth",
+    yearlyData: "Yearly Data",
+    age: "Age",
+    startingCapital: "Starting Capital",
+    yearlyInvestment: "Yearly Investment",
+    capitalGrowthAmount: "Capital Growth",
+    inflationAdjusted: "inflation adjusted",
+    projectionNote: "Note: Dashed line after end age shows projected capital growth without new investments.",
+    calculationNote: "All calculations are based on annual compound interest. Taxes and fees are not taken into account."
   },
   
   ua: {
@@ -418,7 +446,35 @@ export const translations: Translations = {
     perMonth: "на місяць",
     acceleratedPaymentDescription1: "Якщо ви здійсните",
     acceleratedPaymentDescription2: "платежів протягом",
-    paymentMultiplierWithAmount: "x платіж"
+    paymentMultiplierWithAmount: "x платіж",
+    
+    // Investment calculator
+    investmentCalculator: "Інвестиційний калькулятор",
+    investmentCalculatorDescription: "Розрахунок заощаджень та пасивного доходу до пенсійного віку",
+    investmentParameters: "Параметри інвестування",
+    startingAge: "Початковий вік",
+    initialCapital: "Початковий капітал",
+    monthlyInvestment: "Щомісячні інвестиції",
+    annualReturn: "Річна прибутковість (%)",
+    inflation: "Річна інфляція (%)",
+    considerInflation: "Враховувати інфляцію",
+    endAge: "Кінцевий вік",
+    summary: "Підсумок",
+    investmentPeriod: "Період інвестування",
+    totalInvestment: "Загальні інвестиції",
+    finalCapital: "Кінцевий капітал",
+    monthlyPassiveIncome: "Щомісячний пасивний дохід",
+    inflationAdjustedCapital: "Капітал з урахуванням інфляції",
+    inflationAdjustedIncome: "Дохід з урахуванням інфляції",
+    capitalGrowth: "Зростання капіталу",
+    yearlyData: "Щорічні дані",
+    age: "Вік",
+    startingCapital: "Початковий капітал",
+    yearlyInvestment: "Річні інвестиції",
+    capitalGrowthAmount: "Приріст капіталу",
+    inflationAdjusted: "з урахуванням інфляції",
+    projectionNote: "Примітка: Пунктирна лінія після кінцевого віку показує прогнозоване зростання капіталу без нових інвестицій.",
+    calculationNote: "Всі розрахунки базуються на річному складному відсотку. Податки та комісії не враховуються."
   }
 };
 

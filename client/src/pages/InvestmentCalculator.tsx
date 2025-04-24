@@ -387,7 +387,7 @@ export default function InvestmentCalculator() {
                       />
                       {/* Active investment period - solid lines */}
                       <Line 
-                        name={t.finalCapital}
+                        name={language === 'pl' ? 'Kapitał na koniec okresu' : language === 'ua' ? 'Кінцевий капітал' : 'Final capital'}
                         type="monotone" 
                         dataKey="capital" 
                         stroke="#8884d8" 
@@ -401,7 +401,7 @@ export default function InvestmentCalculator() {
                       
                       {(inflation > 0 && considerInflation) && (
                         <Line 
-                          name={t.inflationAdjustedCapital}
+                          name={language === 'pl' ? 'Kapitał z uwzględnieniem inflacji' : language === 'ua' ? 'Капітал з урахуванням інфляції' : 'Inflation-adjusted capital'}
                           type="monotone" 
                           dataKey="adjustedCapital" 
                           stroke="#82ca9d" 

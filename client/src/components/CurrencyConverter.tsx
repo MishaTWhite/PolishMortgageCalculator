@@ -79,7 +79,8 @@ export default function CurrencyConverter() {
           baseCurrencyValue: baseValue
         };
       } else {
-        const convertedValue = baseValue * exchangeRates.rates[currency.code];
+        // Округляем конвертированную сумму до 2 знаков после запятой
+        const convertedValue = Math.round(baseValue * exchangeRates.rates[currency.code] * 100) / 100;
         newAmounts[currency.code] = { 
           value: convertedValue.toFixed(2),
           baseCurrencyValue: baseValue

@@ -113,7 +113,8 @@ export default function MortgageCalculator() {
     const rate = exchangeRates.rates[selectedCurrency];
     if (!rate) return amount;
     
-    return amount * rate;
+    // Округляем конвертированную сумму до 2 знаков после запятой
+    return Math.round(amount * rate * 100) / 100;
   };
   
   // Convert a value from the selected currency to the base currency (PLN)
@@ -126,7 +127,8 @@ export default function MortgageCalculator() {
     const rate = exchangeRates.rates[selectedCurrency];
     if (!rate) return amount;
     
-    return amount / rate;
+    // Округляем до целых в базовой валюте
+    return Math.round(amount / rate);
   };
 
   // Effect to calculate loan amount when property price or down payment changes
@@ -260,6 +262,9 @@ export default function MortgageCalculator() {
   
   // Format amount with currency symbol
   const formatAmount = (amount: number): string => {
+    // Округляем число перед форматированием для избежания длинных десятичных частей
+    const roundedAmount = Math.round(amount * 100) / 100;
+    
     let formatter;
     
     switch (selectedCurrency) {
@@ -285,10 +290,10 @@ export default function MortgageCalculator() {
         });
         break;
       default: // PLN
-        return formatCurrency(amount);
+        return formatCurrency(roundedAmount);
     }
     
-    return formatter.format(amount);
+    return formatter.format(roundedAmount);
   };
 
   // Main content for mortgage calculator

@@ -25,7 +25,9 @@ export default function PropertyPriceInput({
   
   // Update input value when the currency or value changes
   useEffect(() => {
-    setInputValue(value.toString());
+    // Округляем значение для избежания длинных дробей при изменении валюты
+    const roundedValue = Math.round(value * 100) / 100;
+    setInputValue(roundedValue.toString());
   }, [value, currencyCode]);
   
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {

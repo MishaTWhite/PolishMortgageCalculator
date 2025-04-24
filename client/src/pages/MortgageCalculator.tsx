@@ -238,14 +238,15 @@ export default function MortgageCalculator() {
     // Set the new currency
     setSelectedCurrency(currency);
     
-    // Convert stored values to the new currency
+    // Convert stored values to the new currency with proper rounding
     if (currency === "PLN") {
-      setPropertyPrice(currentPropertyPricePLN);
-      setMonthlyPayment(currentMonthlyPaymentPLN);
+      setPropertyPrice(Math.round(currentPropertyPricePLN));
+      setMonthlyPayment(Math.round(currentMonthlyPaymentPLN * 100) / 100);
     } else if (exchangeRates && exchangeRates.rates && exchangeRates.rates[currency]) {
       const rate = exchangeRates.rates[currency];
-      setPropertyPrice(currentPropertyPricePLN * rate);
-      setMonthlyPayment(currentMonthlyPaymentPLN * rate);
+      // Округляем до 2 знаков после запятой для предотвращения длинных дробей
+      setPropertyPrice(Math.round(currentPropertyPricePLN * rate * 100) / 100);
+      setMonthlyPayment(Math.round(currentMonthlyPaymentPLN * rate * 100) / 100);
     }
   };
 

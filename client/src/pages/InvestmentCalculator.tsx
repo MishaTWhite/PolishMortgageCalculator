@@ -414,6 +414,7 @@ export default function InvestmentCalculator() {
                       
                       {/* Projection period - dashed lines */}
                       <Line 
+                        name={`${language === 'pl' ? 'Prognoza kapitału' : language === 'ua' ? 'Прогноз капіталу' : 'Capital forecast'}`}
                         type="monotone" 
                         dataKey="projectedCapital"
                         stroke="#8884d8" 
@@ -423,11 +424,11 @@ export default function InvestmentCalculator() {
                         isAnimationActive={false} // Disable animation for better performance
                         activeDot={{ r: 8 }}
                         connectNulls
-                        legendType="none" // Скрываем из легенды
                       />
                       
                       {(inflation > 0 && considerInflation) && (
                         <Line 
+                          name={`${language === 'pl' ? 'Prognoza kapitału z inflacją' : language === 'ua' ? 'Прогноз капіталу з інфляцією' : 'Inflation-adjusted forecast'}`}
                           type="monotone" 
                           dataKey="projectedAdjustedCapital"
                           stroke="#82ca9d" 
@@ -436,7 +437,6 @@ export default function InvestmentCalculator() {
                           dot={false}
                           activeDot={{ r: 6 }}
                           connectNulls
-                          legendType="none"
                         />
                       )}
                     </LineChart>

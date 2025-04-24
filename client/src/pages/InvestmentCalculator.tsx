@@ -95,11 +95,15 @@ export default function InvestmentCalculator() {
       }
       
       // Store data for chart (including projection after investment period)
+      // Store values in appropriate properties based on investment phase
       chartPoints.push({
         age,
-        capital: Math.round(endCapital),
-        adjustedCapital: Math.round(inflationAdjustedCapitalValue),
-        isProjection: !isActiveInvestment
+        // For active investment period, store in main properties
+        capital: isActiveInvestment ? Math.round(endCapital) : null,
+        adjustedCapital: isActiveInvestment ? Math.round(inflationAdjustedCapitalValue) : null,
+        // For projection period, store in separate properties
+        projectedCapital: !isActiveInvestment ? Math.round(endCapital) : null,
+        projectedAdjustedCapital: !isActiveInvestment ? Math.round(inflationAdjustedCapitalValue) : null
       });
       
       // Update for next year
@@ -369,6 +373,7 @@ export default function InvestmentCalculator() {
                         labelFormatter={(value) => `${t.age}: ${value}`}
                       />
                       <Legend />
+                      {/* Active investment period - solid lines */}
                       <Line 
                         name={t.finalCapital}
                         type="monotone" 
@@ -393,11 +398,11 @@ export default function InvestmentCalculator() {
                         />
                       )}
                       
-                      {/* Create duplicate lines with different styles for projection */}
+                      {/* Projection period - dashed lines */}
                       <Line 
                         name={`${t.finalCapital} (projection)`}
                         type="monotone" 
-                        dataKey={(dataPoint) => dataPoint.isProjection ? dataPoint.capital : null}
+                        dataKey="projectedCapital"
                         stroke="#8884d8" 
                         strokeWidth={2}
                         strokeDasharray="5 5"
@@ -411,7 +416,7 @@ export default function InvestmentCalculator() {
                         <Line 
                           name={`${t.inflationAdjustedCapital} (projection)`}
                           type="monotone" 
-                          dataKey={(dataPoint) => dataPoint.isProjection ? dataPoint.adjustedCapital : null}
+                          dataKey="projectedAdjustedCapital"
                           stroke="#82ca9d" 
                           strokeWidth={2}
                           strokeDasharray="5 5"

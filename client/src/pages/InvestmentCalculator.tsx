@@ -4,7 +4,7 @@ import { useTranslations } from "@/lib/translations";
 import LanguageSelector from "@/components/LanguageSelector";
 import CalcNavigation from "@/components/CalcNavigation";
 import { format } from "date-fns";
-import { LineChart, XAxis, YAxis, CartesianGrid, Tooltip, Legend, Line, ResponsiveContainer } from "recharts";
+import { LineChart, XAxis, YAxis, CartesianGrid, Tooltip, Legend, Line, ResponsiveContainer, ReferenceLine } from "recharts";
 import { Card, CardContent } from "@/components/ui/card";
 import { Slider } from "@/components/ui/slider";
 import { Input } from "@/components/ui/input";
@@ -353,7 +353,13 @@ export default function InvestmentCalculator() {
                       <YAxis />
                       <Tooltip 
                         formatter={(value: number) => [formatCurrency(value)]}
-                        labelFormatter={(value) => `${t.age}: ${value}`}
+                        labelFormatter={(value) => {
+                          // Highlight key ages in tooltip
+                          if (value === endAge) {
+                            return `${t.age}: ${value} (${t.endAge})`;
+                          }
+                          return `${t.age}: ${value}`;
+                        }}
                       />
                       <Legend />
                       {/* Active investment period - solid lines */}
@@ -363,10 +369,12 @@ export default function InvestmentCalculator() {
                         dataKey="capital" 
                         stroke="#8884d8" 
                         strokeWidth={2}
-                        dot={{ r: 0 }} // Hide regular dots by using very small dots
+                        dot={false} // No dots for cleaner look
                         activeDot={{ r: 6 }}
                         connectNulls
                       />
+                      
+                      {/* Highlighting the end age in tooltip is better than using reference line */}
                       
                       {(inflation > 0 && considerInflation) && (
                         <Line 

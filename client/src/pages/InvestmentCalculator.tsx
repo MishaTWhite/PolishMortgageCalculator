@@ -402,7 +402,6 @@ export default function InvestmentCalculator() {
                       
                       {/* Projection period - dashed lines */}
                       <Line 
-                        name={`${t.finalCapital} (projection)`}
                         type="monotone" 
                         dataKey="projectedCapital"
                         stroke="#8884d8" 
@@ -412,12 +411,11 @@ export default function InvestmentCalculator() {
                         isAnimationActive={false} // Disable animation for better performance
                         activeDot={{ r: 8 }}
                         connectNulls
-                        legendType="none"
+                        legendType="none" // Скрываем из легенды
                       />
                       
                       {(inflation > 0 && considerInflation) && (
                         <Line 
-                          name={`${t.inflationAdjustedCapital} (projection)`}
                           type="monotone" 
                           dataKey="projectedAdjustedCapital"
                           stroke="#82ca9d" 

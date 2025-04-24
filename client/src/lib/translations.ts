@@ -88,6 +88,34 @@ type TranslationKeys = {
   acceleratedPaymentDescription1: string;
   acceleratedPaymentDescription2: string;
   paymentMultiplierWithAmount: string;
+  
+  // Investment calculator
+  investmentCalculator: string;
+  investmentCalculatorDescription: string;
+  investmentParameters: string;
+  startingAge: string;
+  initialCapital: string;
+  monthlyInvestment: string;
+  annualReturn: string;
+  inflation: string;
+  considerInflation: string;
+  endAge: string;
+  summary: string;
+  investmentPeriod: string;
+  totalInvestment: string;
+  finalCapital: string;
+  monthlyPassiveIncome: string;
+  inflationAdjustedCapital: string;
+  inflationAdjustedIncome: string;
+  capitalGrowth: string;
+  yearlyData: string;
+  age: string;
+  startingCapital: string;
+  yearlyInvestment: string;
+  capitalGrowthAmount: string;
+  inflationAdjusted: string;
+  projectionNote: string;
+  calculationNote: string;
 };
 
 type Translations = {
@@ -182,7 +210,35 @@ export const translations: Translations = {
     perMonth: "miesięcznie",
     acceleratedPaymentDescription1: "Jeśli dokonasz",
     acceleratedPaymentDescription2: "płatności przez",
-    paymentMultiplierWithAmount: "x płatności"
+    paymentMultiplierWithAmount: "x płatności",
+    
+    // Investment calculator
+    investmentCalculator: "Kalkulator Inwestycyjny",
+    investmentCalculatorDescription: "Obliczenie oszczędności i pasywnego dochodu do wieku emerytalnego",
+    investmentParameters: "Parametry inwestycji",
+    startingAge: "Wiek rozpoczęcia inwestycji",
+    initialCapital: "Kapitał początkowy",
+    monthlyInvestment: "Miesięczna inwestycja",
+    annualReturn: "Roczna stopa zwrotu (%)",
+    inflation: "Roczna inflacja (%)",
+    considerInflation: "Uwzględnij inflację",
+    endAge: "Wiek zakończenia oszczędzania",
+    summary: "Podsumowanie",
+    investmentPeriod: "Okres inwestycji",
+    totalInvestment: "Suma inwestycji",
+    finalCapital: "Kapitał na koniec okresu",
+    monthlyPassiveIncome: "Miesięczny dochód pasywny",
+    inflationAdjustedCapital: "Kapitał z uwzględnieniem inflacji",
+    inflationAdjustedIncome: "Dochód z uwzględnieniem inflacji",
+    capitalGrowth: "Wzrost kapitału",
+    yearlyData: "Dane roczne",
+    age: "Wiek",
+    startingCapital: "Kapitał początkowy",
+    yearlyInvestment: "Inwestycje za rok",
+    capitalGrowthAmount: "Wzrost kapitału",
+    inflationAdjusted: "z uwzględnieniem inflacji",
+    projectionNote: "Uwaga: Linia przerywana po wieku zakończenia pokazuje przewidywany wzrost kapitału bez nowych inwestycji.",
+    calculationNote: "Wszystkie obliczenia wykonane na podstawie rocznego naliczania odsetek składanych. Podatki i prowizje nie są uwzględniane."
   },
   
   en: {

@@ -5,12 +5,14 @@ import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import NotFound from "@/pages/not-found";
 import MortgageCalculator from "@/pages/MortgageCalculator";
+import InvestmentCalculator from "@/pages/InvestmentCalculator";
 import { LanguageProvider } from "@/context/LanguageContext";
 
 function Router() {
   return (
     <Switch>
       <Route path="/" component={MortgageCalculator} />
+      <Route path="/investment" component={InvestmentCalculator} />
       <Route component={NotFound} />
     </Switch>
   );

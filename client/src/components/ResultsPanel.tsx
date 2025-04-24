@@ -64,10 +64,15 @@ export default function ResultsPanel({
     
     // Only use the original PLN values for percentage calculation
     // This ensures consistent visualization across all currencies
-    if (originalLoanAmount > 0 && originalTotalInterest > 0) {
+    if (originalLoanAmount && originalTotalInterest && 
+        originalLoanAmount > 0 && originalTotalInterest > 0) {
+      // Явное приведение типов для TypeScript
+      const loanAmt = originalLoanAmount as number;
+      const totalInt = originalTotalInterest as number;
+      
       const { principalPercent: pp, interestPercent: ip } = calculateLoanPercentages(
-        originalLoanAmount, 
-        originalTotalInterest
+        loanAmt, 
+        totalInt
       );
       
       setPrincipalPercent(pp);

@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { format } from "date-fns";
+import { Link } from "wouter";
 import PropertyPriceInput from "@/components/PropertyPriceInput";
 import DownPaymentSlider from "@/components/DownPaymentSlider";
 import LoanDurationSlider from "@/components/LoanDurationSlider";
@@ -475,7 +476,15 @@ export default function MortgageCalculator() {
             <h1 className="text-2xl md:text-3xl font-medium text-primary">{t.appTitle}</h1>
             <p className="text-text-secondary">{t.appDescription}</p>
           </div>
-          <div className="mt-4 md:mt-0">
+          <div className="mt-4 md:mt-0 flex flex-col sm:flex-row items-end gap-3">
+            <Link href="/investment">
+              <Button variant="outline" className="mb-2 sm:mb-0 flex items-center gap-2 whitespace-nowrap">
+                {language === 'ua' ? 'Інвестиційний калькулятор' : 
+                 language === 'pl' ? 'Kalkulator inwestycyjny' : 
+                 'Investment Calculator'}
+                <ArrowRight size={16} />
+              </Button>
+            </Link>
             <LanguageSelector />
           </div>
         </header>

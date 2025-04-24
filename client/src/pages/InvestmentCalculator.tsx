@@ -158,9 +158,10 @@ export default function InvestmentCalculator() {
           </div>
         </header>
         
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          {/* Input parameters */}
-          <div className="lg:col-span-1">
+        {/* Desktop layout: Parameters, Graph, Summary then Table */}
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+          {/* Input parameters - 4 columns on desktop */}
+          <div className="lg:col-span-4">
             <Card>
               <CardContent className="p-6">
                 <h2 className="text-lg font-medium mb-4">{t.investmentParameters}</h2>
@@ -354,9 +355,9 @@ export default function InvestmentCalculator() {
             </Card>
           </div>
           
-          {/* Chart and Table */}
-          <div className="lg:col-span-2">
-            <Card className="mb-6">
+          {/* Chart - 8 columns on desktop */}
+          <div className="lg:col-span-8">
+            <Card>
               <CardContent className="p-6">
                 <h2 className="text-lg font-medium mb-4">{t.capitalGrowth}</h2>
                 
@@ -436,7 +437,55 @@ export default function InvestmentCalculator() {
                 </p>
               </CardContent>
             </Card>
-            
+          </div>
+          
+          {/* Summary box - 4 columns on desktop, posotioned below the parameters box on mobile */}
+          <div className="lg:col-span-4 lg:order-3 order-2">
+            <Card>
+              <CardContent className="p-6">
+                <h2 className="text-lg font-medium mb-4">{t.summary}</h2>
+                
+                <div className="space-y-3">
+                  <div className="flex justify-between">
+                    <span className="text-sm">{t.investmentPeriod}:</span>
+                    <span className="font-medium">{investmentPeriod} {t.years}</span>
+                  </div>
+                  
+                  <div className="flex justify-between">
+                    <span className="text-sm">{t.totalInvestment}:</span>
+                    <span className="font-medium">{formatCurrency(totalInvestment)}</span>
+                  </div>
+                  
+                  <div className="flex justify-between">
+                    <span className="text-sm">{t.finalCapital}:</span>
+                    <span className="font-medium">{formatCurrency(finalCapital)}</span>
+                  </div>
+                  
+                  <div className="flex justify-between">
+                    <span className="text-sm">{t.monthlyPassiveIncome}:</span>
+                    <span className="font-medium">{formatCurrency(monthlyPassiveIncome)}</span>
+                  </div>
+                  
+                  {inflation > 0 && (
+                    <>
+                      <div className="flex justify-between">
+                        <span className="text-sm">{t.inflationAdjustedCapital}:</span>
+                        <span className="font-medium">{formatCurrency(inflationAdjustedCapital)}</span>
+                      </div>
+                      
+                      <div className="flex justify-between">
+                        <span className="text-sm">{t.inflationAdjustedIncome}:</span>
+                        <span className="font-medium">{formatCurrency(inflationAdjustedIncome)}</span>
+                      </div>
+                    </>
+                  )}
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+          
+          {/* Table - Full width (12 columns) on desktop */}
+          <div className="lg:col-span-12 order-4">
             <Card>
               <CardContent className="p-6">
                 <h2 className="text-lg font-medium mb-4">{t.yearlyData}</h2>

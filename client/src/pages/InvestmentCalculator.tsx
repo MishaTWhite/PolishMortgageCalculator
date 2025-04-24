@@ -354,9 +354,10 @@ export default function InvestmentCalculator() {
                           const dataKey = props.dataKey;
                           
                           if (dataKey === "projectedCapital") {
-                            return [`${formatCurrency(value)} (${t.finalCapital})`];
+                            // Пишем "прогноз" или "projection" вместо системного названия
+                            return [`${formatCurrency(value)} (${t.finalCapital}, ${language === 'pl' ? 'prognoza' : language === 'ua' ? 'прогноз' : 'forecast'})`];
                           } else if (dataKey === "projectedAdjustedCapital") {
-                            return [`${formatCurrency(value)} (${t.inflationAdjustedCapital})`];
+                            return [`${formatCurrency(value)} (${t.inflationAdjustedCapital}, ${language === 'pl' ? 'prognoza' : language === 'ua' ? 'прогноз' : 'forecast'})`];
                           }
                           
                           return [formatCurrency(value)];

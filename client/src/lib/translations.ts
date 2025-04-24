@@ -1,7 +1,10 @@
 import { Language } from "@/context/LanguageContext";
 
 type TranslationKeys = {
-  // Application title and header
+  // Navigation
+  mortgageCalculator: string;
+  
+  // Application title and header  
   appTitle: string;
   appDescription: string;
   
@@ -124,6 +127,9 @@ type Translations = {
 
 export const translations: Translations = {
   pl: {
+    // Navigation
+    mortgageCalculator: "Kalkulator Hipoteczny",
+    
     // Application title and header
     appTitle: "Polski Kalkulator Kredytu Hipotecznego",
     appDescription: "Oblicz swoje miesięczne raty i całkowity koszt kredytu",
@@ -242,6 +248,9 @@ export const translations: Translations = {
   },
   
   en: {
+    // Navigation
+    mortgageCalculator: "Mortgage Calculator",
+    
     // Application title and header
     appTitle: "Polish Mortgage Calculator",
     appDescription: "Calculate your monthly payments and total loan cost",
@@ -360,6 +369,9 @@ export const translations: Translations = {
   },
   
   ua: {
+    // Navigation
+    mortgageCalculator: "Іпотечний калькулятор",
+    
     // Application title and header
     appTitle: "Польський калькулятор іпотеки",
     appDescription: "Розрахуйте свої щомісячні платежі та загальну вартість кредиту",

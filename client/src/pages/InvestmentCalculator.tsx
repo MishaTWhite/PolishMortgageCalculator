@@ -370,24 +370,8 @@ export default function InvestmentCalculator() {
                           return `${t.age}: ${value}`;
                         }}
                       />
-                      <Legend 
-                        wrapperStyle={{ 
-                          paddingTop: '10px',
-                          paddingBottom: '10px' 
-                        }}
-                        iconType="circle" 
-                        layout="horizontal"
-                        verticalAlign="top" // Переместим легенду вверх
-                        align="center"
-                        iconSize={10}
-                        formatter={(value) => {
-                          // Добавляем дополнительные пробелы между элементами легенды
-                          return <span style={{ marginRight: '20px', marginLeft: '20px' }}>{value}</span>;
-                        }}
-                      />
                       {/* Active investment period - solid lines */}
                       <Line 
-                        name={language === 'pl' ? 'Kapitał na koniec okresu' : language === 'ua' ? 'Кінцевий капітал' : 'Final capital'}
                         type="monotone" 
                         dataKey="capital" 
                         stroke="#8884d8" 
@@ -395,13 +379,13 @@ export default function InvestmentCalculator() {
                         dot={false} // No dots for cleaner look
                         activeDot={{ r: 6 }}
                         connectNulls
+                        legendType="none" // Скрываем из легенды полностью
                       />
                       
                       {/* Highlighting the end age in tooltip is better than using reference line */}
                       
                       {(inflation > 0 && considerInflation) && (
                         <Line 
-                          name={language === 'pl' ? 'Kapitał z uwzględnieniem inflacji' : language === 'ua' ? 'Капітал з урахуванням інфляції' : 'Inflation-adjusted capital'}
                           type="monotone" 
                           dataKey="adjustedCapital" 
                           stroke="#82ca9d" 
@@ -409,6 +393,7 @@ export default function InvestmentCalculator() {
                           dot={false}
                           activeDot={{ r: 6 }}
                           connectNulls
+                          legendType="none" // Скрываем из легенды полностью
                         />
                       )}
                       
@@ -441,6 +426,20 @@ export default function InvestmentCalculator() {
                       )}
                     </LineChart>
                   </ResponsiveContainer>
+                </div>
+
+                {/* Кастомная легенда */}
+                <div className="flex justify-center items-center mt-4 mb-2 space-x-8">
+                  <div className="flex items-center">
+                    <div className="w-3 h-3 rounded-full bg-[#8884d8] mr-2"></div>
+                    <span>{language === 'pl' ? 'Kapitał na koniec okresu' : language === 'ua' ? 'Кінцевий капітал' : 'Final capital'}</span>
+                  </div>
+                  {(inflation > 0 && considerInflation) && (
+                    <div className="flex items-center">
+                      <div className="w-3 h-3 rounded-full bg-[#82ca9d] mr-2"></div>
+                      <span>{language === 'pl' ? 'Kapitał z uwzględnieniem inflacji' : language === 'ua' ? 'Капітал з урахуванням інфляції' : 'Inflation-adjusted capital'}</span>
+                    </div>
+                  )}
                 </div>
                 
                 <p className="text-xs text-text-secondary mt-2 mb-6">

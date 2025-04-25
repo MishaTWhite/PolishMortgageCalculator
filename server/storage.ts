@@ -135,6 +135,151 @@ export class MemStorage implements IStorage {
     this.exchangeRates.set(id, rate);
     return rate;
   }
+  
+  // Inflation rate methods
+  async getLatestInflationRate(): Promise<InflationRate | undefined> {
+    if (this.inflationRates.size === 0) {
+      return undefined;
+    }
+    
+    // Get all inflation rates and sort by ID (descending)
+    const allRates = Array.from(this.inflationRates.values());
+    allRates.sort((a, b) => b.id - a.id);
+    
+    return allRates[0];
+  }
+  
+  async getAllInflationRates(): Promise<InflationRate[]> {
+    const allRates = Array.from(this.inflationRates.values());
+    // Sort by date field (newest to oldest)
+    allRates.sort((a, b) => {
+      const dateA = new Date(a.date.split('.').reverse().join('-'));
+      const dateB = new Date(b.date.split('.').reverse().join('-'));
+      return dateB.getTime() - dateA.getTime();
+    });
+    
+    return allRates;
+  }
+  
+  async createInflationRate(insertRate: InsertInflationRate): Promise<InflationRate> {
+    const id = this.inflationRateCurrentId++;
+    
+    // Ensure monthlyRate is null if undefined
+    const monthlyRate = insertRate.monthlyRate === undefined ? null : insertRate.monthlyRate;
+    
+    const rate: InflationRate = { 
+      ...insertRate, 
+      id,
+      monthlyRate 
+    };
+    
+    this.inflationRates.set(id, rate);
+    return rate;
+  }
+  
+  // Stock index methods
+  async getLatestStockIndex(symbol: string): Promise<StockIndex | undefined> {
+    if (this.stockIndices.size === 0) {
+      return undefined;
+    }
+    
+    // Get all stock indices with the specified symbol and sort by ID (descending)
+    const allIndices = Array.from(this.stockIndices.values())
+      .filter(index => index.symbol === symbol);
+    
+    if (allIndices.length === 0) {
+      return undefined;
+    }
+    
+    allIndices.sort((a, b) => b.id - a.id);
+    
+    return allIndices[0];
+  }
+  
+  async createStockIndex(insertIndex: InsertStockIndex): Promise<StockIndex> {
+    const id = this.stockIndexCurrentId++;
+    
+    // Ensure fiveYearReturn and tenYearReturn are null if undefined
+    const fiveYearReturn = insertIndex.fiveYearReturn === undefined ? null : insertIndex.fiveYearReturn;
+    const tenYearReturn = insertIndex.tenYearReturn === undefined ? null : insertIndex.tenYearReturn;
+    
+    const index: StockIndex = { 
+      ...insertIndex, 
+      id,
+      fiveYearReturn,
+      tenYearReturn
+    };
+    
+    this.stockIndices.set(id, index);
+    return index;
+  }
+  
+  // WIBOR rate methods
+  async getLatestWiborRates(): Promise<WiborRate[]> {
+    if (this.wiborRates.size === 0) {
+      return [];
+    }
+    
+    // Group WIBOR rates by type and get the latest for each type
+    const ratesByType = new Map<string, WiborRate>();
+    
+    for (const rate of this.wiborRates.values()) {
+      const currentLatest = ratesByType.get(rate.type);
+      
+      if (!currentLatest || rate.id > currentLatest.id) {
+        ratesByType.set(rate.type, rate);
+      }
+    }
+    
+    return Array.from(ratesByType.values());
+  }
+  
+  async createWiborRate(insertRate: InsertWiborRate): Promise<WiborRate> {
+    const id = this.wiborRateCurrentId++;
+    const rate: WiborRate = { ...insertRate, id };
+    this.wiborRates.set(id, rate);
+    return rate;
+  }
+  
+  // Bank offer methods
+  async getLatestBankOffers(): Promise<BankOffer[]> {
+    if (this.bankOffers.size === 0) {
+      return [];
+    }
+    
+    // Group bank offers by bank name and get the latest for each bank
+    const offersByBank = new Map<string, BankOffer>();
+    
+    for (const offer of this.bankOffers.values()) {
+      const currentLatest = offersByBank.get(offer.bankName);
+      
+      if (!currentLatest || offer.id > currentLatest.id) {
+        offersByBank.set(offer.bankName, offer);
+      }
+    }
+    
+    // Return all offers sorted by total rate (ascending)
+    const result = Array.from(offersByBank.values());
+    result.sort((a, b) => parseFloat(a.totalRate) - parseFloat(b.totalRate));
+    
+    return result;
+  }
+  
+  async createBankOffer(insertOffer: InsertBankOffer): Promise<BankOffer> {
+    const id = this.bankOfferCurrentId++;
+    
+    // Ensure additionalInfo is null if undefined
+    const additionalInfo = insertOffer.additionalInfo === undefined ? null : insertOffer.additionalInfo;
+    
+    const offer: BankOffer = { 
+      ...insertOffer, 
+      id,
+      additionalInfo
+    };
+    
+    this.bankOffers.set(id, offer);
+    return offer;
+  }
 }
 
 export const storage = new MemStorage();

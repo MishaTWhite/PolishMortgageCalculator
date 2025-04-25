@@ -418,6 +418,10 @@ export default function MortgageCalculator() {
               lastUpdate={(interestRateData as InterestRateResponse | undefined)?.fetchDate || format(new Date(), "dd.MM.yyyy")}
               onRefresh={refetchInterestRate}
               isLoading={isLoadingRate}
+              wiborRates={wiborRates?.rates}
+              wiborLastUpdate={wiborRates?.fetchDate}
+              bankOffers={bankOffers?.offers}
+              bankOffersLastUpdate={bankOffers?.fetchDate}
             />
           </div>
         </div>

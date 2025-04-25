@@ -1,8 +1,28 @@
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { RefreshCw } from "lucide-react";
+import { RefreshCw, Info, Building } from "lucide-react";
 import { useLanguage } from "@/context/LanguageContext";
 import { useTranslations } from "@/lib/translations";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { Separator } from "@/components/ui/separator";
+import {
+  Table,
+  TableBody,
+  TableCaption,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
+
+interface BankOffer {
+  bankName: string;
+  bankMargin: number;
+  wiborType: string;
+  totalRate: number;
+  additionalInfo?: string;
+}
 
 interface InterestRateSectionProps {
   baseRate: number;
@@ -12,6 +32,10 @@ interface InterestRateSectionProps {
   lastUpdate: string;
   onRefresh: () => void;
   isLoading: boolean;
+  wiborRates?: Record<string, number>;
+  wiborLastUpdate?: string;
+  bankOffers?: BankOffer[];
+  bankOffersLastUpdate?: string;
 }
 
 export default function InterestRateSection({
@@ -21,7 +45,11 @@ export default function InterestRateSection({
   totalInterestRate,
   lastUpdate,
   onRefresh,
-  isLoading
+  isLoading,
+  wiborRates,
+  wiborLastUpdate,
+  bankOffers,
+  bankOffersLastUpdate
 }: InterestRateSectionProps) {
   const { language } = useLanguage();
   const t = useTranslations(language);
@@ -94,6 +122,76 @@ export default function InterestRateSection({
           <span className="text-lg font-medium text-primary">{totalInterestRate.toFixed(2)}%</span>
         </div>
       </div>
+      
+      {/* WIBOR Rates */}
+      {wiborRates && (
+        <Card className="mt-5">
+          <CardHeader className="pb-3">
+            <div className="flex items-center">
+              <Info className="h-4 w-4 mr-2 text-blue-500" />
+              <CardTitle className="text-md">WIBOR Rates</CardTitle>
+            </div>
+            <CardDescription className="text-xs mt-1">
+              Source: {wiborLastUpdate ? `Last updated: ${wiborLastUpdate}` : ''}
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+              {Object.entries(wiborRates).map(([term, rate]) => (
+                <div key={term} className="border rounded-md p-3 text-center">
+                  <div className="text-sm text-muted-foreground">WIBOR {term}</div>
+                  <div className="text-lg font-medium text-primary">{rate.toFixed(2)}%</div>
+                </div>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
+      )}
+      
+      {/* Bank Offers */}
+      {bankOffers && bankOffers.length > 0 && (
+        <Card className="mt-5">
+          <CardHeader className="pb-3">
+            <div className="flex items-center">
+              <Building className="h-4 w-4 mr-2 text-green-500" />
+              <CardTitle className="text-md">Bank Mortgage Offers</CardTitle>
+            </div>
+            <CardDescription className="text-xs mt-1">
+              Source: Market Research {bankOffersLastUpdate ? `(Last updated: ${bankOffersLastUpdate})` : ''}
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Bank</TableHead>
+                  <TableHead>Margin</TableHead>
+                  <TableHead>Base Rate</TableHead>
+                  <TableHead>Total Rate</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {bankOffers.map((offer, index) => (
+                  <TableRow key={index}>
+                    <TableCell className="font-medium">{offer.bankName}</TableCell>
+                    <TableCell>{offer.bankMargin.toFixed(2)}%</TableCell>
+                    <TableCell>WIBOR {offer.wiborType}</TableCell>
+                    <TableCell className="text-primary font-semibold">{offer.totalRate.toFixed(2)}%</TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+            <div className="mt-3 text-xs text-muted-foreground">
+              <p>* The actual rate may vary depending on your credit score, loan amount, and other factors.</p>
+              {bankMargin > 0 && (
+                <div className="mt-2 p-2 bg-secondary/20 rounded-md">
+                  <p className="font-medium">Your current rate: {totalInterestRate.toFixed(2)}% (NBP Reference Rate + {bankMargin.toFixed(2)}% margin)</p>
+                </div>
+              )}
+            </div>
+          </CardContent>
+        </Card>
+      )}
     </div>
   );
 }

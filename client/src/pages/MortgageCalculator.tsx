@@ -59,9 +59,27 @@ export default function MortgageCalculator() {
   // Currency related states
   const [selectedCurrency, setSelectedCurrency] = useState("PLN");
 
-  // Define response type for interest rate API
+  // Define response types for API
   interface InterestRateResponse {
     rate: number;
+    fetchDate: string;
+    source: string;
+  }
+  
+  interface WiborRateResponse {
+    rates: Record<string, number>;
+    fetchDate: string;
+    source: string;
+  }
+  
+  interface BankOfferResponse {
+    offers: Array<{
+      bankName: string;
+      bankMargin: number;
+      wiborType: string;
+      totalRate: number;
+      additionalInfo?: string;
+    }>;
     fetchDate: string;
     source: string;
   }
@@ -73,6 +91,24 @@ export default function MortgageCalculator() {
     refetch: refetchInterestRate
   } = useQuery<InterestRateResponse>({
     queryKey: ['/api/interest-rate']
+  });
+  
+  // Fetch WIBOR rates
+  const {
+    data: wiborRates,
+    isLoading: isLoadingWibor
+  } = useQuery<WiborRateResponse>({
+    queryKey: ['/api/wibor-rates'],
+    staleTime: 1000 * 60 * 60, // 1 hour
+  });
+  
+  // Fetch bank mortgage offers
+  const {
+    data: bankOffers,
+    isLoading: isLoadingBankOffers
+  } = useQuery<BankOfferResponse>({
+    queryKey: ['/api/bank-offers'],
+    staleTime: 1000 * 60 * 60, // 1 hour
   });
   
   // Fetch exchange rates

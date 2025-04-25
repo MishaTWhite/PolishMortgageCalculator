@@ -1,11 +1,12 @@
 import { useState, useEffect } from "react";
 import { useLanguage } from "@/context/LanguageContext";
 import { useTranslations } from "@/lib/translations";
+import { useQuery } from "@tanstack/react-query";
 import LanguageSelector from "@/components/LanguageSelector";
 import CalcNavigation from "@/components/CalcNavigation";
 import { format } from "date-fns";
 import { LineChart, XAxis, YAxis, CartesianGrid, Tooltip, Legend, Line, ResponsiveContainer, ReferenceLine } from "recharts";
-import { Card, CardContent } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardDescription, CardTitle } from "@/components/ui/card";
 import { Slider } from "@/components/ui/slider";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -13,6 +14,8 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Button } from "@/components/ui/button";
 import { Table, TableBody, TableCaption, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Separator } from "@/components/ui/separator";
+import { Badge } from "@/components/ui/badge";
+import { InfoIcon, TrendingUpIcon } from "lucide-react";
 
 interface YearData {
   age: number;
@@ -39,6 +42,20 @@ export default function InvestmentCalculator() {
   const [considerInflation, setConsiderInflation] = useState(false);
   const [reinvestIncome, setReinvestIncome] = useState(true);
   const [endAge, setEndAge] = useState(60);
+  const [useHistoricalReturns, setUseHistoricalReturns] = useState(false);
+  const [useHistoricalInflation, setUseHistoricalInflation] = useState(false);
+  
+  // Fetch S&P 500 data
+  const { data: sp500Data, isLoading: sp500Loading } = useQuery({
+    queryKey: ['/api/sp500'],
+    staleTime: 1000 * 60 * 60, // 1 hour
+  });
+  
+  // Fetch US inflation data
+  const { data: inflationData, isLoading: inflationLoading } = useQuery({
+    queryKey: ['/api/us-inflation'],
+    staleTime: 1000 * 60 * 60, // 1 hour
+  });
   
   // Derived state
   const [yearlyData, setYearlyData] = useState<YearData[]>([]);
@@ -281,6 +298,47 @@ export default function InvestmentCalculator() {
                         />
                       </div>
                     </div>
+                    
+                    {sp500Data && !sp500Loading && (
+                      <div className="mt-2 p-3 bg-secondary/10 rounded-md text-sm">
+                        <div className="flex items-center gap-1.5 text-primary font-medium mb-1">
+                          <TrendingUpIcon size={16} className="text-green-600" />
+                          <span>S&P 500 {sp500Data.withDividends ? "Performance (with dividends)" : "Performance"}</span>
+                        </div>
+                        <div className="text-sm space-y-1 text-muted-foreground">
+                          <div className="flex justify-between">
+                            <span>1 Year:</span>
+                            <span className="font-medium text-primary">{sp500Data.annualReturn.toFixed(2)}%</span>
+                          </div>
+                          {sp500Data.fiveYearReturn && (
+                            <div className="flex justify-between">
+                              <span>5 Years:</span>
+                              <span className="font-medium text-primary">{sp500Data.fiveYearReturn.toFixed(2)}%</span>
+                            </div>
+                          )}
+                          {sp500Data.tenYearReturn && (
+                            <div className="flex justify-between">
+                              <span>10 Years:</span>
+                              <span className="font-medium text-primary">{sp500Data.tenYearReturn.toFixed(2)}%</span>
+                            </div>
+                          )}
+                        </div>
+                        <div className="flex justify-between mt-1.5 items-center">
+                          <div className="text-xs text-muted-foreground">Source: {sp500Data.source}</div>
+                          <Button 
+                            variant="ghost" 
+                            size="sm" 
+                            className="h-6 px-2 text-xs"
+                            onClick={() => {
+                              setAnnualReturn(sp500Data.annualReturn);
+                              setUseHistoricalReturns(true);
+                            }}
+                          >
+                            Use this rate
+                          </Button>
+                        </div>
+                      </div>
+                    )}
                   </div>
                   
                   <div className="space-y-2">
@@ -307,6 +365,48 @@ export default function InvestmentCalculator() {
                         />
                       </div>
                     </div>
+                    
+                    {inflationData && !inflationLoading && (
+                      <div className="mt-2 p-3 bg-secondary/10 rounded-md text-sm">
+                        <div className="flex items-center gap-1.5 text-primary font-medium mb-1">
+                          <InfoIcon size={16} className="text-amber-500" />
+                          <span>US Inflation Rate</span>
+                        </div>
+                        <div className="text-sm space-y-1 text-muted-foreground">
+                          <div className="flex justify-between">
+                            <span>Current rate:</span>
+                            <span className="font-medium text-primary">{inflationData.current.toFixed(1)}%</span>
+                          </div>
+                          {inflationData.historical && (
+                            <div className="flex justify-between">
+                              <span>Average (12m):</span>
+                              <span className="font-medium text-primary">
+                                {(
+                                  inflationData.historical
+                                    .slice(0, 12)
+                                    .reduce((sum, item) => sum + item.annualRate, 0) / 
+                                    Math.min(12, inflationData.historical.length)
+                                ).toFixed(1)}%
+                              </span>
+                            </div>
+                          )}
+                        </div>
+                        <div className="flex justify-between mt-1.5 items-center">
+                          <div className="text-xs text-muted-foreground">Source: {inflationData.source}</div>
+                          <Button 
+                            variant="ghost" 
+                            size="sm" 
+                            className="h-6 px-2 text-xs"
+                            onClick={() => {
+                              setInflation(inflationData.current);
+                              setUseHistoricalInflation(true);
+                            }}
+                          >
+                            Use this rate
+                          </Button>
+                        </div>
+                      </div>
+                    )}
                   </div>
                   
                   <div className="flex items-center space-x-2">

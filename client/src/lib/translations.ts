@@ -12,6 +12,25 @@ type TranslationKeys = {
   appDescription: string;
   propertyMarketAnalysisDescription: string;
   
+  // Property market analysis
+  refresh: string;
+  errorLoadingData: string;
+  cityAveragePrice: string;
+  dataBasedOn: string;
+  activeListings: string;
+  pricesByDistrict: string;
+  pricesByDistrictDescription: string;
+  district: string;
+  avgPricePerSqm: string;
+  listings: string;
+  priceRange: string;
+  aboveAvg: string;
+  belowAvg: string;
+  nearAvg: string;
+  dataDisclaimer: string;
+  dataDisclaimerDetails: string;
+  noDataAvailable: string;
+  
   // Calculator parameters section
   parametersTitle: string;
   propertyPrice: string;
@@ -134,10 +153,33 @@ export const translations: Translations = {
   pl: {
     // Navigation
     mortgageCalculator: "Kalkulator Hipoteczny",
+    investmentCalculator: "Kalkulator Inwestycyjny",
+    currencyConverter: "Przelicznik walut",
+    propertyMarketAnalysis: "Analiza Rynku Nieruchomości",
     
     // Application title and header
     appTitle: "Polski Kalkulator Kredytu Hipotecznego",
     appDescription: "Oblicz swoje miesięczne raty i całkowity koszt kredytu",
+    propertyMarketAnalysisDescription: "Analiza cen nieruchomości w głównych miastach Polski",
+    
+    // Property market analysis
+    refresh: "Odśwież dane",
+    errorLoadingData: "Nie udało się załadować danych",
+    cityAveragePrice: "Średnia cena za m² w mieście",
+    dataBasedOn: "Dane oparte na",
+    activeListings: "aktywnych ogłoszeniach",
+    pricesByDistrict: "Ceny według dzielnic",
+    pricesByDistrictDescription: "Porównanie cen nieruchomości w różnych dzielnicach",
+    district: "Dzielnica",
+    avgPricePerSqm: "Średnia cena/m²",
+    listings: "Ogłoszenia",
+    priceRange: "Zakres cen",
+    aboveAvg: "Powyżej średniej",
+    belowAvg: "Poniżej średniej",
+    nearAvg: "Blisko średniej",
+    dataDisclaimer: "Zastrzeżenie: Dane pochodzą z",
+    dataDisclaimerDetails: "Ceny mogą się różnić od rzeczywistych transakcji i zależą od wielu czynników, w tym standardu wykończenia, piętra, dostępności itd.",
+    noDataAvailable: "Brak dostępnych danych. Spróbuj ponownie później.",
     
     // Calculator parameters section
     parametersTitle: "Parametry kredytu",
@@ -194,7 +236,6 @@ export const translations: Translations = {
     language: "Język",
     
     // Currency converter
-    currencyConverter: "Przelicznik walut",
     currencyConverterDescription: "Przelicz wartości między różnymi walutami",
     amount: "Kwota",
     refreshRates: "Odśwież kursy",
@@ -224,7 +265,6 @@ export const translations: Translations = {
     paymentMultiplierWithAmount: "x płatności",
     
     // Investment calculator
-    investmentCalculator: "Kalkulator Inwestycyjny",
     investmentCalculatorDescription: "Obliczenie oszczędności i pasywnego dochodu do wieku emerytalnego",
     investmentParameters: "Parametry inwestycji",
     startingAge: "Wiek rozpoczęcia inwestycji",
@@ -256,10 +296,33 @@ export const translations: Translations = {
   en: {
     // Navigation
     mortgageCalculator: "Mortgage Calculator",
+    investmentCalculator: "Investment Calculator",
+    currencyConverter: "Currency Converter",
+    propertyMarketAnalysis: "Property Market Analysis",
     
     // Application title and header
     appTitle: "Polish Mortgage Calculator",
     appDescription: "Calculate your monthly payments and total loan cost",
+    propertyMarketAnalysisDescription: "Analysis of property prices in major Polish cities",
+    
+    // Property market analysis
+    refresh: "Refresh data",
+    errorLoadingData: "Failed to load data",
+    cityAveragePrice: "Average price per m² in the city",
+    dataBasedOn: "Data based on",
+    activeListings: "active listings",
+    pricesByDistrict: "Prices by district",
+    pricesByDistrictDescription: "Comparison of property prices in different districts",
+    district: "District",
+    avgPricePerSqm: "Average price/m²",
+    listings: "Listings",
+    priceRange: "Price range",
+    aboveAvg: "Above average",
+    belowAvg: "Below average",
+    nearAvg: "Near average",
+    dataDisclaimer: "Disclaimer: Data sourced from",
+    dataDisclaimerDetails: "Prices may differ from actual transactions and depend on many factors including finish standard, floor, availability, etc.",
+    noDataAvailable: "No data available. Please try again later.",
     
     // Calculator parameters section
     parametersTitle: "Loan Parameters",
@@ -378,10 +441,33 @@ export const translations: Translations = {
   ua: {
     // Navigation
     mortgageCalculator: "Іпотечний калькулятор",
+    investmentCalculator: "Інвестиційний калькулятор",
+    currencyConverter: "Конвертер валют",
+    propertyMarketAnalysis: "Аналіз ринку нерухомості",
     
     // Application title and header
     appTitle: "Польський калькулятор іпотеки",
     appDescription: "Розрахуйте свої щомісячні платежі та загальну вартість кредиту",
+    propertyMarketAnalysisDescription: "Аналіз цін на нерухомість у великих містах Польщі",
+    
+    // Property market analysis
+    refresh: "Оновити дані",
+    errorLoadingData: "Не вдалося завантажити дані",
+    cityAveragePrice: "Середня ціна за м² у місті",
+    dataBasedOn: "Дані на основі",
+    activeListings: "активних оголошень",
+    pricesByDistrict: "Ціни за районами",
+    pricesByDistrictDescription: "Порівняння цін на нерухомість у різних районах",
+    district: "Район",
+    avgPricePerSqm: "Середня ціна/м²",
+    listings: "Оголошення",
+    priceRange: "Діапазон цін",
+    aboveAvg: "Вище середнього",
+    belowAvg: "Нижче середнього",
+    nearAvg: "Близько до середнього",
+    dataDisclaimer: "Застереження: Дані отримані з",
+    dataDisclaimerDetails: "Ціни можуть відрізнятися від фактичних угод і залежать від багатьох факторів, включаючи стандарт оздоблення, поверх, доступність тощо.",
+    noDataAvailable: "Дані відсутні. Спробуйте пізніше.",
     
     // Calculator parameters section
     parametersTitle: "Параметри кредиту",

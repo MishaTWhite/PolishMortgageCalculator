@@ -217,3 +217,45 @@ export const bankOfferResponseSchema = z.object({
 });
 
 export type BankOfferResponse = z.infer<typeof bankOfferResponseSchema>;
+
+// Property market analysis
+export const propertyPrices = pgTable("property_prices", {
+  id: serial("id").primaryKey(),
+  city: text("city").notNull(),
+  district: text("district").notNull(),
+  averagePricePerSqm: integer("average_price_per_sqm").notNull(),
+  numberOfListings: integer("number_of_listings").notNull(),
+  minPrice: integer("min_price").notNull(),
+  maxPrice: integer("max_price").notNull(),
+  fetchDate: text("fetch_date").notNull(),
+  source: text("source").notNull(),
+});
+
+export const insertPropertyPriceSchema = createInsertSchema(propertyPrices).pick({
+  city: true,
+  district: true,
+  averagePricePerSqm: true,
+  numberOfListings: true,
+  minPrice: true,
+  maxPrice: true,
+  fetchDate: true,
+  source: true,
+});
+
+export type InsertPropertyPrice = z.infer<typeof insertPropertyPriceSchema>;
+export type PropertyPrice = typeof propertyPrices.$inferSelect;
+
+export const propertyPriceResponseSchema = z.object({
+  city: z.string(),
+  prices: z.array(z.object({
+    district: z.string(),
+    averagePricePerSqm: z.number(),
+    numberOfListings: z.number(),
+    minPrice: z.number(),
+    maxPrice: z.number(),
+  })),
+  lastUpdated: z.string(),
+  source: z.string(),
+});
+
+export type PropertyPriceResponse = z.infer<typeof propertyPriceResponseSchema>;

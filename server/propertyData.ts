@@ -222,6 +222,7 @@ export async function fetchPropertyPriceData(
         minPrice: districtResults.minPrice.toString(),
         maxPrice: districtResults.maxPrice.toString(),
         roomBreakdown: JSON.stringify(districtResults.roomBreakdown),
+        source: "Otodom",
         fetchDate
       };
       

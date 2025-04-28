@@ -7,6 +7,35 @@ import { exchangeRateResponseSchema, propertyPriceResponseSchema } from "../shar
 import { fetchPropertyPriceData } from "./propertyData";
 
 export async function registerRoutes(app: Express): Promise<Server> {
+  // Scrape current property prices from Otodom - with targeted options
+  app.get("/api/property-prices/update", async (req, res) => {
+    try {
+      const city = req.query.city as string || "warsaw"; // Default to Warsaw if no city provided
+      const district = req.query.district as string || null; // Optional district filter
+      const roomType = req.query.roomType as string || null; // Optional room type filter
+      const fetchDate = format(new Date(), "dd.MM.yyyy");
+      
+      console.log(`Scraping property price data from Otodom for ${city}`);
+      if (district && roomType) {
+        console.log(`Targeting specific room type ${roomType} in district ${district}`);
+      } else if (roomType) {
+        console.log(`Targeting specific room type ${roomType} in all districts`);
+      } else if (district) {
+        console.log(`Targeting all room types in district ${district}`);
+      }
+      
+      // Use our new more granular scraping function
+      await fetchPropertyPriceData(city, fetchDate, district, roomType);
+      
+      res.json({ 
+        success: true, 
+        message: `Property prices updated for ${city}${district ? `, district: ${district}` : ''}${roomType ? `, room type: ${roomType}` : ''}`
+      });
+    } catch (error) {
+      console.error("Error scraping property prices:", error);
+      res.status(500).json({ success: false, message: "Error scraping property prices" });
+    }
+  });
   // Get property prices by city
   app.get("/api/property-prices", async (req, res) => {
     try {
@@ -51,7 +80,22 @@ export async function registerRoutes(app: Express): Promise<Server> {
                 maxPrice: Number(price.maxPrice),
               };
               
-              // Check if we have room breakdown data (might not be present in old records)
+              // Add room breakdown if available
+              if (price.roomBreakdown) {
+                try {
+                  const roomBreakdown = JSON.parse(price.roomBreakdown);
+                  return {
+                    ...priceData,
+                    roomBreakdown
+                  };
+                } catch (e) {
+                  // If JSON parsing fails, return without room breakdown
+                  console.error(`Error parsing room breakdown for ${price.district}:`, e);
+                  return priceData;
+                }
+              }
+              
+              // For backward compatibility with old format
               if ('oneRoomCount' in price) {
                 return {
                   ...priceData,
@@ -80,7 +124,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
               return priceData;
             }),
             lastUpdated: prices[0].fetchDate,
-            source: prices[0].source
+            source: "Otodom"
           };
           
           return res.json(cityData);
@@ -91,9 +135,46 @@ export async function registerRoutes(app: Express): Promise<Server> {
       console.log(`Fetching real property data for ${normalizedCity} (force refresh: ${forceRefresh})`);
       
       // Fetch real property data from Otodom via web scraping
-      const realData = await fetchPropertyPriceData(normalizedCity, currentDate);
+      await fetchPropertyPriceData(normalizedCity, currentDate);
       
-      return res.json(realData);
+      // Get the updated prices
+      prices = await storage.getPropertyPricesByCity(normalizedCity);
+      
+      // Format response
+      const cityData = {
+        city: cityDisplayNames[normalizedCity] || city,
+        prices: prices.map(price => {
+          // Base price data that's always present
+          const priceData = {
+            district: price.district,
+            averagePricePerSqm: Number(price.averagePricePerSqm),
+            numberOfListings: Number(price.numberOfListings),
+            minPrice: Number(price.minPrice),
+            maxPrice: Number(price.maxPrice),
+          };
+          
+          // Add room breakdown if available
+          if (price.roomBreakdown) {
+            try {
+              const roomBreakdown = JSON.parse(price.roomBreakdown);
+              return {
+                ...priceData,
+                roomBreakdown
+              };
+            } catch (e) {
+              // If JSON parsing fails, return without room breakdown
+              console.error(`Error parsing room breakdown for ${price.district}:`, e);
+              return priceData;
+            }
+          }
+          
+          return priceData;
+        }),
+        lastUpdated: currentDate,
+        source: "Otodom"
+      };
+      
+      return res.json(cityData);
     } catch (error) {
       console.error("Error fetching property prices:", error);
       res.status(500).json({ error: "Failed to fetch property prices" });

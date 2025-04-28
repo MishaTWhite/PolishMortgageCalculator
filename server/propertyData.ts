@@ -266,20 +266,24 @@ async function scrapeOtodomPropertyData(cityUrl: string, districtSearchTerm: str
       maxPrice,
       roomBreakdown: {
         oneRoom: {
-          // Show actual processed counts on the frontend instead of reported counts
+          // Store both reported count and actual processed count
           count: roomConfigs[0].prices.length,
+          reportedCount: roomConfigs[0].count,
           avgPrice: avgPriceByRoomType.oneRoom
         },
         twoRoom: {
           count: roomConfigs[1].prices.length,
+          reportedCount: roomConfigs[1].count,
           avgPrice: avgPriceByRoomType.twoRoom
         },
         threeRoom: {
           count: roomConfigs[2].prices.length,
+          reportedCount: roomConfigs[2].count,
           avgPrice: avgPriceByRoomType.threeRoom
         },
         fourPlusRoom: {
-          count: roomConfigs[3].prices.length,
+          count: roomConfigs[3].prices.length, 
+          reportedCount: roomConfigs[3].count,
           avgPrice: avgPriceByRoomType.fourPlusRoom
         }
       }
@@ -387,12 +391,16 @@ export async function fetchPropertyPriceData(city: string, fetchDate: string) {
         minPrice: scrapedData.minPrice,
         maxPrice: scrapedData.maxPrice,
         oneRoomCount: scrapedData.roomBreakdown.oneRoom.count,
+        oneRoomReportedCount: scrapedData.roomBreakdown.oneRoom.reportedCount || 0,
         oneRoomAvgPrice: scrapedData.roomBreakdown.oneRoom.avgPrice,
         twoRoomCount: scrapedData.roomBreakdown.twoRoom.count,
+        twoRoomReportedCount: scrapedData.roomBreakdown.twoRoom.reportedCount || 0,
         twoRoomAvgPrice: scrapedData.roomBreakdown.twoRoom.avgPrice,
         threeRoomCount: scrapedData.roomBreakdown.threeRoom.count,
+        threeRoomReportedCount: scrapedData.roomBreakdown.threeRoom.reportedCount || 0,
         threeRoomAvgPrice: scrapedData.roomBreakdown.threeRoom.avgPrice,
         fourPlusRoomCount: scrapedData.roomBreakdown.fourPlusRoom.count,
+        fourPlusRoomReportedCount: scrapedData.roomBreakdown.fourPlusRoom.reportedCount || 0,
         fourPlusRoomAvgPrice: scrapedData.roomBreakdown.fourPlusRoom.avgPrice,
         source: "Otodom",
         fetchDate
@@ -521,12 +529,16 @@ export async function fetchPropertyPriceData(city: string, fetchDate: string) {
       minPrice: Number(price.minPrice),
       maxPrice: Number(price.maxPrice),
       oneRoomCount: price.roomBreakdown?.oneRoom.count || 0,
+      oneRoomReportedCount: price.roomBreakdown?.oneRoom.reportedCount || price.roomBreakdown?.oneRoom.count || 0,
       oneRoomAvgPrice: price.roomBreakdown?.oneRoom.avgPrice || 0,
       twoRoomCount: price.roomBreakdown?.twoRoom.count || 0,
+      twoRoomReportedCount: price.roomBreakdown?.twoRoom.reportedCount || price.roomBreakdown?.twoRoom.count || 0,
       twoRoomAvgPrice: price.roomBreakdown?.twoRoom.avgPrice || 0,
       threeRoomCount: price.roomBreakdown?.threeRoom.count || 0,
+      threeRoomReportedCount: price.roomBreakdown?.threeRoom.reportedCount || price.roomBreakdown?.threeRoom.count || 0,
       threeRoomAvgPrice: price.roomBreakdown?.threeRoom.avgPrice || 0,
       fourPlusRoomCount: price.roomBreakdown?.fourPlusRoom.count || 0,
+      fourPlusRoomReportedCount: price.roomBreakdown?.fourPlusRoom.reportedCount || price.roomBreakdown?.fourPlusRoom.count || 0,
       fourPlusRoomAvgPrice: price.roomBreakdown?.fourPlusRoom.avgPrice || 0,
       source: "Otodom",
       fetchDate

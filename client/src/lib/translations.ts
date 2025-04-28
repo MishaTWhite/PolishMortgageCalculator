@@ -30,6 +30,7 @@ type TranslationKeys = {
   dataDisclaimer: string;
   dataDisclaimerDetails: string;
   noDataAvailable: string;
+  lastUpdated: string;
   
   // Calculator parameters section
   parametersTitle: string;
@@ -180,6 +181,7 @@ export const translations: Translations = {
     dataDisclaimer: "Zastrzeżenie: Dane pochodzą z",
     dataDisclaimerDetails: "Ceny mogą się różnić od rzeczywistych transakcji i zależą od wielu czynników, w tym standardu wykończenia, piętra, dostępności itd.",
     noDataAvailable: "Brak dostępnych danych. Spróbuj ponownie później.",
+    lastUpdated: "Ostatnia aktualizacja",
     
     // Calculator parameters section
     parametersTitle: "Parametry kredytu",

@@ -22,7 +22,7 @@ import {
 import { Badge } from "@/components/ui/badge";
 
 // Define interfaces for property data
-import { PropertyPriceResponse } from "../../shared/schema";
+import { PropertyPriceResponse } from "@shared/schema";
 
 interface PropertyPrice {
   district: string;
@@ -183,7 +183,7 @@ export default function PropertyMarketAnalysis() {
                       <span className="text-2xl font-bold text-primary">{formatPrice(cityAverage)} / m²</span>
                     </div>
                     <p className="text-sm text-muted-foreground mt-2">
-                      {t.dataBasedOn || "Based on"} {propertyData.prices.reduce((sum, district) => sum + district.numberOfListings, 0)} {t.activeListings || "active listings"}.
+                      {t.dataBasedOn || "Based on"} {propertyData.prices.reduce((sum: number, district: PropertyPrice) => sum + district.numberOfListings, 0)} {t.activeListings || "active listings"}.
                     </p>
                   </div>
                 </CardContent>
@@ -212,8 +212,8 @@ export default function PropertyMarketAnalysis() {
                     </TableHeader>
                     <TableBody>
                       {propertyData.prices
-                        .sort((a, b) => b.averagePricePerSqm - a.averagePricePerSqm)
-                        .map((district, index) => (
+                        .sort((a: PropertyPrice, b: PropertyPrice) => b.averagePricePerSqm - a.averagePricePerSqm)
+                        .map((district: PropertyPrice, index: number) => (
                         <TableRow key={index}>
                           <TableCell className="font-medium">{district.district}</TableCell>
                           <TableCell>

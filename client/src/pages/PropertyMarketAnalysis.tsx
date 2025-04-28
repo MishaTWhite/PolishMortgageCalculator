@@ -40,19 +40,23 @@ export default function PropertyMarketAnalysis() {
   const { language } = useLanguage();
   const t = useTranslations(language);
   
-  // State for selected city
+  // State for selected city and loading state
   const [selectedCity, setSelectedCity] = useState("warsaw");
+  const [isLoading, setIsLoading] = useState(false);
   
   // Fetch property prices data
   const {
     data: propertyData,
-    isLoading,
+    isLoading: isQueryLoading,
     isError,
     refetch
   } = useQuery<PropertyPriceResponse>({
     queryKey: ['/api/property-prices', selectedCity],
     staleTime: 1000 * 60 * 60 * 24, // 24 hours
   });
+  
+  // Combine both loading states
+  const isPageLoading = isLoading || isQueryLoading;
   
   // Function to format prices in PLN
   const formatPrice = (price: number): string => {
@@ -115,24 +119,68 @@ export default function PropertyMarketAnalysis() {
                   </Select>
                 </div>
                 
-                <Button 
-                  variant="outline"
-                  onClick={() => {
-                    queryClient.invalidateQueries({ queryKey: ['/api/property-prices'] });
-                    refetch();
-                  }}
-                  disabled={isLoading}
-                  className="flex items-center gap-2"
-                >
-                  <RefreshCw size={16} className={isLoading ? "animate-spin" : ""} />
-                  {t.refresh || "Refresh Data"}
-                </Button>
+                <div className="flex flex-col md:flex-row gap-2">
+                  <Button 
+                    variant="outline"
+                    onClick={() => {
+                      queryClient.invalidateQueries({ queryKey: ['/api/property-prices', selectedCity] });
+                      refetch();
+                    }}
+                    disabled={isLoading}
+                    className="flex items-center gap-2"
+                  >
+                    <RefreshCw size={16} className={isLoading ? "animate-spin" : ""} />
+                    {t.refresh || "Refresh Cache"}
+                  </Button>
+                  
+                  <Button 
+                    variant="default"
+                    onClick={() => {
+                      // Force refresh from Otodom by adding refresh=true parameter
+                      fetch(`/api/property-prices?city=${selectedCity}&refresh=true`)
+                        .then(res => res.json())
+                        .then(() => {
+                          queryClient.invalidateQueries({ queryKey: ['/api/property-prices', selectedCity] });
+                          refetch();
+                        });
+                    }}
+                    disabled={isLoading}
+                    className="flex items-center gap-2"
+                  >
+                    <RefreshCw size={16} className={isLoading ? "animate-spin" : ""} />
+                    {t.forceRefresh || "Update Current City"}
+                  </Button>
+                  
+                  <Button 
+                    variant="secondary"
+                    onClick={async () => {
+                      setIsLoading(true);
+                      try {
+                        const cities = ["warsaw", "krakow", "wroclaw", "gdansk"];
+                        for (const city of cities) {
+                          await fetch(`/api/property-prices?city=${city}&refresh=true`)
+                            .then(res => res.json());
+                        }
+                        // Invalidate all queries and refetch current one
+                        queryClient.invalidateQueries({ queryKey: ['/api/property-prices'] });
+                        refetch();
+                      } finally {
+                        setIsLoading(false);
+                      }
+                    }}
+                    disabled={isLoading}
+                    className="flex items-center gap-2"
+                  >
+                    <RefreshCw size={16} className={isLoading ? "animate-spin" : ""} />
+                    {t.updateAllCities || "Update All Cities"}
+                  </Button>
+                </div>
               </div>
             </CardContent>
           </Card>
           
           {/* Data Display */}
-          {isLoading ? (
+          {isPageLoading ? (
             <Card>
               <CardContent className="pt-6">
                 <div className="space-y-4">

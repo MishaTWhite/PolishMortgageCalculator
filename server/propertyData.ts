@@ -144,14 +144,14 @@ async function scrapeOtodomPropertyData(cityUrl: string, districtSearchTerm: str
     
     console.log(`Listings text found: "${listingsText}"`);
     
-    const listingsMatch = listingsText.match(/(\d+)\s+ogłosz/i) || 
-                          listingsText.match(/znaleziono\s+(\d+)/i) || 
-                          listingsText.match(/(\d+)\s+ofert/i) || 
-                          listingsMatch || listingsText.match(/(\d+)\s+mieszk/i) ||
-                          listingsText.match(/(\d+)/);
+    let regexMatch = listingsText.match(/(\d+)\s+ogłosz/i) || 
+                     listingsText.match(/znaleziono\s+(\d+)/i) || 
+                     listingsText.match(/(\d+)\s+ofert/i) || 
+                     listingsText.match(/(\d+)\s+mieszk/i) ||
+                     listingsText.match(/(\d+)/);
                           
-    if (listingsMatch) {
-      totalListings = parseInt(listingsMatch[1], 10);
+    if (regexMatch) {
+      totalListings = parseInt(regexMatch[1], 10);
       console.log(`Found total of ${totalListings} listings`);
     }
     

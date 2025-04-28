@@ -11,7 +11,7 @@ import {
 } from "./propertyData";
 
 export async function registerRoutes(app: Express): Promise<Server> {
-  // Scrape current property prices from Otodom - with targeted options
+  // Scrape current property prices from Otodom using the legacy scraper (with targeted options)
   app.get("/api/property-prices/update", async (req, res) => {
     try {
       const city = req.query.city as string || "warsaw"; // Default to Warsaw if no city provided
@@ -38,6 +38,55 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("Error scraping property prices:", error);
       res.status(500).json({ success: false, message: "Error scraping property prices" });
+    }
+  });
+  
+  // Scrape current property prices from Otodom using the new Playwright-based scraper
+  app.get("/api/property-prices/update-playwright", async (req, res) => {
+    try {
+      const city = req.query.city as string || "warsaw"; // Default to Warsaw if no city provided
+      const district = req.query.district as string || null; // Optional district filter
+      const roomType = req.query.roomType as string || null; // Optional room type filter
+      const fetchDate = format(new Date(), "dd.MM.yyyy");
+      
+      console.log(`Scraping property price data from Otodom using Playwright for ${city}`);
+      if (district && roomType) {
+        console.log(`Targeting specific room type ${roomType} in district ${district}`);
+      } else if (roomType) {
+        console.log(`Targeting specific room type ${roomType} in all districts`);
+      } else if (district) {
+        console.log(`Targeting all room types in district ${district}`);
+      }
+      
+      // Use the new Playwright-based scraper
+      const result = await fetchPropertyPriceDataPlaywright(city, fetchDate, district, roomType);
+      
+      res.json(result);
+    } catch (error) {
+      console.error("Error scraping property prices with Playwright:", error);
+      res.status(500).json({ 
+        success: false, 
+        message: "Error scraping property prices with Playwright",
+        error: error instanceof Error ? error.message : String(error)
+      });
+    }
+  });
+  
+  // Get the status of the Playwright scraper task queue
+  app.get("/api/property-prices/scraping-status", (req, res) => {
+    try {
+      const status = getScrapingStatus();
+      res.json({
+        success: true,
+        status
+      });
+    } catch (error) {
+      console.error("Error getting scraping status:", error);
+      res.status(500).json({ 
+        success: false, 
+        message: "Error getting scraping status",
+        error: error instanceof Error ? error.message : String(error)
+      });
     }
   });
   // Get property prices by city

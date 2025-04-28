@@ -10,7 +10,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
-import { RefreshCw, Building, Home, MapPin, Bed, Layers, Box } from "lucide-react";
+import { RefreshCw, Building, Home, MapPin, Bed, Layers, Box, BarChart3 } from "lucide-react";
 import {
   Table,
   TableBody,
@@ -22,6 +22,8 @@ import {
 } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { Progress } from "@/components/ui/progress";
 
 // Define interfaces for property data
 import { PropertyPriceResponse } from "@shared/schema";
@@ -47,6 +49,38 @@ interface PropertyPrice {
   };
 }
 
+// Interface for the scraper task status
+interface ScrapingTask {
+  id: string;
+  district: string;
+  roomType: string;
+  status: string;
+}
+
+interface ScraperQueueStatus {
+  isProcessing: boolean;
+  lastError?: string;
+  lastTaskId?: string;
+  totalTasks: number;
+  pendingTasks: number;
+  completedTasks: number;
+  failedTasks: number;
+  startTime?: string;
+  updatedAt: string;
+}
+
+interface ScraperResponse {
+  success: boolean;
+  status: ScraperQueueStatus;
+}
+
+interface PlaywrightScraperResponse {
+  status: string;
+  message: string;
+  queueStatus: ScraperQueueStatus;
+  tasks: ScrapingTask[];
+}
+
 // Use the response type from the schema
 type CityPrices = PropertyPriceResponse;
 
@@ -57,6 +91,10 @@ export default function PropertyMarketAnalysis() {
   // State for selected city and loading state
   const [selectedCity, setSelectedCity] = useState("warsaw");
   const [isLoading, setIsLoading] = useState(false);
+  const [isPlaywrightLoading, setIsPlaywrightLoading] = useState(false);
+  const [playwrightTasks, setPlaywrightTasks] = useState<ScrapingTask[]>([]);
+  const [scraperStatus, setScraperStatus] = useState<ScraperQueueStatus | null>(null);
+  const [showScraperStatus, setShowScraperStatus] = useState(false);
   
   // Fetch property prices data
   const {
@@ -77,7 +115,32 @@ export default function PropertyMarketAnalysis() {
     }
   });
   
-  // Combine both loading states
+  // Get scraper status
+  const {
+    data: scraperData,
+    isLoading: isScraperStatusLoading,
+    refetch: refetchScraperStatus
+  } = useQuery<ScraperResponse>({
+    queryKey: ['/api/property-prices/scraping-status'],
+    enabled: showScraperStatus,
+    refetchInterval: showScraperStatus ? 3000 : false, // Poll every 3 seconds when visible
+    queryFn: async () => {
+      const response = await fetch('/api/property-prices/scraping-status');
+      if (!response.ok) {
+        throw new Error('Failed to get scraper status');
+      }
+      return response.json();
+    }
+  });
+  
+  // Update scraper status when data changes
+  useEffect(() => {
+    if (scraperData && scraperData.status) {
+      setScraperStatus(scraperData.status);
+    }
+  }, [scraperData]);
+  
+  // Combine loading states
   const isPageLoading = isLoading || isQueryLoading;
   
   // Function to format prices in PLN

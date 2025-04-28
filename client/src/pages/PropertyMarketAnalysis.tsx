@@ -368,7 +368,14 @@ export default function PropertyMarketAnalysis() {
                                 <span className="text-lg font-semibold">{formatPrice(cityRoomStats.threeRoom.avgPrice / 80)}</span>
                                 <span className="text-xs text-muted-foreground">/ m²</span>
                               </div>
-                              <div className="text-xs text-muted-foreground">{cityRoomStats.threeRoom.count} {t.listings || "listings"}</div>
+                              <div className="text-xs text-muted-foreground">
+                                <span>{cityRoomStats.threeRoom.count} {t.processedListings || "processed"}</span>
+                                {cityRoomStats.threeRoom.reportedCount > cityRoomStats.threeRoom.count && (
+                                  <span className="ml-1 text-gray-400">
+                                    ({t.reportedCount || "reported"}: {cityRoomStats.threeRoom.reportedCount})
+                                  </span>
+                                )}
+                              </div>
                             </div>
                             
                             {/* Four-plus-room apartments */}
@@ -381,7 +388,14 @@ export default function PropertyMarketAnalysis() {
                                 <span className="text-lg font-semibold">{formatPrice(cityRoomStats.fourPlusRoom.avgPrice / 100)}</span>
                                 <span className="text-xs text-muted-foreground">/ m²</span>
                               </div>
-                              <div className="text-xs text-muted-foreground">{cityRoomStats.fourPlusRoom.count} {t.listings || "listings"}</div>
+                              <div className="text-xs text-muted-foreground">
+                                <span>{cityRoomStats.fourPlusRoom.count} {t.processedListings || "processed"}</span>
+                                {cityRoomStats.fourPlusRoom.reportedCount > cityRoomStats.fourPlusRoom.count && (
+                                  <span className="ml-1 text-gray-400">
+                                    ({t.reportedCount || "reported"}: {cityRoomStats.fourPlusRoom.reportedCount})
+                                  </span>
+                                )}
+                              </div>
                             </div>
                           </div>
                         </div>
@@ -449,22 +463,42 @@ export default function PropertyMarketAnalysis() {
                                   <div className="flex items-center gap-1">
                                     <span className="text-xs text-muted-foreground">{t.oneRoom || "1 Room"}:</span>
                                     <span className="text-xs font-medium">{formatPrice(district.roomBreakdown.oneRoom.avgPrice / 40)}</span>
-                                    <span className="text-xs text-muted-foreground">({district.roomBreakdown.oneRoom.count})</span>
+                                    <span className="text-xs text-muted-foreground">
+                                      ({district.roomBreakdown.oneRoom.count}
+                                      {district.roomBreakdown.oneRoom.reportedCount > district.roomBreakdown.oneRoom.count && 
+                                        ` / ${district.roomBreakdown.oneRoom.reportedCount} ${t.reported || "rep"}`}
+                                      )
+                                    </span>
                                   </div>
                                   <div className="flex items-center gap-1">
                                     <span className="text-xs text-muted-foreground">{t.twoRoom || "2 Rooms"}:</span>
                                     <span className="text-xs font-medium">{formatPrice(district.roomBreakdown.twoRoom.avgPrice / 60)}</span>
-                                    <span className="text-xs text-muted-foreground">({district.roomBreakdown.twoRoom.count})</span>
+                                    <span className="text-xs text-muted-foreground">
+                                      ({district.roomBreakdown.twoRoom.count}
+                                      {district.roomBreakdown.twoRoom.reportedCount > district.roomBreakdown.twoRoom.count && 
+                                        ` / ${district.roomBreakdown.twoRoom.reportedCount} ${t.reported || "rep"}`}
+                                      )
+                                    </span>
                                   </div>
                                   <div className="flex items-center gap-1">
                                     <span className="text-xs text-muted-foreground">{t.threeRoom || "3 Rooms"}:</span>
                                     <span className="text-xs font-medium">{formatPrice(district.roomBreakdown.threeRoom.avgPrice / 80)}</span>
-                                    <span className="text-xs text-muted-foreground">({district.roomBreakdown.threeRoom.count})</span>
+                                    <span className="text-xs text-muted-foreground">
+                                      ({district.roomBreakdown.threeRoom.count}
+                                      {district.roomBreakdown.threeRoom.reportedCount > district.roomBreakdown.threeRoom.count && 
+                                        ` / ${district.roomBreakdown.threeRoom.reportedCount} ${t.reported || "rep"}`}
+                                      )
+                                    </span>
                                   </div>
                                   <div className="flex items-center gap-1">
                                     <span className="text-xs text-muted-foreground">{t.fourPlusRoom || "4+ Rooms"}:</span>
                                     <span className="text-xs font-medium">{formatPrice(district.roomBreakdown.fourPlusRoom.avgPrice / 100)}</span>
-                                    <span className="text-xs text-muted-foreground">({district.roomBreakdown.fourPlusRoom.count})</span>
+                                    <span className="text-xs text-muted-foreground">
+                                      ({district.roomBreakdown.fourPlusRoom.count}
+                                      {district.roomBreakdown.fourPlusRoom.reportedCount > district.roomBreakdown.fourPlusRoom.count && 
+                                        ` / ${district.roomBreakdown.fourPlusRoom.reportedCount} ${t.reported || "rep"}`}
+                                      )
+                                    </span>
                                   </div>
                                 </div>
                               )}

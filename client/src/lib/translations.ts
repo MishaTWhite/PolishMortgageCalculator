@@ -31,6 +31,9 @@ type TranslationKeys = {
   district: string;
   avgPricePerSqm: string;
   listings: string;
+  processedListings: string;
+  reportedCount: string;
+  reported: string;
   priceRange: string;
   aboveAvg: string;
   belowAvg: string;
@@ -39,6 +42,7 @@ type TranslationKeys = {
   dataDisclaimerDetails: string;
   noDataAvailable: string;
   lastUpdated: string;
+  updateAllData: string;
   
   // Calculator parameters section
   parametersTitle: string;
@@ -190,6 +194,9 @@ export const translations: Translations = {
     district: "Dzielnica",
     avgPricePerSqm: "Średnia cena/m²",
     listings: "Ogłoszenia",
+    processedListings: "przetworzonych",
+    reportedCount: "podanych",
+    reported: "zgl.",
     priceRange: "Zakres cen",
     aboveAvg: "Powyżej średniej",
     belowAvg: "Poniżej średniej",
@@ -342,6 +349,9 @@ export const translations: Translations = {
     district: "District",
     avgPricePerSqm: "Average price/m²",
     listings: "Listings",
+    processedListings: "processed",
+    reportedCount: "reported",
+    reported: "rep",
     priceRange: "Price range",
     aboveAvg: "Above average",
     belowAvg: "Below average",

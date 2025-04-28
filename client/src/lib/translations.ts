@@ -22,6 +22,12 @@ type TranslationKeys = {
   activeListings: string;
   pricesByDistrict: string;
   pricesByDistrictDescription: string;
+  pricesByRoomType: string;
+  roomBreakdown: string;
+  oneRoom: string;
+  twoRoom: string;
+  threeRoom: string;
+  fourPlusRoom: string;
   district: string;
   avgPricePerSqm: string;
   listings: string;
@@ -175,6 +181,12 @@ export const translations: Translations = {
     activeListings: "aktywnych ogłoszeniach",
     pricesByDistrict: "Ceny według dzielnic",
     pricesByDistrictDescription: "Porównanie cen nieruchomości w różnych dzielnicach",
+    pricesByRoomType: "Średnie ceny według liczby pokoi",
+    roomBreakdown: "Podział według pokoi",
+    oneRoom: "1 Pokój",
+    twoRoom: "2 Pokoje",
+    threeRoom: "3 Pokoje",
+    fourPlusRoom: "4+ Pokoje",
     district: "Dzielnica",
     avgPricePerSqm: "Średnia cena/m²",
     listings: "Ogłoszenia",
@@ -321,6 +333,12 @@ export const translations: Translations = {
     activeListings: "active listings",
     pricesByDistrict: "Prices by district",
     pricesByDistrictDescription: "Comparison of property prices in different districts",
+    pricesByRoomType: "Average prices by room type",
+    roomBreakdown: "Room breakdown",
+    oneRoom: "1 Room",
+    twoRoom: "2 Rooms",
+    threeRoom: "3 Rooms",
+    fourPlusRoom: "4+ Rooms",
     district: "District",
     avgPricePerSqm: "Average price/m²",
     listings: "Listings",
@@ -331,6 +349,7 @@ export const translations: Translations = {
     dataDisclaimer: "Disclaimer: Data sourced from",
     dataDisclaimerDetails: "Prices may differ from actual transactions and depend on many factors including finish standard, floor, availability, etc.",
     noDataAvailable: "No data available. Please try again later.",
+    lastUpdated: "Last updated",
     
     // Calculator parameters section
     parametersTitle: "Loan Parameters",
@@ -467,6 +486,12 @@ export const translations: Translations = {
     activeListings: "активних оголошень",
     pricesByDistrict: "Ціни за районами",
     pricesByDistrictDescription: "Порівняння цін на нерухомість у різних районах",
+    pricesByRoomType: "Середні ціни за типом кімнат",
+    roomBreakdown: "Розподіл за кімнатами",
+    oneRoom: "1 Кімната",
+    twoRoom: "2 Кімнати",
+    threeRoom: "3 Кімнати",
+    fourPlusRoom: "4+ Кімнат",
     district: "Район",
     avgPricePerSqm: "Середня ціна/м²",
     listings: "Оголошення",

@@ -10,7 +10,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
-import { RefreshCw, Building, Home, MapPin } from "lucide-react";
+import { RefreshCw, Building, Home, MapPin, Bed, Layers, Box } from "lucide-react";
 import {
   Table,
   TableBody,
@@ -21,6 +21,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
+import { Separator } from "@/components/ui/separator";
 
 // Define interfaces for property data
 import { PropertyPriceResponse } from "@shared/schema";
@@ -300,6 +301,57 @@ export default function PropertyMarketAnalysis() {
                     <p className="text-sm text-muted-foreground mt-2">
                       {t.dataBasedOn || "Based on"} {propertyData.prices.reduce((sum: number, district: PropertyPrice) => sum + district.numberOfListings, 0)} {t.activeListings || "active listings"}.
                     </p>
+                    
+                    {/* Room type statistics */}
+                    {propertyData.prices[0]?.roomBreakdown && (
+                      <>
+                        <Separator className="my-4" />
+                        <div className="mt-4">
+                          <h3 className="font-medium mb-3">{t.pricesByRoomType || "Average prices by room type"}</h3>
+                          <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+                            {/* One-room apartments */}
+                            <div className="bg-gray-50 rounded p-3">
+                              <div className="flex items-center gap-2 mb-1">
+                                <Bed size={16} className="text-primary" />
+                                <span className="text-sm font-medium">{t.oneRoom || "1 Room"}</span>
+                              </div>
+                              <div className="text-lg font-semibold">{formatPrice(cityRoomStats.oneRoom.avgPrice)}</div>
+                              <div className="text-xs text-muted-foreground">{cityRoomStats.oneRoom.count} {t.listings || "listings"}</div>
+                            </div>
+                            
+                            {/* Two-room apartments */}
+                            <div className="bg-gray-50 rounded p-3">
+                              <div className="flex items-center gap-2 mb-1">
+                                <Layers size={16} className="text-primary" />
+                                <span className="text-sm font-medium">{t.twoRoom || "2 Rooms"}</span>
+                              </div>
+                              <div className="text-lg font-semibold">{formatPrice(cityRoomStats.twoRoom.avgPrice)}</div>
+                              <div className="text-xs text-muted-foreground">{cityRoomStats.twoRoom.count} {t.listings || "listings"}</div>
+                            </div>
+                            
+                            {/* Three-room apartments */}
+                            <div className="bg-gray-50 rounded p-3">
+                              <div className="flex items-center gap-2 mb-1">
+                                <Layers size={16} className="text-primary" />
+                                <span className="text-sm font-medium">{t.threeRoom || "3 Rooms"}</span>
+                              </div>
+                              <div className="text-lg font-semibold">{formatPrice(cityRoomStats.threeRoom.avgPrice)}</div>
+                              <div className="text-xs text-muted-foreground">{cityRoomStats.threeRoom.count} {t.listings || "listings"}</div>
+                            </div>
+                            
+                            {/* Four-plus-room apartments */}
+                            <div className="bg-gray-50 rounded p-3">
+                              <div className="flex items-center gap-2 mb-1">
+                                <Box size={16} className="text-primary" />
+                                <span className="text-sm font-medium">{t.fourPlusRoom || "4+ Rooms"}</span>
+                              </div>
+                              <div className="text-lg font-semibold">{formatPrice(cityRoomStats.fourPlusRoom.avgPrice)}</div>
+                              <div className="text-xs text-muted-foreground">{cityRoomStats.fourPlusRoom.count} {t.listings || "listings"}</div>
+                            </div>
+                          </div>
+                        </div>
+                      </>
+                    )}
                   </div>
                 </CardContent>
               </Card>
@@ -329,33 +381,66 @@ export default function PropertyMarketAnalysis() {
                       {propertyData.prices
                         .sort((a: PropertyPrice, b: PropertyPrice) => b.averagePricePerSqm - a.averagePricePerSqm)
                         .map((district: PropertyPrice, index: number) => (
-                        <TableRow key={index}>
-                          <TableCell className="font-medium">{district.district}</TableCell>
-                          <TableCell>
-                            {formatPrice(district.averagePricePerSqm)}
-                            <div className="mt-1">
-                              {district.averagePricePerSqm > cityAverage * 1.1 ? (
-                                <Badge variant="outline" className="bg-red-50 text-red-600 hover:bg-red-50">
-                                  +{Math.round((district.averagePricePerSqm / cityAverage - 1) * 100)}% {t.aboveAvg || "above avg"}
-                                </Badge>
-                              ) : district.averagePricePerSqm < cityAverage * 0.9 ? (
-                                <Badge variant="outline" className="bg-green-50 text-green-600 hover:bg-green-50">
-                                  {Math.round((1 - district.averagePricePerSqm / cityAverage) * 100)}% {t.belowAvg || "below avg"}
-                                </Badge>
-                              ) : (
-                                <Badge variant="outline" className="bg-gray-50 text-gray-600 hover:bg-gray-50">
-                                  {t.nearAvg || "near average"}
-                                </Badge>
-                              )}
-                            </div>
-                          </TableCell>
-                          <TableCell className="text-right">{district.numberOfListings}</TableCell>
-                          <TableCell className="text-right">
-                            <div>{formatPrice(district.minPrice)}</div>
-                            <div>-</div>
-                            <div>{formatPrice(district.maxPrice)}</div>
-                          </TableCell>
-                        </TableRow>
+                        <>
+                          <TableRow key={index}>
+                            <TableCell className="font-medium">{district.district}</TableCell>
+                            <TableCell>
+                              {formatPrice(district.averagePricePerSqm)}
+                              <div className="mt-1">
+                                {district.averagePricePerSqm > cityAverage * 1.1 ? (
+                                  <Badge variant="outline" className="bg-red-50 text-red-600 hover:bg-red-50">
+                                    +{Math.round((district.averagePricePerSqm / cityAverage - 1) * 100)}% {t.aboveAvg || "above avg"}
+                                  </Badge>
+                                ) : district.averagePricePerSqm < cityAverage * 0.9 ? (
+                                  <Badge variant="outline" className="bg-green-50 text-green-600 hover:bg-green-50">
+                                    {Math.round((1 - district.averagePricePerSqm / cityAverage) * 100)}% {t.belowAvg || "below avg"}
+                                  </Badge>
+                                ) : (
+                                  <Badge variant="outline" className="bg-gray-50 text-gray-600 hover:bg-gray-50">
+                                    {t.nearAvg || "near average"}
+                                  </Badge>
+                                )}
+                              </div>
+                            </TableCell>
+                            <TableCell className="text-right">{district.numberOfListings}</TableCell>
+                            <TableCell className="text-right">
+                              <div>{formatPrice(district.minPrice)}</div>
+                              <div>-</div>
+                              <div>{formatPrice(district.maxPrice)}</div>
+                            </TableCell>
+                          </TableRow>
+                          
+                          {/* Room breakdown for this district */}
+                          {district.roomBreakdown && (
+                            <TableRow className="bg-gray-50/50">
+                              <TableCell colSpan={4} className="py-2">
+                                <div className="text-xs font-medium mb-1">{t.roomBreakdown || "Room breakdown"}</div>
+                                <div className="grid grid-cols-4 gap-2">
+                                  <div>
+                                    <div className="text-xs text-muted-foreground">{t.oneRoom || "1 Room"}</div>
+                                    <div className="text-sm">{formatPrice(district.roomBreakdown.oneRoom.avgPrice)}</div>
+                                    <div className="text-xs text-muted-foreground">{district.roomBreakdown.oneRoom.count} {t.listings || "listings"}</div>
+                                  </div>
+                                  <div>
+                                    <div className="text-xs text-muted-foreground">{t.twoRoom || "2 Rooms"}</div>
+                                    <div className="text-sm">{formatPrice(district.roomBreakdown.twoRoom.avgPrice)}</div>
+                                    <div className="text-xs text-muted-foreground">{district.roomBreakdown.twoRoom.count} {t.listings || "listings"}</div>
+                                  </div>
+                                  <div>
+                                    <div className="text-xs text-muted-foreground">{t.threeRoom || "3 Rooms"}</div>
+                                    <div className="text-sm">{formatPrice(district.roomBreakdown.threeRoom.avgPrice)}</div>
+                                    <div className="text-xs text-muted-foreground">{district.roomBreakdown.threeRoom.count} {t.listings || "listings"}</div>
+                                  </div>
+                                  <div>
+                                    <div className="text-xs text-muted-foreground">{t.fourPlusRoom || "4+ Rooms"}</div>
+                                    <div className="text-sm">{formatPrice(district.roomBreakdown.fourPlusRoom.avgPrice)}</div>
+                                    <div className="text-xs text-muted-foreground">{district.roomBreakdown.fourPlusRoom.count} {t.listings || "listings"}</div>
+                                  </div>
+                                </div>
+                              </TableCell>
+                            </TableRow>
+                          )}
+                        </>
                       ))}
                     </TableBody>
                   </Table>

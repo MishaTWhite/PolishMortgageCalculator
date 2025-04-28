@@ -124,7 +124,7 @@ export default function CurrencyConverter() {
           {isLoading ? (
             <Skeleton className="h-4 w-64" />
           ) : (
-            `${t.exchangeRatesFrom} ${exchangeRates?.source || 'unknown source'}: ${t.lastUpdated} ${exchangeRates?.fetchDate || 'unknown'}`
+            `${t.exchangeRatesFrom} ${exchangeRates?.source || 'unknown source'}: ${t.ratesLastUpdated} ${exchangeRates?.fetchDate || 'unknown'}`
           )}
         </p>
         

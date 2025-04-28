@@ -364,7 +364,7 @@ export default function PropertyMarketAnalysis() {
                   </Button>
                 </div>
                 <CardDescription>
-                  {t.lastUpdated || "Last updated"}: {new Date(scraperStatus.updatedAt).toLocaleTimeString()}
+                  {t.lastUpdated || "Last updated"}: {new Date(scraperStatus.updatedAt || new Date()).toLocaleTimeString()}
                 </CardDescription>
               </CardHeader>
               <CardContent>

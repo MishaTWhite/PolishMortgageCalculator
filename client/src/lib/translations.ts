@@ -54,6 +54,16 @@ type TranslationKeys = {
   error: string;
   taskDetails: string;
   refreshStatus: string;
+  ratesLastUpdated: string;
+  
+  // Currency converter
+  currencyConverterDescription: string;
+  amount: string;
+  refreshRates: string;
+  exchangeRatesFrom: string;
+  exchangeRateTable: string;
+  loading: string;
+  failedToLoad: string;
   
   // Calculator parameters section
   parametersTitle: string;
@@ -109,17 +119,6 @@ type TranslationKeys = {
   // Language selector
   language: string;
   
-  // Currency converter
-  currencyConverter: string;
-  currencyConverterDescription: string;
-  amount: string;
-  refreshRates: string;
-  exchangeRatesFrom: string;
-  lastUpdated: string;
-  exchangeRateTable: string;
-  loading: string;
-  failedToLoad: string;
-  
   // Accelerated repayment
   acceleratedRepayment: string;
   acceleratedRepaymentDescription: string;
@@ -140,7 +139,6 @@ type TranslationKeys = {
   paymentMultiplierWithAmount: string;
   
   // Investment calculator
-  investmentCalculator: string;
   investmentCalculatorDescription: string;
   investmentParameters: string;
   startingAge: string;

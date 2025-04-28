@@ -393,8 +393,7 @@ export default function PropertyMarketAnalysis() {
                       {propertyData.prices
                         .sort((a: PropertyPrice, b: PropertyPrice) => b.averagePricePerSqm - a.averagePricePerSqm)
                         .map((district: PropertyPrice, index: number) => (
-                        <React.Fragment key={`district-${index}`}>
-                          <TableRow key={`row-${index}`}>
+                        <TableRow key={`row-${index}`}>
                             <TableCell className="font-medium">{district.district}</TableCell>
                             <TableCell>
                               {/* Main average price */}
@@ -454,7 +453,6 @@ export default function PropertyMarketAnalysis() {
                               <div>{formatPrice(district.maxPrice)}</div>
                             </TableCell>
                           </TableRow>
-                        </React.Fragment>
                       ))}
                     </TableBody>
                   </Table>

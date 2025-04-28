@@ -2,6 +2,62 @@ import axios from "axios";
 import * as cheerio from "cheerio";
 
 // Function to scrape property data from Otodom for a specific room type
+// Function to generate a random IP address from the specified country
+function generateRandomPolishIP(): string {
+  // Polish IP ranges (simplified example)
+  const polishRanges = [
+    { start: '5.172.0.0', end: '5.172.255.255' },
+    { start: '31.0.0.0', end: '31.63.255.255' },
+    { start: '46.48.0.0', end: '46.48.255.255' },
+    { start: '77.252.0.0', end: '77.255.255.255' },
+    { start: '83.0.0.0', end: '83.31.255.255' },
+    { start: '89.64.0.0', end: '89.79.255.255' },
+    { start: '91.192.0.0', end: '91.223.255.255' }
+  ];
+  
+  // Select a random range
+  const range = polishRanges[Math.floor(Math.random() * polishRanges.length)];
+  
+  // Convert IP to number for easier manipulation
+  const startParts = range.start.split('.').map(Number);
+  const endParts = range.end.split('.').map(Number);
+  
+  // Generate a random IP within the range
+  const ipParts = [];
+  for (let i = 0; i < 4; i++) {
+    ipParts.push(Math.floor(Math.random() * (endParts[i] - startParts[i] + 1) + startParts[i]));
+  }
+  
+  return ipParts.join('.');
+}
+
+// Generate realistic browsing pattern by visiting the main page first,
+// then category page, then search results
+async function simulateRealBrowsing(headers: Record<string, string>) {
+  try {
+    // Visit homepage first (like a real user would)
+    console.log('Simulating real user: Visiting Otodom homepage...');
+    await axios.get('https://www.otodom.pl/', { headers });
+    
+    // Random delay between actions (1-3 seconds)
+    const delay1 = 1000 + Math.floor(Math.random() * 2000);
+    await new Promise(resolve => setTimeout(resolve, delay1));
+    
+    // Visit the sales category page
+    console.log('Simulating real user: Visiting sales category page...');
+    await axios.get('https://www.otodom.pl/pl/oferty/sprzedaz/mieszkanie', { headers });
+    
+    // Random delay between actions (2-4 seconds)
+    const delay2 = 2000 + Math.floor(Math.random() * 2000);
+    await new Promise(resolve => setTimeout(resolve, delay2));
+    
+    return true;
+  } catch (error) {
+    console.error('Error during browsing simulation:', error);
+    return false;
+  }
+}
+
 export async function scrapeOtodomPropertyDataByRoomType(
   cityUrl: string, 
   districtSearchTerm: string,
@@ -36,7 +92,7 @@ export async function scrapeOtodomPropertyDataByRoomType(
     const randomUserAgent = userAgents[Math.floor(Math.random() * userAgents.length)];
     
     // Headers to make request look like it's coming from a real browser
-    const headers = {
+    const headers: Record<string, string> = {
       'User-Agent': randomUserAgent,
       'Accept-Language': 'pl-PL,pl;q=0.9,en-US;q=0.8,en;q=0.7',
       'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.7',
@@ -79,8 +135,23 @@ export async function scrapeOtodomPropertyDataByRoomType(
     const prices: number[] = [];
     const pricesPerSqm: number[] = [];
     
+    // Simulate real browsing behavior before making the actual request
+    console.log('Simulating real user browsing behavior...');
+    await simulateRealBrowsing(headers);
+    
+    // Add random X-Forwarded-For to simulate request coming from a random Polish IP
+    // This header is often used by proxies and can help bypass geographical restrictions
+    const randomPolishIP = generateRandomPolishIP();
+    headers['X-Forwarded-For'] = randomPolishIP;
+    console.log(`Using random Polish IP: ${randomPolishIP}`);
+    
     // Get first page to check total listings and pagination
-    const firstResponse = await axios.get(roomUrl, { headers });
+    console.log(`Now accessing the actual search results: ${roomUrl}`);
+    const firstResponse = await axios.get(roomUrl, { 
+      headers,
+      timeout: 30000, // 30 second timeout
+      maxRedirects: 5 // Allow up to 5 redirects
+    });
     const firstHtml = firstResponse.data;
     const $ = cheerio.load(firstHtml);
     
@@ -123,29 +194,94 @@ export async function scrapeOtodomPropertyDataByRoomType(
     console.log(`Divs count: ${$('div').length}`);
     
     // Try multiple selectors for property items, as Otodom changes selectors frequently
-    // Prefer 'article' elements, which are commonly used for list items
-    const propertyItems = $('article') || 
-                         $('[data-cy="search.listing"]') || 
-                         $('[data-cy^="listing-item"]') ||
-                         $('[data-testid="listing-item"]') ||
-                         $('.css-1q7njkh') || 
-                         $('.css-1oji9jw') || 
-                         $('.css-1hfoviz') || 
-                         $('.offer-item') ||
-                         $('div[data-cy^="search.listing"]');
+    // Note: In Cheerio, we need to explicitly select items, as the || operator doesn't work the same as in jQuery
+    let propertyItems;
+    
+    if ($('article').length > 0) {
+      propertyItems = $('article');
+      console.log('Found listings using article selector');
+    } else if ($('[data-cy="search.listing"]').length > 0) {
+      propertyItems = $('[data-cy="search.listing"]');
+      console.log('Found listings using data-cy="search.listing" selector');
+    } else if ($('[data-cy^="listing-item"]').length > 0) {
+      propertyItems = $('[data-cy^="listing-item"]');
+      console.log('Found listings using data-cy^="listing-item" selector');
+    } else if ($('[data-testid="listing-item"]').length > 0) {
+      propertyItems = $('[data-testid="listing-item"]');
+      console.log('Found listings using data-testid="listing-item" selector');
+    } else if ($('.listing-item').length > 0) {
+      propertyItems = $('.listing-item');
+      console.log('Found listings using .listing-item selector');
+    } else if ($('div[data-cy^="search.listing"]').length > 0) {
+      propertyItems = $('div[data-cy^="search.listing"]'); 
+      console.log('Found listings using div[data-cy^="search.listing"] selector');
+    } else if ($('.css-1q7njkh').length > 0) {
+      propertyItems = $('.css-1q7njkh');
+      console.log('Found listings using .css-1q7njkh selector');
+    } else if ($('.css-1oji9jw').length > 0) {
+      propertyItems = $('.css-1oji9jw');
+      console.log('Found listings using .css-1oji9jw selector');
+    } else {
+      // If no listing container is found, try to find any div containing price and area information
+      console.log('No standard listing containers found, trying generic selectors');
+      propertyItems = $('div:has(p:contains("zł"))');
+      if (propertyItems.length === 0) {
+        propertyItems = $('div:has(span:contains("zł"))');
+      }
+    }
     console.log(`Found ${propertyItems.length} property items on first page`);
     
     // Process listings from the first page
     propertyItems.each((_, element) => {
       try {
-        // Extract price and area
-        const priceText = $(element).find('p:contains("zł")').text() || 
-                          $(element).find('.css-1323u5x').text() || 
-                          $(element).find('.offer-item-price').text();
+        // Extract price and area using multiple selector strategies
+        // First, try the most common selectors
+        let priceText = $(element).find('p:contains("zł")').text();
+        let areaText = $(element).find('p:contains("m²")').text();
         
-        const areaText = $(element).find('p:contains("m²")').text() || 
-                         $(element).find('.css-1itfubx').text() || 
-                         $(element).find('.offer-item-area').text();
+        // If not found, try specific class selectors that Otodom has used in the past
+        if (!priceText) {
+          priceText = $(element).find('.css-1323u5x').text() || 
+                     $(element).find('.offer-item-price').text();
+        }
+        
+        if (!areaText) {
+          areaText = $(element).find('.css-1itfubx').text() || 
+                    $(element).find('.offer-item-area').text();
+        }
+        
+        // If still not found, try more generic approaches
+        if (!priceText) {
+          // Look for any element containing price indicators
+          priceText = $(element).find('*:contains("zł")').first().text() ||
+                     $(element).find('*:contains("PLN")').first().text();
+        }
+        
+        if (!areaText) {
+          // Look for any element containing area indicators
+          areaText = $(element).find('*:contains("m²")').first().text() ||
+                    $(element).find('*:contains("mkw")').first().text();
+        }
+        
+        // Log all text in the element if we still can't find what we need
+        if (!priceText || !areaText) {
+          const allText = $(element).text().trim();
+          console.log(`Full listing text: ${allText.substring(0, 200)}...`);
+          
+          // Try to extract numbers followed by currency symbol from full text
+          const priceMatch = allText.match(/(\d[\d\s]*[\d])\s*zł/i);
+          const areaMatch = allText.match(/(\d[\d\s,.]*[\d])\s*m²/i);
+          
+          if (priceMatch && !priceText) {
+            priceText = priceMatch[0];
+            console.log(`Extracted price from full text: ${priceText}`);
+          }
+          
+          if (areaMatch && !areaText) {
+            areaText = areaMatch[0];
+            console.log(`Extracted area from full text: ${areaText}`);
+          }
+        }
         
         console.log(`Found listing for ${roomType}: Price=${priceText}, Area=${areaText}`);
         
@@ -288,32 +424,110 @@ export async function scrapeOtodomPropertyDataByRoomType(
         const pageUrl = `${roomUrl}&page=${page}`;
         console.log(`Scraping page ${page}/${pagesToScrape} for ${roomType}: ${pageUrl}`);
         
-        const response = await axios.get(pageUrl, { headers });
+        // Generate a new random Polish IP for each page request to avoid pattern detection
+        headers['X-Forwarded-For'] = generateRandomPolishIP();
+        
+        // Add a small variance to the user agent occasionally to appear more realistic
+        if (Math.random() > 0.8) {
+          headers['User-Agent'] = userAgents[Math.floor(Math.random() * userAgents.length)];
+          console.log(`Changed user agent for page ${page}`);
+        }
+        
+        const response = await axios.get(pageUrl, { 
+          headers,
+          timeout: 30000,
+          maxRedirects: 5
+        });
         const html = response.data;
         const $page = cheerio.load(html);
         
         // Try multiple selectors for property items on pagination pages
-        const pageItems = $page('article') || 
-                         $page('[data-cy="search.listing"]') || 
-                         $page('[data-cy^="listing-item"]') ||
-                         $page('[data-testid="listing-item"]') ||
-                         $page('.css-1q7njkh') || 
-                         $page('.css-1oji9jw') || 
-                         $page('.css-1hfoviz') || 
-                         $page('.offer-item') ||
-                         $page('div[data-cy^="search.listing"]');
+        let pageItems;
+        
+        if ($page('article').length > 0) {
+          pageItems = $page('article');
+          console.log(`Found listings on page ${page} using article selector`);
+        } else if ($page('[data-cy="search.listing"]').length > 0) {
+          pageItems = $page('[data-cy="search.listing"]');
+          console.log(`Found listings on page ${page} using data-cy="search.listing" selector`);
+        } else if ($page('[data-cy^="listing-item"]').length > 0) {
+          pageItems = $page('[data-cy^="listing-item"]');
+          console.log(`Found listings on page ${page} using data-cy^="listing-item" selector`);
+        } else if ($page('[data-testid="listing-item"]').length > 0) {
+          pageItems = $page('[data-testid="listing-item"]');
+          console.log(`Found listings on page ${page} using data-testid="listing-item" selector`);
+        } else if ($page('.listing-item').length > 0) {
+          pageItems = $page('.listing-item');
+          console.log(`Found listings on page ${page} using .listing-item selector`);
+        } else if ($page('div[data-cy^="search.listing"]').length > 0) {
+          pageItems = $page('div[data-cy^="search.listing"]'); 
+          console.log(`Found listings on page ${page} using div[data-cy^="search.listing"] selector`);
+        } else if ($page('.css-1q7njkh').length > 0) {
+          pageItems = $page('.css-1q7njkh');
+          console.log(`Found listings on page ${page} using .css-1q7njkh selector`);
+        } else if ($page('.css-1oji9jw').length > 0) {
+          pageItems = $page('.css-1oji9jw');
+          console.log(`Found listings on page ${page} using .css-1oji9jw selector`);
+        } else {
+          // If no listing container is found, try to find any div containing price and area information
+          console.log(`No standard listing containers found on page ${page}, trying generic selectors`);
+          pageItems = $page('div:has(p:contains("zł"))');
+          if (pageItems.length === 0) {
+            pageItems = $page('div:has(span:contains("zł"))');
+          }
+        }
         console.log(`Found ${pageItems.length} property items on page ${page}`);
         
         pageItems.each((_, element) => {
           try {
-            // Extract price and area
-            const priceText = $page(element).find('p:contains("zł")').text() || 
-                              $page(element).find('.css-1323u5x').text() || 
-                              $page(element).find('.offer-item-price').text();
+            // Extract price and area using multiple selector strategies
+            // First, try the most common selectors
+            let priceText = $page(element).find('p:contains("zł")').text();
+            let areaText = $page(element).find('p:contains("m²")').text();
             
-            const areaText = $page(element).find('p:contains("m²")').text() || 
-                             $page(element).find('.css-1itfubx').text() || 
-                             $page(element).find('.offer-item-area').text();
+            // If not found, try specific class selectors that Otodom has used in the past
+            if (!priceText) {
+              priceText = $page(element).find('.css-1323u5x').text() || 
+                         $page(element).find('.offer-item-price').text();
+            }
+            
+            if (!areaText) {
+              areaText = $page(element).find('.css-1itfubx').text() || 
+                        $page(element).find('.offer-item-area').text();
+            }
+            
+            // If still not found, try more generic approaches
+            if (!priceText) {
+              // Look for any element containing price indicators
+              priceText = $page(element).find('*:contains("zł")').first().text() ||
+                         $page(element).find('*:contains("PLN")').first().text();
+            }
+            
+            if (!areaText) {
+              // Look for any element containing area indicators
+              areaText = $page(element).find('*:contains("m²")').first().text() ||
+                        $page(element).find('*:contains("mkw")').first().text();
+            }
+            
+            // Log all text in the element if we still can't find what we need
+            if (!priceText || !areaText) {
+              const allText = $page(element).text().trim();
+              console.log(`Full listing text on page ${page}: ${allText.substring(0, 200)}...`);
+              
+              // Try to extract numbers followed by currency symbol from full text
+              const priceMatch = allText.match(/(\d[\d\s]*[\d])\s*zł/i);
+              const areaMatch = allText.match(/(\d[\d\s,.]*[\d])\s*m²/i);
+              
+              if (priceMatch && !priceText) {
+                priceText = priceMatch[0];
+                console.log(`Extracted price from full text on page ${page}: ${priceText}`);
+              }
+              
+              if (areaMatch && !areaText) {
+                areaText = areaMatch[0];
+                console.log(`Extracted area from full text on page ${page}: ${areaText}`);
+              }
+            }
             
             console.log(`Found listing on page ${page}: Price=${priceText}, Area=${areaText}`);
             

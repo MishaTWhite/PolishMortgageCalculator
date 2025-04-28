@@ -499,10 +499,22 @@ async function fetchCachedExchangeRates() {
     const hoursSinceLastFetch = (now.getTime() - fetchDate.getTime()) / (1000 * 60 * 60);
     
     if (hoursSinceLastFetch < 24) {
+      // Handle rates as string or object
+      let parsedRates;
+      try {
+        // If it's stored as a string, parse it
+        parsedRates = typeof latestRates.rates === 'string' 
+          ? JSON.parse(latestRates.rates) 
+          : latestRates.rates;
+      } catch (e) {
+        console.error("Error parsing rates:", e);
+        parsedRates = {};
+      }
+      
       return {
         source: latestRates.source,
         base: latestRates.base,
-        rates: JSON.parse(latestRates.rates),
+        rates: parsedRates,
         fetchDate: latestRates.fetchDate
       };
     }

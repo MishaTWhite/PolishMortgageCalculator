@@ -78,7 +78,7 @@ const cityConfig: {
   }
 };
 
-// Function to scrape property data from Otodom
+// Function to scrape property data from Otodom with separate requests per room count
 async function scrapeOtodomPropertyData(cityUrl: string, districtSearchTerm: string): Promise<{ 
   averagePricePerSqm: number; 
   numberOfListings: number;
@@ -95,14 +95,6 @@ async function scrapeOtodomPropertyData(cityUrl: string, districtSearchTerm: str
     // Base URL for the district
     const baseUrl = `https://www.otodom.pl/pl/oferty/sprzedaz/mieszkanie/${cityUrl}/${districtSearchTerm}`;
     console.log(`Base URL for scraping: ${baseUrl}`);
-    
-    // Stats for room types
-    const roomStats = {
-      oneRoom: { count: 0, totalPrice: 0, avgPrice: 0 },
-      twoRoom: { count: 0, totalPrice: 0, avgPrice: 0 },
-      threeRoom: { count: 0, totalPrice: 0, avgPrice: 0 },
-      fourPlusRoom: { count: 0, totalPrice: 0, avgPrice: 0 }
-    };
     
     // Set headers to mimic a browser request
     const headers = {
@@ -123,228 +115,163 @@ async function scrapeOtodomPropertyData(cityUrl: string, districtSearchTerm: str
       'Cookie': 'lang=pl'
     };
     
-    console.log(`Scraping Otodom data for ${cityUrl}/${districtSearchTerm}`);
-    
     // Variables to collect all data
     let totalListings = 0;
-    let prices: number[] = [];
-    let pricesPerSqm: number[] = [];
+    let allPrices: number[] = [];
+    let allPricesPerSqm: number[] = [];
     
-    // First page response to extract total pages count
-    const firstPageResponse = await axios.get(baseUrl, { headers });
-    const firstPageHtml = firstPageResponse.data;
-    const $firstPage = cheerio.load(firstPageHtml);
+    // Room configurations to scrape separately for more accurate results
+    const roomConfigs = [
+      { name: "oneRoom", query: "?ownerTypeSingleSelect=ALL&roomsNumber=ONE", count: 0, totalPrice: 0, prices: [], pricesPerSqm: [] },
+      { name: "twoRoom", query: "?ownerTypeSingleSelect=ALL&roomsNumber=TWO", count: 0, totalPrice: 0, prices: [], pricesPerSqm: [] },
+      { name: "threeRoom", query: "?ownerTypeSingleSelect=ALL&roomsNumber=THREE", count: 0, totalPrice: 0, prices: [], pricesPerSqm: [] },
+      { name: "fourPlusRoom", query: "?ownerTypeSingleSelect=ALL&roomsNumber=FOUR", count: 0, totalPrice: 0, prices: [], pricesPerSqm: [] }
+    ];
     
-    // Extract the number of total listings
-    const listingsText = $firstPage('div[data-cy="search.listing-panel.label.ads-number"]').text() || 
-                         $firstPage('h1:contains("ogłosz")').text() || 
-                         $firstPage('h3:contains("ogłosz")').text() || 
-                         $firstPage('span:contains("ogłosz")').text() || 
-                         $firstPage('div:contains("ogłosz")').first().text();
+    console.log(`Scraping Otodom data for ${cityUrl}/${districtSearchTerm} by room counts`);
     
-    console.log(`Listings text found: "${listingsText}"`);
-    
-    let regexMatch = listingsText.match(/(\d+)\s+ogłosz/i) || 
-                     listingsText.match(/znaleziono\s+(\d+)/i) || 
-                     listingsText.match(/(\d+)\s+ofert/i) || 
-                     listingsText.match(/(\d+)\s+mieszk/i) ||
-                     listingsText.match(/(\d+)/);
+    // Process each room configuration
+    for (const roomConfig of roomConfigs) {
+      const roomUrl = `${baseUrl}${roomConfig.query}`;
+      console.log(`Scraping ${roomConfig.name} - URL: ${roomUrl}`);
+      
+      // Get first page to check total listings and pagination
+      const firstResponse = await axios.get(roomUrl, { headers });
+      const firstHtml = firstResponse.data;
+      const $ = cheerio.load(firstHtml);
+      
+      // Extract the number of listings for this room config
+      const listingsText = $('div[data-cy="search.listing-panel.label.ads-number"]').text() || 
+                          $('h1:contains("ogłosz")').text() || 
+                          $('h3:contains("ogłosz")').text() || 
+                          $('span:contains("ogłosz")').text() || 
+                          $('div:contains("ogłosz")').first().text();
+      
+      let listingCount = 0;
+      let regexMatch = listingsText.match(/(\d+)\s+ogłosz/i) || 
+                      listingsText.match(/znaleziono\s+(\d+)/i) || 
+                      listingsText.match(/(\d+)\s+ofert/i) || 
+                      listingsText.match(/(\d+)\s+mieszk/i) ||
+                      listingsText.match(/(\d+)/);
                           
-    if (regexMatch) {
-      totalListings = parseInt(regexMatch[1], 10);
-      console.log(`Found total of ${totalListings} listings`);
-    }
-    
-    // Find pagination to determine number of pages
-    let maxPages = 1;
-    const paginationElements = $firstPage('li[data-cy^="pagination.page-"]');
-    
-    if (paginationElements.length > 0) {
-      // Get the last pagination element to determine total pages
-      const lastPageElement = paginationElements.last();
-      const pageNumber = lastPageElement.attr('data-cy')?.replace('pagination.page-', '');
-      if (pageNumber && !isNaN(parseInt(pageNumber, 10))) {
-        maxPages = parseInt(pageNumber, 10);
-      }
-    }
-    
-    console.log(`Found ${maxPages} pages to scrape`);
-    
-    // Limit to 5 pages maximum to avoid overloading the website
-    const pagesToScrape = Math.min(maxPages, 5);
-    console.log(`Will scrape ${pagesToScrape} pages`);
-    
-    // Process each page
-    for (let page = 1; page <= pagesToScrape; page++) {
-      const pageUrl = page === 1 ? baseUrl : `${baseUrl}?page=${page}`;
-      console.log(`Scraping page ${page}/${pagesToScrape}: ${pageUrl}`);
-      
-      // Skip refetching page 1 since we already have it
-      let $ = $firstPage;
-      if (page > 1) {
-        const response = await axios.get(pageUrl, { headers });
-        const html = response.data;
-        $ = cheerio.load(html);
-        
-        // Add a small delay between page requests to be respectful
-        await new Promise(resolve => setTimeout(resolve, 1500));
+      if (regexMatch) {
+        listingCount = parseInt(regexMatch[1], 10);
+        roomConfig.count = listingCount;
+        totalListings += listingCount;
+        console.log(`Found ${listingCount} listings for ${roomConfig.name}`);
+      } else {
+        console.log(`No listings found for ${roomConfig.name}`);
+        continue; // Skip to next room config
       }
       
-      // Extract listings from this page
-      const propertyItems = $('article') || $('.css-1q7njkh') || $('.css-1oji9jw') || $('.css-1hfoviz') || $('.offer-item');
-      console.log(`Found ${propertyItems.length} property items on page ${page}`);
+      // Process the first page listings
+      await processListingsOnPage($, roomConfig);
       
-      propertyItems.each((_, element) => {
-        try {
-          // Extract price, area, and rooms
-          let priceText = '';
-          let areaText = '';
-          let roomsText = '';
-          
-          // Try various selectors for price
-          const priceSelectors = [
-            'span:contains("zł")',
-            'div[data-cy="Price"]',
-            'p:contains("zł")',
-            'div:contains("zł")' 
-          ];
-          
-          for (const selector of priceSelectors) {
-            priceText = $(element).find(selector).first().text();
-            if (priceText.includes('zł')) break;
-          }
-          
-          // Try various selectors for area
-          const areaSelectors = [
-            'span:contains("m²")',
-            'div[data-cy="Area"]',
-            'span:contains("m2")',
-            'p:contains("m²")',
-            'div:contains("m²")'
-          ];
-          
-          for (const selector of areaSelectors) {
-            areaText = $(element).find(selector).first().text();
-            if (areaText.includes('m²') || areaText.includes('m2')) break;
-          }
-          
-          // Look for room count
-          const roomSelectors = [
-            'span:contains("pokój")',
-            'span:contains("pokoje")',
-            'div:contains("pokój")',
-            'div:contains("pokoje")'
-          ];
-          
-          for (const selector of roomSelectors) {
-            roomsText = $(element).find(selector).first().text();
-            if (roomsText.includes('pokój') || roomsText.includes('pokoje')) break;
-          }
-          
-          console.log(`Found listing: Price=${priceText}, Area=${areaText}, Rooms=${roomsText}`);
-          
-          // Parse price, area, and rooms
-          const priceMatch = priceText.match(/(\d[\d\s,.]*)/);
-          const areaMatch = areaText.match(/(\d[\d\s,.]*)/);
-          
-          // Parse room count
-          let roomCount = 0;
-          if (roomsText) {
-            const roomMatch = roomsText.match(/(\d+)\s*pok/);
-            if (roomMatch) {
-              roomCount = parseInt(roomMatch[1], 10);
-            }
-          }
-          
-          if (priceMatch && areaMatch) {
-            // Clean and parse values
-            const cleanPriceText = priceMatch[1].replace(/\s/g, '').replace(',', '.');
-            const cleanAreaText = areaMatch[1].replace(/\s/g, '').replace(',', '.');
-            
-            const price = parseInt(cleanPriceText, 10);
-            const area = parseFloat(cleanAreaText);
-            
-            // Validate price and area
-            if (!isNaN(price) && !isNaN(area) && area > 0 && price > 10000) {
-              prices.push(price);
-              const pricePerSqm = Math.round(price / area);
-              pricesPerSqm.push(pricePerSqm);
-              
-              // Update room statistics
-              if (roomCount === 1) {
-                roomStats.oneRoom.count++;
-                roomStats.oneRoom.totalPrice += price;
-              } else if (roomCount === 2) {
-                roomStats.twoRoom.count++;
-                roomStats.twoRoom.totalPrice += price;
-              } else if (roomCount === 3) {
-                roomStats.threeRoom.count++;
-                roomStats.threeRoom.totalPrice += price;
-              } else if (roomCount >= 4) {
-                roomStats.fourPlusRoom.count++;
-                roomStats.fourPlusRoom.totalPrice += price;
-              }
-              
-              console.log(`Successfully parsed: price=${price}, area=${area}, price/m²=${pricePerSqm}, rooms=${roomCount}`);
-            }
-          }
-        } catch (err) {
-          console.error("Error parsing listing:", err);
+      // Find pagination to determine if we need to fetch more pages
+      let maxPages = 1;
+      const paginationElements = $('li[data-cy^="pagination.page-"]');
+      
+      if (paginationElements.length > 0) {
+        // Get the last pagination element to determine total pages
+        const lastPageElement = paginationElements.last();
+        const pageNumber = lastPageElement.attr('data-cy')?.replace('pagination.page-', '');
+        if (pageNumber && !isNaN(parseInt(pageNumber, 10))) {
+          maxPages = parseInt(pageNumber, 10);
         }
-      });
+      }
+      
+      console.log(`Found ${maxPages} pages for ${roomConfig.name}`);
+      
+      // Limit to 3 pages maximum for each room type to be respectful
+      const pagesToScrape = Math.min(maxPages, 3);
+      
+      // If more than one page, process additional pages
+      for (let page = 2; page <= pagesToScrape; page++) {
+        // Add a delay between requests to avoid overloading the server
+        await new Promise(resolve => setTimeout(resolve, 1500));
+        
+        const pageUrl = `${roomUrl}&page=${page}`;
+        console.log(`Scraping page ${page}/${pagesToScrape} for ${roomConfig.name}: ${pageUrl}`);
+        
+        try {
+          const response = await axios.get(pageUrl, { headers });
+          const html = response.data;
+          const $page = cheerio.load(html);
+          
+          // Process listings from this page
+          await processListingsOnPage($page, roomConfig);
+        } catch (error) {
+          console.error(`Error fetching page ${page} for ${roomConfig.name}:`, error);
+          break; // Stop processing pages for this room config if we encounter an error
+        }
+      }
+      
+      // Add all prices from this room config to the overall lists
+      allPrices = [...allPrices, ...roomConfig.prices];
+      allPricesPerSqm = [...allPricesPerSqm, ...roomConfig.pricesPerSqm];
+      
+      // Calculate average price for this room type if we have any prices
+      if (roomConfig.prices.length > 0) {
+        roomConfig.totalPrice = roomConfig.prices.reduce((sum, price) => sum + price, 0);
+      }
+      
+      console.log(`Completed scraping for ${roomConfig.name}: ${roomConfig.prices.length} listings processed`);
     }
     
-    // Calculate averages for each room type
-    roomStats.oneRoom.avgPrice = roomStats.oneRoom.count > 0 ? 
-      Math.round(roomStats.oneRoom.totalPrice / roomStats.oneRoom.count) : 0;
-      
-    roomStats.twoRoom.avgPrice = roomStats.twoRoom.count > 0 ? 
-      Math.round(roomStats.twoRoom.totalPrice / roomStats.twoRoom.count) : 0;
-      
-    roomStats.threeRoom.avgPrice = roomStats.threeRoom.count > 0 ? 
-      Math.round(roomStats.threeRoom.totalPrice / roomStats.threeRoom.count) : 0;
-      
-    roomStats.fourPlusRoom.avgPrice = roomStats.fourPlusRoom.count > 0 ? 
-      Math.round(roomStats.fourPlusRoom.totalPrice / roomStats.fourPlusRoom.count) : 0;
+    // Calculate overall stats
+    const avgPriceByRoomType = {
+      oneRoom: roomConfigs[0].prices.length > 0 
+        ? Math.round(roomConfigs[0].totalPrice / roomConfigs[0].prices.length) 
+        : 0,
+      twoRoom: roomConfigs[1].prices.length > 0 
+        ? Math.round(roomConfigs[1].totalPrice / roomConfigs[1].prices.length) 
+        : 0,
+      threeRoom: roomConfigs[2].prices.length > 0 
+        ? Math.round(roomConfigs[2].totalPrice / roomConfigs[2].prices.length) 
+        : 0,
+      fourPlusRoom: roomConfigs[3].prices.length > 0 
+        ? Math.round(roomConfigs[3].totalPrice / roomConfigs[3].prices.length) 
+        : 0
+    };
     
-    console.log(`Successfully parsed ${prices.length} listings across ${pagesToScrape} pages`);
-    console.log(`Room breakdown: 1 room: ${roomStats.oneRoom.count}, 2 rooms: ${roomStats.twoRoom.count}, 3 rooms: ${roomStats.threeRoom.count}, 4+ rooms: ${roomStats.fourPlusRoom.count}`);
+    // Calculate overall average price per square meter
+    const averagePricePerSqm = allPricesPerSqm.length > 0
+      ? Math.round(allPricesPerSqm.reduce((sum, price) => sum + price, 0) / allPricesPerSqm.length)
+      : 0;
     
-    // If we couldn't extract any prices, return empty result
-    if (pricesPerSqm.length === 0) {
-      throw new Error("Could not extract price data");
-    }
+    // Find overall min and max prices if we have any prices
+    const minPrice = allPrices.length > 0 ? Math.min(...allPrices) : 0;
+    const maxPrice = allPrices.length > 0 ? Math.max(...allPrices) : 0;
     
-    // Calculate average price per square meter
-    const averagePricePerSqm = Math.round(
-      pricesPerSqm.reduce((sum, price) => sum + price, 0) / pricesPerSqm.length
-    );
+    console.log(`Successfully processed a total of ${allPrices.length} listings`);
+    console.log(`Room breakdown:
+      1 room: ${roomConfigs[0].count} (processed: ${roomConfigs[0].prices.length}), avg price: ${avgPriceByRoomType.oneRoom}
+      2 rooms: ${roomConfigs[1].count} (processed: ${roomConfigs[1].prices.length}), avg price: ${avgPriceByRoomType.twoRoom}
+      3 rooms: ${roomConfigs[2].count} (processed: ${roomConfigs[2].prices.length}), avg price: ${avgPriceByRoomType.threeRoom}
+      4+ rooms: ${roomConfigs[3].count} (processed: ${roomConfigs[3].prices.length}), avg price: ${avgPriceByRoomType.fourPlusRoom}`);
     
-    // Find min and max prices
-    const minPrice = Math.min(...prices);
-    const maxPrice = Math.max(...prices);
-    
+    // Return the compiled data
     return {
       averagePricePerSqm,
-      numberOfListings: totalListings || prices.length,
+      numberOfListings: totalListings,
       minPrice,
       maxPrice,
       roomBreakdown: {
         oneRoom: {
-          count: roomStats.oneRoom.count,
-          avgPrice: roomStats.oneRoom.avgPrice
+          count: roomConfigs[0].count,
+          avgPrice: avgPriceByRoomType.oneRoom
         },
         twoRoom: {
-          count: roomStats.twoRoom.count,
-          avgPrice: roomStats.twoRoom.avgPrice
+          count: roomConfigs[1].count,
+          avgPrice: avgPriceByRoomType.twoRoom
         },
         threeRoom: {
-          count: roomStats.threeRoom.count,
-          avgPrice: roomStats.threeRoom.avgPrice
+          count: roomConfigs[2].count,
+          avgPrice: avgPriceByRoomType.threeRoom
         },
         fourPlusRoom: {
-          count: roomStats.fourPlusRoom.count,
-          avgPrice: roomStats.fourPlusRoom.avgPrice
+          count: roomConfigs[3].count,
+          avgPrice: avgPriceByRoomType.fourPlusRoom
         }
       }
     };
@@ -352,6 +279,81 @@ async function scrapeOtodomPropertyData(cityUrl: string, districtSearchTerm: str
     console.error(`Error scraping Otodom data for ${districtSearchTerm}:`, error);
     throw error;
   }
+}
+
+// Helper function to process listings on a page
+async function processListingsOnPage($: cheerio.CheerioAPI, roomConfig: { 
+  name: string; 
+  query: string; 
+  count: number; 
+  totalPrice: number; 
+  prices: number[];
+  pricesPerSqm: number[];
+}) {
+  // Extract listings from the page
+  const propertyItems = $('article') || $('.css-1q7njkh') || $('.css-1oji9jw') || $('.css-1hfoviz') || $('.offer-item');
+  console.log(`Found ${propertyItems.length} property items on this page for ${roomConfig.name}`);
+  
+  propertyItems.each((_, element) => {
+    try {
+      // Extract price and area
+      let priceText = '';
+      let areaText = '';
+      
+      // Try various selectors for price
+      const priceSelectors = [
+        'span:contains("zł")',
+        'div[data-cy="Price"]',
+        'p:contains("zł")',
+        'div:contains("zł")' 
+      ];
+      
+      for (const selector of priceSelectors) {
+        priceText = $(element).find(selector).first().text();
+        if (priceText.includes('zł')) break;
+      }
+      
+      // Try various selectors for area
+      const areaSelectors = [
+        'span:contains("m²")',
+        'div[data-cy="Area"]',
+        'span:contains("m2")',
+        'p:contains("m²")',
+        'div:contains("m²")'
+      ];
+      
+      for (const selector of areaSelectors) {
+        areaText = $(element).find(selector).first().text();
+        if (areaText.includes('m²') || areaText.includes('m2')) break;
+      }
+      
+      console.log(`Found listing for ${roomConfig.name}: Price=${priceText}, Area=${areaText}`);
+      
+      // Parse price and area
+      const priceMatch = priceText.match(/(\d[\d\s,.]*)/);
+      const areaMatch = areaText.match(/(\d[\d\s,.]*)/);
+      
+      if (priceMatch && areaMatch) {
+        // Clean and parse values
+        const cleanPriceText = priceMatch[1].replace(/\s/g, '').replace(',', '.');
+        const cleanAreaText = areaMatch[1].replace(/\s/g, '').replace(',', '.');
+        
+        const price = parseInt(cleanPriceText, 10);
+        const area = parseFloat(cleanAreaText);
+        
+        // Validate price and area
+        if (!isNaN(price) && !isNaN(area) && area > 0 && price > 10000) {
+          roomConfig.prices.push(price);
+          const pricePerSqm = Math.round(price / area);
+          roomConfig.pricesPerSqm.push(pricePerSqm);
+          
+          console.log(`Successfully parsed for ${roomConfig.name}: price=${price}, area=${area}, price/m²=${pricePerSqm}`);
+        }
+      }
+    } catch (err) {
+      console.error(`Error parsing listing for ${roomConfig.name}:`, err);
+    }
+  });
 }
 
 // Fetch and process property price data from Otodom for a specific city

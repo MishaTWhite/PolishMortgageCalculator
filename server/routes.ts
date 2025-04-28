@@ -4,7 +4,11 @@ import { storage } from "./storage";
 import axios from "axios";
 import { format } from "date-fns";
 import { exchangeRateResponseSchema, propertyPriceResponseSchema } from "../shared/schema";
-import { fetchPropertyPriceData } from "./propertyData";
+import { 
+  fetchPropertyPriceData, 
+  fetchPropertyPriceDataPlaywright,
+  getScrapingStatus
+} from "./propertyData";
 
 export async function registerRoutes(app: Express): Promise<Server> {
   // Scrape current property prices from Otodom - with targeted options

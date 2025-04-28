@@ -1,5 +1,13 @@
 import { storage } from "./storage";
 import { scrapeOtodomPropertyDataByRoomType } from "./scraper";
+import { scrapePropertyData } from "./playwrightScraper";
+import { 
+  enqueueCityTasks, 
+  getQueueStatus, 
+  ScrapeTask, 
+  TaskStatus 
+} from "./scrapeTaskManager";
+import { logInfo, logError, logWarning } from "./scraperLogger";
 
 // Helper function to normalize city names for database storage and API comparison
 function normalizeCity(cityName: string): string {
@@ -82,6 +90,85 @@ const cityConfig: {
 };
 
 // Function to fetch property price data for a city
+/**
+ * Новая функция для скрапинга данных о недвижимости с использованием Playwright и очереди задач
+ */
+export async function fetchPropertyPriceDataPlaywright(
+  city: string, 
+  fetchDate: string, 
+  specificDistrict?: string | null,
+  specificRoomType?: string | null
+) {
+  try {
+    logInfo(`Starting property data fetch using Playwright for ${city}`);
+    
+    // Нормализация города
+    const normalizedCity = normalizeCity(city);
+    const cityData = cityConfig[normalizedCity];
+    
+    if (!cityData) {
+      throw new Error(`City not found: ${city}`);
+    }
+    
+    // Фильтрация районов, если указан конкретный
+    const districtsToProcess = specificDistrict 
+      ? cityData.districts.filter(d => d.searchTerm === specificDistrict || d.name === specificDistrict)
+      : cityData.districts;
+    
+    if (specificDistrict && districtsToProcess.length === 0) {
+      throw new Error(`District not found: ${specificDistrict}`);
+    }
+    
+    // Определение типов комнат для скрапинга
+    const roomTypes = specificRoomType 
+      ? [specificRoomType] 
+      : ["oneRoom", "twoRoom", "threeRoom", "fourPlusRoom"];
+    
+    // Если обрабатываем все районы и типы комнат, удаляем существующие данные
+    if (!specificDistrict && !specificRoomType) {
+      logInfo(`Deleting existing property price data for ${normalizedCity}`);
+      await storage.deletePropertyPricesByCity(normalizedCity);
+    }
+    
+    // Создаем задачи для скрапинга в очереди
+    const tasks = enqueueCityTasks(
+      cityData.otodomUrl,
+      normalizedCity,
+      districtsToProcess,
+      roomTypes,
+      fetchDate
+    );
+    
+    logInfo(`Added ${tasks.length} tasks to the queue for ${cityData.name}`);
+    
+    // Возвращаем информацию о добавленных задачах
+    return {
+      status: "processing",
+      message: `Started scraping tasks for ${cityData.name}. Processing will continue in the background.`,
+      queueStatus: getQueueStatus(),
+      tasks: tasks.map(t => ({
+        id: t.id,
+        district: t.districtName,
+        roomType: t.roomType,
+        status: t.status
+      }))
+    };
+  } catch (error) {
+    logError(`Error in fetchPropertyPriceDataPlaywright: ${error}`);
+    throw error;
+  }
+}
+
+/**
+ * Получить статус очереди задач скрапинга
+ */
+export function getScrapingStatus() {
+  return getQueueStatus();
+}
+
+/**
+ * Оригинальная функция для скрапинга данных о недвижимости (сохранена для обратной совместимости)
+ */
 export async function fetchPropertyPriceData(
   city: string, 
   fetchDate: string, 

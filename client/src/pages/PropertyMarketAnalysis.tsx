@@ -465,7 +465,8 @@ export default function PropertyMarketAnalysis() {
                                     <span className="text-xs font-medium">{formatPrice(district.roomBreakdown.oneRoom.avgPrice / 40)}</span>
                                     <span className="text-xs text-muted-foreground">
                                       ({district.roomBreakdown.oneRoom.count}
-                                      {district.roomBreakdown.oneRoom.reportedCount > district.roomBreakdown.oneRoom.count && 
+                                      {district.roomBreakdown.oneRoom.reportedCount && 
+                                       district.roomBreakdown.oneRoom.reportedCount > district.roomBreakdown.oneRoom.count && 
                                         ` / ${district.roomBreakdown.oneRoom.reportedCount} ${t.reported || "rep"}`}
                                       )
                                     </span>
@@ -475,7 +476,8 @@ export default function PropertyMarketAnalysis() {
                                     <span className="text-xs font-medium">{formatPrice(district.roomBreakdown.twoRoom.avgPrice / 60)}</span>
                                     <span className="text-xs text-muted-foreground">
                                       ({district.roomBreakdown.twoRoom.count}
-                                      {district.roomBreakdown.twoRoom.reportedCount > district.roomBreakdown.twoRoom.count && 
+                                      {district.roomBreakdown.twoRoom.reportedCount && 
+                                       district.roomBreakdown.twoRoom.reportedCount > district.roomBreakdown.twoRoom.count && 
                                         ` / ${district.roomBreakdown.twoRoom.reportedCount} ${t.reported || "rep"}`}
                                       )
                                     </span>
@@ -485,7 +487,8 @@ export default function PropertyMarketAnalysis() {
                                     <span className="text-xs font-medium">{formatPrice(district.roomBreakdown.threeRoom.avgPrice / 80)}</span>
                                     <span className="text-xs text-muted-foreground">
                                       ({district.roomBreakdown.threeRoom.count}
-                                      {district.roomBreakdown.threeRoom.reportedCount > district.roomBreakdown.threeRoom.count && 
+                                      {district.roomBreakdown.threeRoom.reportedCount && 
+                                       district.roomBreakdown.threeRoom.reportedCount > district.roomBreakdown.threeRoom.count && 
                                         ` / ${district.roomBreakdown.threeRoom.reportedCount} ${t.reported || "rep"}`}
                                       )
                                     </span>

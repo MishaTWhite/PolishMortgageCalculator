@@ -179,6 +179,7 @@ export const translations: Translations = {
     refresh: "Odśwież dane",
     forceRefresh: "Zaktualizuj z Otodom",
     updateAllCities: "Zaktualizuj wszystkie miasta",
+    updateAllData: "Aktualizuj dane nieruchomości",
     errorLoadingData: "Nie udało się załadować danych",
     cityAveragePrice: "Średnia cena za m² w mieście",
     dataBasedOn: "Dane oparte na",
@@ -334,6 +335,7 @@ export const translations: Translations = {
     refresh: "Refresh data",
     forceRefresh: "Update from Otodom",
     updateAllCities: "Update all cities",
+    updateAllData: "Update all data",
     errorLoadingData: "Failed to load data",
     cityAveragePrice: "Average price per m² in the city",
     dataBasedOn: "Data based on",
@@ -489,6 +491,8 @@ export const translations: Translations = {
     
     // Property market analysis
     refresh: "Оновити дані",
+    forceRefresh: "Оновити з Otodom",
+    updateAllCities: "Оновити всі міста",
     updateAllData: "Оновити дані нерухомості",
     errorLoadingData: "Не вдалося завантажити дані",
     cityAveragePrice: "Середня ціна за м² у місті",

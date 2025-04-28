@@ -416,18 +416,22 @@ export async function fetchPropertyPriceData(city: string, fetchDate: string) {
         roomBreakdown: {
           oneRoom: {
             count: scrapedData.roomBreakdown.oneRoom.count,
+            reportedCount: scrapedData.roomBreakdown.oneRoom.reportedCount,
             avgPrice: scrapedData.roomBreakdown.oneRoom.avgPrice
           },
           twoRoom: {
             count: scrapedData.roomBreakdown.twoRoom.count,
+            reportedCount: scrapedData.roomBreakdown.twoRoom.reportedCount,
             avgPrice: scrapedData.roomBreakdown.twoRoom.avgPrice
           },
           threeRoom: {
             count: scrapedData.roomBreakdown.threeRoom.count,
+            reportedCount: scrapedData.roomBreakdown.threeRoom.reportedCount,
             avgPrice: scrapedData.roomBreakdown.threeRoom.avgPrice
           },
           fourPlusRoom: {
             count: scrapedData.roomBreakdown.fourPlusRoom.count,
+            reportedCount: scrapedData.roomBreakdown.fourPlusRoom.reportedCount,
             avgPrice: scrapedData.roomBreakdown.fourPlusRoom.avgPrice
           }
         }
@@ -493,18 +497,22 @@ export async function fetchPropertyPriceData(city: string, fetchDate: string) {
         roomBreakdown: {
           oneRoom: {
             count: oneRoomCount,
+            reportedCount: oneRoomCount, // Same as count for fallback data
             avgPrice: oneRoomAvgPrice * 40 // approx size of 1-room apt in sqm
           },
           twoRoom: {
             count: twoRoomCount,
+            reportedCount: twoRoomCount, // Same as count for fallback data
             avgPrice: twoRoomAvgPrice * 55 // approx size of 2-room apt in sqm
           },
           threeRoom: {
             count: threeRoomCount,
+            reportedCount: threeRoomCount, // Same as count for fallback data
             avgPrice: threeRoomAvgPrice * 75 // approx size of 3-room apt in sqm
           },
           fourPlusRoom: {
             count: fourPlusRoomCount,
+            reportedCount: fourPlusRoomCount, // Same as count for fallback data
             avgPrice: fourPlusRoomAvgPrice * 100 // approx size of 4+ room apt in sqm
           }
         }

@@ -217,6 +217,15 @@ export default function MortgageCalculator() {
         const newTotalRate = typedData.rate + bankMargin;
         setTotalInterestRate(newTotalRate);
         setBaseRateSource("NBP Reference Rate");
+        
+        // Пересчитываем месячный платеж в соответствии с новой процентной ставкой
+        const loanAmountPLN = selectedCurrency === "PLN" ? loanAmount : convertToPLN(loanAmount);
+        const newMonthlyPaymentPLN = calculateMonthlyPayment(loanAmountPLN, newTotalRate, loanDuration);
+        const newMonthlyPayment = selectedCurrency === "PLN" 
+          ? newMonthlyPaymentPLN 
+          : convertFromPLN(newMonthlyPaymentPLN);
+        setMonthlyPayment(newMonthlyPayment);
+        
         recalculate();
       }
     } 
@@ -226,9 +235,18 @@ export default function MortgageCalculator() {
       const newTotalRate = wiborRate + bankMargin;
       setTotalInterestRate(newTotalRate);
       setBaseRateSource(`WIBOR ${selectedWiborType}`);
+      
+      // Пересчитываем месячный платеж в соответствии с новой процентной ставкой
+      const loanAmountPLN = selectedCurrency === "PLN" ? loanAmount : convertToPLN(loanAmount);
+      const newMonthlyPaymentPLN = calculateMonthlyPayment(loanAmountPLN, newTotalRate, loanDuration);
+      const newMonthlyPayment = selectedCurrency === "PLN" 
+        ? newMonthlyPaymentPLN 
+        : convertFromPLN(newMonthlyPaymentPLN);
+      setMonthlyPayment(newMonthlyPayment);
+      
       recalculate();
     }
-  }, [interestRateData, bankMargin, recalculate, selectedWiborType, wiborRates]);
+  }, [interestRateData, bankMargin, recalculate, selectedWiborType, wiborRates, loanAmount, loanDuration, selectedCurrency, convertToPLN, convertFromPLN]);
   
   // Обработчик выбора ставки WIBOR
   const handleSelectWibor = (wiborType: string, rate: number) => {

@@ -356,10 +356,15 @@ export async function generateSamplePropertyData(city: string, fetchDate: string
     }
   }
   
+  // Delete existing data for this city before saving new data
+  const normalizedCityName = normalizeCity(config.name);
+  console.log(`Deleting existing property price data for ${normalizedCityName}`);
+  await storage.deletePropertyPricesByCity(normalizedCityName);
+  
   // Save the final data to the database
   for (const price of prices) {
     await storage.createPropertyPrice({
-      city: normalizeCity(config.name),
+      city: normalizedCityName,
       district: price.district,
       averagePricePerSqm: Number(price.averagePricePerSqm),
       numberOfListings: Number(price.numberOfListings),

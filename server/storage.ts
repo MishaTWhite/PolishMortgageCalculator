@@ -48,6 +48,7 @@ export interface IStorage {
   // Property price methods
   getPropertyPricesByCity(city: string): Promise<PropertyPrice[]>;
   createPropertyPrice(price: InsertPropertyPrice): Promise<PropertyPrice>;
+  deletePropertyPricesByCity(city: string): Promise<void>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -206,6 +207,14 @@ export class DatabaseStorage implements IStorage {
   async createPropertyPrice(price: InsertPropertyPrice): Promise<PropertyPrice> {
     const [propertyPrice] = await db.insert(propertyPrices).values(price).returning();
     return propertyPrice;
+  }
+  
+  async deletePropertyPricesByCity(city: string): Promise<void> {
+    // Normalize city name for consistent storage
+    const normalizedCity = city.toLowerCase();
+    
+    // Delete all property prices for this city
+    await db.delete(propertyPrices).where(eq(propertyPrices.city, normalizedCity));
   }
 }
 

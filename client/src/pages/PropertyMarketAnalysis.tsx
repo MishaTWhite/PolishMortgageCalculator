@@ -162,7 +162,7 @@ export default function PropertyMarketAnalysis() {
                     className="flex items-center gap-2"
                   >
                     <RefreshCw size={16} className={isLoading ? "animate-spin" : ""} />
-                    {t.updateAllData || "Update Property Data"}
+                    {t.updateAllCities || "Update Property Data"}
                   </Button>
                 </div>
               </div>

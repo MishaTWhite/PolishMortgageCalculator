@@ -17,17 +17,28 @@ export async function scrapeOtodomPropertyDataByRoomType(
   try {
     console.log(`Starting scrape for ${roomType} in ${cityUrl}/${districtSearchTerm}`);
     
-    // Base URL for Otodom
-    const baseUrl = `https://www.otodom.pl/pl/wyniki/sprzedaz/mieszkanie/all/${cityUrl}/${cityUrl}/${districtSearchTerm}`;
+    // Base URL for Otodom - trying the correct URL format for the current version of Otodom
+    // Testing with a more direct approach to the search results
+    const baseUrl = `https://www.otodom.pl/pl/oferty/sprzedaz/mieszkanie/${cityUrl}/${districtSearchTerm}`;
     
-    // Headers to make request look like it's coming from a browser
+    // Headers to make request look like it's coming from a real browser
+    // Adding more real browser headers to avoid 403 errors
     const headers = {
-      'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/112.0.0.0 Safari/537.36',
-      'Accept-Language': 'en-US,en;q=0.9,pl;q=0.8',
-      'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.7',
+      'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+      'Accept-Language': 'pl-PL,pl;q=0.9,en-US;q=0.8,en;q=0.7',
+      'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.7',
       'Referer': 'https://www.otodom.pl/',
       'Connection': 'keep-alive',
-      'Cache-Control': 'max-age=0'
+      'Cache-Control': 'max-age=0',
+      'sec-ch-ua': '"Google Chrome";v="120", "Chromium";v="120", "Not=A?Brand";v="99"',
+      'sec-ch-ua-mobile': '?0',
+      'sec-ch-ua-platform': '"Windows"',
+      'Sec-Fetch-Dest': 'document',
+      'Sec-Fetch-Mode': 'navigate',
+      'Sec-Fetch-Site': 'same-origin',
+      'Sec-Fetch-User': '?1',
+      'Upgrade-Insecure-Requests': '1',
+      'Cookie': 'lang=pl; zgoda=1'
     };
     
     // Map room type to query parameter

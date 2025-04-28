@@ -217,10 +217,25 @@ export async function fetchPropertyPriceData(
       const propertyPrice = {
         city: normalizedCity,
         district: district.name,
-        averagePricePerSqm: districtResults.averagePricePerSqm.toString(),
-        numberOfListings: districtResults.numberOfListings.toString(),
-        minPrice: districtResults.minPrice.toString(),
-        maxPrice: districtResults.maxPrice.toString(),
+        averagePricePerSqm: Number(districtResults.averagePricePerSqm),
+        numberOfListings: Number(districtResults.numberOfListings),
+        minPrice: Number(districtResults.minPrice),
+        maxPrice: Number(districtResults.maxPrice),
+        // Add these properties for compatibility with the database schema
+        // but they'll be ignored in favor of the roomBreakdown JSON 
+        oneRoomCount: districtResults.roomBreakdown.oneRoom.count,
+        oneRoomReportedCount: districtResults.roomBreakdown.oneRoom.reportedCount,
+        oneRoomAvgPrice: districtResults.roomBreakdown.oneRoom.avgPrice,
+        twoRoomCount: districtResults.roomBreakdown.twoRoom.count,
+        twoRoomReportedCount: districtResults.roomBreakdown.twoRoom.reportedCount,
+        twoRoomAvgPrice: districtResults.roomBreakdown.twoRoom.avgPrice,
+        threeRoomCount: districtResults.roomBreakdown.threeRoom.count,
+        threeRoomReportedCount: districtResults.roomBreakdown.threeRoom.reportedCount,
+        threeRoomAvgPrice: districtResults.roomBreakdown.threeRoom.avgPrice,
+        fourPlusRoomCount: districtResults.roomBreakdown.fourPlusRoom.count,
+        fourPlusRoomReportedCount: districtResults.roomBreakdown.fourPlusRoom.reportedCount,
+        fourPlusRoomAvgPrice: districtResults.roomBreakdown.fourPlusRoom.avgPrice,
+        // Store the roomBreakdown as JSON string in a separate field
         roomBreakdown: JSON.stringify(districtResults.roomBreakdown),
         source: "Otodom",
         fetchDate

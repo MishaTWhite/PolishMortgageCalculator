@@ -16,7 +16,7 @@ function Router() {
       <Route path="/" component={MortgageCalculator} />
       <Route path="/investment" component={InvestmentCalculator} />
       <Route path="/converter" component={CurrencyConverterPage} />
-      <Route path="/property-market" component={PropertyMarketAnalysis} />
+      <Route path="/property-market-analysis" component={PropertyMarketAnalysis} />
       <Route component={NotFound} />
     </Switch>
   );

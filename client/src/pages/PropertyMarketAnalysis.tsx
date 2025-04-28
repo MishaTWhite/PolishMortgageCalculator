@@ -75,10 +75,9 @@ interface ScraperResponse {
 }
 
 interface PlaywrightScraperResponse {
-  status: string;
-  message: string;
-  queueStatus: ScraperQueueStatus;
-  tasks: ScrapingTask[];
+  success: boolean;
+  status: ScraperQueueStatus;
+  tasks?: ScrapingTask[];
 }
 
 // Use the response type from the schema
@@ -135,8 +134,10 @@ export default function PropertyMarketAnalysis() {
   
   // Update scraper status when data changes
   useEffect(() => {
-    if (scraperData && scraperData.status) {
-      setScraperStatus(scraperData.status);
+    if (scraperData) {
+      if (scraperData.status) {
+        setScraperStatus(scraperData.status);
+      }
       // Update task list if available
       if (scraperData.tasks) {
         setPlaywrightTasks(scraperData.tasks);
@@ -326,8 +327,10 @@ export default function PropertyMarketAnalysis() {
                         const result = await response.json() as PlaywrightScraperResponse;
                         
                         // Update tasks and status
-                        setPlaywrightTasks(result.tasks);
-                        setScraperStatus(result.queueStatus);
+                        if (result.tasks) {
+                          setPlaywrightTasks(result.tasks);
+                        }
+                        setScraperStatus(result.status);
                         
                         // Trigger status refetch
                         refetchScraperStatus();

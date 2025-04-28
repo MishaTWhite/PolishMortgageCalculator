@@ -44,9 +44,9 @@ export default function CalcNavigation() {
         </Button>
       </Link>
       
-      <Link href="/property-market">
+      <Link href="/property-market-analysis">
         <Button
-          variant={location === "/property-market" ? "default" : "outline"}
+          variant={location === "/property-market-analysis" ? "default" : "outline"}
           className="flex items-center gap-2"
           size="sm"
         >

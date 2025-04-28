@@ -5,7 +5,8 @@ import {
   inflationRates, type InflationRate, type InsertInflationRate,
   stockIndices, type StockIndex, type InsertStockIndex,
   wiborRates, type WiborRate, type InsertWiborRate,
-  bankOffers, type BankOffer, type InsertBankOffer
+  bankOffers, type BankOffer, type InsertBankOffer,
+  propertyPrices, type PropertyPrice, type InsertPropertyPrice
 } from "@shared/schema";
 
 // modify the interface with any CRUD methods
@@ -41,6 +42,10 @@ export interface IStorage {
   // Bank offer methods
   getLatestBankOffers(): Promise<BankOffer[]>;
   createBankOffer(offer: InsertBankOffer): Promise<BankOffer>;
+  
+  // Property price methods
+  getPropertyPricesByCity(city: string): Promise<PropertyPrice[]>;
+  createPropertyPrice(price: InsertPropertyPrice): Promise<PropertyPrice>;
 }
 
 export class MemStorage implements IStorage {
@@ -51,6 +56,7 @@ export class MemStorage implements IStorage {
   private stockIndices: Map<number, StockIndex>;
   private wiborRates: Map<number, WiborRate>;
   private bankOffers: Map<number, BankOffer>;
+  private propertyPrices: Map<number, PropertyPrice>;
   
   userCurrentId: number;
   interestRateCurrentId: number;
@@ -59,6 +65,7 @@ export class MemStorage implements IStorage {
   stockIndexCurrentId: number;
   wiborRateCurrentId: number;
   bankOfferCurrentId: number;
+  propertyPriceCurrentId: number;
 
   constructor() {
     this.users = new Map();
@@ -68,6 +75,7 @@ export class MemStorage implements IStorage {
     this.stockIndices = new Map();
     this.wiborRates = new Map();
     this.bankOffers = new Map();
+    this.propertyPrices = new Map();
     
     this.userCurrentId = 1;
     this.interestRateCurrentId = 1;
@@ -76,6 +84,7 @@ export class MemStorage implements IStorage {
     this.stockIndexCurrentId = 1;
     this.wiborRateCurrentId = 1;
     this.bankOfferCurrentId = 1;
+    this.propertyPriceCurrentId = 1;
   }
 
   // User methods
@@ -279,6 +288,28 @@ export class MemStorage implements IStorage {
     
     this.bankOffers.set(id, offer);
     return offer;
+  }
+  
+  // Property price methods
+  async getPropertyPricesByCity(city: string): Promise<PropertyPrice[]> {
+    if (this.propertyPrices.size === 0) {
+      return [];
+    }
+    
+    // Filter prices by city and sort by district
+    const prices = Array.from(this.propertyPrices.values())
+      .filter(price => price.city.toLowerCase() === city.toLowerCase());
+    
+    prices.sort((a, b) => a.district.localeCompare(b.district));
+    
+    return prices;
+  }
+  
+  async createPropertyPrice(insertPrice: InsertPropertyPrice): Promise<PropertyPrice> {
+    const id = this.propertyPriceCurrentId++;
+    const price: PropertyPrice = { ...insertPrice, id };
+    this.propertyPrices.set(id, price);
+    return price;
   }
 }
 

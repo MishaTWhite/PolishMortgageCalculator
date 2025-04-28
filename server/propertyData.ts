@@ -85,10 +85,10 @@ async function scrapeOtodomPropertyData(cityUrl: string, districtSearchTerm: str
   minPrice: number;
   maxPrice: number;
   roomBreakdown: {
-    oneRoom: { count: number; avgPrice: number; };
-    twoRoom: { count: number; avgPrice: number; };
-    threeRoom: { count: number; avgPrice: number; };
-    fourPlusRoom: { count: number; avgPrice: number; };
+    oneRoom: { count: number; reportedCount?: number; avgPrice: number; };
+    twoRoom: { count: number; reportedCount?: number; avgPrice: number; };
+    threeRoom: { count: number; reportedCount?: number; avgPrice: number; };
+    fourPlusRoom: { count: number; reportedCount?: number; avgPrice: number; };
   };
 }> {
   try {
@@ -194,8 +194,8 @@ async function scrapeOtodomPropertyData(cityUrl: string, districtSearchTerm: str
       console.log(`Found ${maxPages} pages for ${roomConfig.name}`);
       
       // Scrape all available pages for each room type to get complete data
-      // Limit to max 10 pages to avoid overwhelming the server
-      const pagesToScrape = Math.min(maxPages, 10);
+      // Limit to max 30 pages (720+ listings) to get more comprehensive data
+      const pagesToScrape = Math.min(maxPages, 30);
       
       // If more than one page, process additional pages
       for (let page = 2; page <= pagesToScrape; page++) {
@@ -306,7 +306,15 @@ async function scrapeOtodomPropertyData(cityUrl: string, districtSearchTerm: str
 }
 
 // Helper function to process listings on a page
-async function processListingsOnPage($: cheerio.CheerioAPI, roomConfig: RoomConfig) {
+async function processListingsOnPage($: cheerio.CheerioAPI, roomConfig: {
+  name: string; 
+  query: string; 
+  count: number; 
+  reportedCount?: number;
+  totalPrice: number; 
+  prices: number[]; 
+  pricesPerSqm: number[];
+}) {
   // Extract listings from the page
   const propertyItems = $('article') || $('.css-1q7njkh') || $('.css-1oji9jw') || $('.css-1hfoviz') || $('.offer-item');
   console.log(`Found ${propertyItems.length} property items on this page for ${roomConfig.name}`);

@@ -46,14 +46,11 @@ const cityConfig: {
     name: "Wrocław",
     otodomUrl: "wroclaw",
     districts: [
-      { name: "Śródmieście", searchTerm: "srodmiescie", fallbackPriceRange: [23000, 24000], fallbackListings: [130, 140] },
-      { name: "Mokotów", searchTerm: "mokotow", fallbackPriceRange: [17000, 18000], fallbackListings: [120, 130] },
-      { name: "Wola", searchTerm: "wola", fallbackPriceRange: [15000, 16000], fallbackListings: [70, 80] },
-      { name: "Praga Południe", searchTerm: "praga-poludnie", fallbackPriceRange: [14000, 15000], fallbackListings: [45, 55] },
-      { name: "Ursynów", searchTerm: "ursynow", fallbackPriceRange: [13500, 14000], fallbackListings: [65, 75] },
-      { name: "Bielany", searchTerm: "bielany", fallbackPriceRange: [13000, 13500], fallbackListings: [50, 60] },
-      { name: "Ochota", searchTerm: "ochota", fallbackPriceRange: [12500, 13000], fallbackListings: [80, 90] },
-      { name: "Praga Północ", searchTerm: "praga-polnoc", fallbackPriceRange: [10500, 11000], fallbackListings: [75, 85] }
+      { name: "Stare Miasto", searchTerm: "stare-miasto", fallbackPriceRange: [14000, 19000], fallbackListings: [70, 110] },
+      { name: "Śródmieście", searchTerm: "srodmiescie", fallbackPriceRange: [12000, 16000], fallbackListings: [55, 85] },
+      { name: "Krzyki", searchTerm: "krzyki", fallbackPriceRange: [11000, 15000], fallbackListings: [60, 90] },
+      { name: "Fabryczna", searchTerm: "fabryczna", fallbackPriceRange: [9500, 13500], fallbackListings: [50, 80] },
+      { name: "Psie Pole", searchTerm: "psie-pole", fallbackPriceRange: [8500, 12000], fallbackListings: [40, 70] }
     ]
   },
   gdansk: {

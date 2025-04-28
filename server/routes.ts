@@ -3,9 +3,48 @@ import { createServer, type Server } from "http";
 import { storage } from "./storage";
 import axios from "axios";
 import { format } from "date-fns";
-import { exchangeRateResponseSchema } from "../shared/schema";
+import { exchangeRateResponseSchema, propertyPriceResponseSchema } from "../shared/schema";
+import { generateSamplePropertyData } from "./propertyData";
 
 export async function registerRoutes(app: Express): Promise<Server> {
+  // Get property prices by city
+  app.get("/api/property-prices", async (req, res) => {
+    try {
+      const city = req.query.city as string || "warsaw"; // Default to Warsaw if no city provided
+      
+      // Get property prices from storage
+      const prices = await storage.getPropertyPricesByCity(city);
+      
+      if (prices.length > 0) {
+        // Group prices by city (should all be the same city)
+        const cityData = {
+          city: prices[0].city,
+          prices: prices.map(price => ({
+            district: price.district,
+            averagePricePerSqm: parseInt(price.averagePricePerSqm.toString()),
+            numberOfListings: parseInt(price.numberOfListings.toString()),
+            minPrice: parseInt(price.minPrice.toString()),
+            maxPrice: parseInt(price.maxPrice.toString())
+          })),
+          lastUpdated: prices[0].fetchDate,
+          source: prices[0].source
+        };
+        
+        return res.json(cityData);
+      }
+      
+      // If no data in storage, create sample data for the requested city
+      const currentDate = format(new Date(), "dd.MM.yyyy");
+      
+      // Create sample property data for testing purposes
+      const sampleData = await generateSamplePropertyData(city, currentDate);
+      
+      return res.json(sampleData);
+    } catch (error) {
+      console.error("Error fetching property prices:", error);
+      res.status(500).json({ error: "Failed to fetch property prices" });
+    }
+  });
   // Get current NBP interest rate
   app.get("/api/interest-rate", async (req, res) => {
     try {

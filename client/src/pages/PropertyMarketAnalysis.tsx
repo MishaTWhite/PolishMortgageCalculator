@@ -22,6 +22,8 @@ import {
 import { Badge } from "@/components/ui/badge";
 
 // Define interfaces for property data
+import { PropertyPriceResponse } from "../../shared/schema";
+
 interface PropertyPrice {
   district: string;
   averagePricePerSqm: number;
@@ -30,12 +32,8 @@ interface PropertyPrice {
   maxPrice: number;
 }
 
-interface CityPrices {
-  city: string;
-  lastUpdated: string;
-  source: string;
-  prices: PropertyPrice[];
-}
+// Use the response type from the schema
+type CityPrices = PropertyPriceResponse;
 
 export default function PropertyMarketAnalysis() {
   const { language } = useLanguage();
@@ -50,7 +48,7 @@ export default function PropertyMarketAnalysis() {
     isLoading,
     isError,
     refetch
-  } = useQuery({
+  } = useQuery<PropertyPriceResponse>({
     queryKey: ['/api/property-prices', selectedCity],
     staleTime: 1000 * 60 * 60 * 24, // 24 hours
   });

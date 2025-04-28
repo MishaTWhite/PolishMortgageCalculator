@@ -8,6 +8,8 @@ import {
   bankOffers, type BankOffer, type InsertBankOffer,
   propertyPrices, type PropertyPrice, type InsertPropertyPrice
 } from "@shared/schema";
+import { eq, desc, and } from "drizzle-orm";
+import { db } from "./db";
 
 // modify the interface with any CRUD methods
 // you might need
@@ -48,269 +50,160 @@ export interface IStorage {
   createPropertyPrice(price: InsertPropertyPrice): Promise<PropertyPrice>;
 }
 
-export class MemStorage implements IStorage {
-  private users: Map<number, User>;
-  private interestRates: Map<number, InterestRate>;
-  private exchangeRates: Map<number, ExchangeRate>;
-  private inflationRates: Map<number, InflationRate>;
-  private stockIndices: Map<number, StockIndex>;
-  private wiborRates: Map<number, WiborRate>;
-  private bankOffers: Map<number, BankOffer>;
-  private propertyPrices: Map<number, PropertyPrice>;
-  
-  userCurrentId: number;
-  interestRateCurrentId: number;
-  exchangeRateCurrentId: number;
-  inflationRateCurrentId: number;
-  stockIndexCurrentId: number;
-  wiborRateCurrentId: number;
-  bankOfferCurrentId: number;
-  propertyPriceCurrentId: number;
-
-  constructor() {
-    this.users = new Map();
-    this.interestRates = new Map();
-    this.exchangeRates = new Map();
-    this.inflationRates = new Map();
-    this.stockIndices = new Map();
-    this.wiborRates = new Map();
-    this.bankOffers = new Map();
-    this.propertyPrices = new Map();
-    
-    this.userCurrentId = 1;
-    this.interestRateCurrentId = 1;
-    this.exchangeRateCurrentId = 1;
-    this.inflationRateCurrentId = 1;
-    this.stockIndexCurrentId = 1;
-    this.wiborRateCurrentId = 1;
-    this.bankOfferCurrentId = 1;
-    this.propertyPriceCurrentId = 1;
-  }
-
+export class DatabaseStorage implements IStorage {
   // User methods
   async getUser(id: number): Promise<User | undefined> {
-    return this.users.get(id);
+    const [user] = await db.select().from(users).where(eq(users.id, id));
+    return user || undefined;
   }
 
   async getUserByUsername(username: string): Promise<User | undefined> {
-    return Array.from(this.users.values()).find(
-      (user) => user.username === username,
-    );
+    const [user] = await db.select().from(users).where(eq(users.username, username));
+    return user || undefined;
   }
 
   async createUser(insertUser: InsertUser): Promise<User> {
-    const id = this.userCurrentId++;
-    const user: User = { ...insertUser, id };
-    this.users.set(id, user);
+    const [user] = await db.insert(users).values(insertUser).returning();
     return user;
   }
   
   // Interest rate methods
   async getLatestInterestRate(): Promise<InterestRate | undefined> {
-    if (this.interestRates.size === 0) {
-      return undefined;
-    }
-    
-    // Get all interest rates and sort by ID (descending)
-    const allRates = Array.from(this.interestRates.values());
-    allRates.sort((a, b) => b.id - a.id);
-    
-    return allRates[0];
+    const [rate] = await db.select().from(interestRates).orderBy(desc(interestRates.id)).limit(1);
+    return rate || undefined;
   }
   
-  async createInterestRate(insertRate: InsertInterestRate): Promise<InterestRate> {
-    const id = this.interestRateCurrentId++;
-    const rate: InterestRate = { ...insertRate, id };
-    this.interestRates.set(id, rate);
-    return rate;
+  async createInterestRate(rate: InsertInterestRate): Promise<InterestRate> {
+    const [interestRate] = await db.insert(interestRates).values(rate).returning();
+    return interestRate;
   }
   
   // Exchange rate methods
   async getLatestExchangeRate(): Promise<ExchangeRate | undefined> {
-    if (this.exchangeRates.size === 0) {
-      return undefined;
-    }
-    
-    // Get all exchange rates and sort by ID (descending)
-    const allRates = Array.from(this.exchangeRates.values());
-    allRates.sort((a, b) => b.id - a.id);
-    
-    return allRates[0];
+    const [rate] = await db.select().from(exchangeRates).orderBy(desc(exchangeRates.id)).limit(1);
+    return rate || undefined;
   }
   
-  async createExchangeRate(insertRate: InsertExchangeRate): Promise<ExchangeRate> {
-    const id = this.exchangeRateCurrentId++;
-    const rate: ExchangeRate = { ...insertRate, id };
-    this.exchangeRates.set(id, rate);
-    return rate;
+  async createExchangeRate(rate: InsertExchangeRate): Promise<ExchangeRate> {
+    const [exchangeRate] = await db.insert(exchangeRates).values(rate).returning();
+    return exchangeRate;
   }
   
   // Inflation rate methods
   async getLatestInflationRate(): Promise<InflationRate | undefined> {
-    if (this.inflationRates.size === 0) {
-      return undefined;
-    }
-    
-    // Get all inflation rates and sort by ID (descending)
-    const allRates = Array.from(this.inflationRates.values());
-    allRates.sort((a, b) => b.id - a.id);
-    
-    return allRates[0];
+    const [rate] = await db.select().from(inflationRates).orderBy(desc(inflationRates.id)).limit(1);
+    return rate || undefined;
   }
   
   async getAllInflationRates(): Promise<InflationRate[]> {
-    const allRates = Array.from(this.inflationRates.values());
-    // Sort by date field (newest to oldest)
-    allRates.sort((a, b) => {
-      const dateA = new Date(a.date.split('.').reverse().join('-'));
-      const dateB = new Date(b.date.split('.').reverse().join('-'));
-      return dateB.getTime() - dateA.getTime();
-    });
-    
-    return allRates;
+    return await db.select().from(inflationRates).orderBy(desc(inflationRates.id));
   }
   
-  async createInflationRate(insertRate: InsertInflationRate): Promise<InflationRate> {
-    const id = this.inflationRateCurrentId++;
-    
-    // Ensure monthlyRate is null if undefined
-    const monthlyRate = insertRate.monthlyRate === undefined ? null : insertRate.monthlyRate;
-    
-    const rate: InflationRate = { 
-      ...insertRate, 
-      id,
-      monthlyRate 
-    };
-    
-    this.inflationRates.set(id, rate);
-    return rate;
+  async createInflationRate(rate: InsertInflationRate): Promise<InflationRate> {
+    const [inflationRate] = await db.insert(inflationRates).values(rate).returning();
+    return inflationRate;
   }
   
   // Stock index methods
   async getLatestStockIndex(symbol: string): Promise<StockIndex | undefined> {
-    if (this.stockIndices.size === 0) {
-      return undefined;
-    }
-    
-    // Get all stock indices with the specified symbol and sort by ID (descending)
-    const allIndices = Array.from(this.stockIndices.values())
-      .filter(index => index.symbol === symbol);
-    
-    if (allIndices.length === 0) {
-      return undefined;
-    }
-    
-    allIndices.sort((a, b) => b.id - a.id);
-    
-    return allIndices[0];
+    const [index] = await db
+      .select()
+      .from(stockIndices)
+      .where(eq(stockIndices.symbol, symbol))
+      .orderBy(desc(stockIndices.id))
+      .limit(1);
+    return index || undefined;
   }
   
-  async createStockIndex(insertIndex: InsertStockIndex): Promise<StockIndex> {
-    const id = this.stockIndexCurrentId++;
-    
-    // Ensure fiveYearReturn and tenYearReturn are null if undefined
-    const fiveYearReturn = insertIndex.fiveYearReturn === undefined ? null : insertIndex.fiveYearReturn;
-    const tenYearReturn = insertIndex.tenYearReturn === undefined ? null : insertIndex.tenYearReturn;
-    
-    const index: StockIndex = { 
-      ...insertIndex, 
-      id,
-      fiveYearReturn,
-      tenYearReturn
-    };
-    
-    this.stockIndices.set(id, index);
-    return index;
+  async createStockIndex(index: InsertStockIndex): Promise<StockIndex> {
+    const [stockIndex] = await db.insert(stockIndices).values(index).returning();
+    return stockIndex;
   }
   
   // WIBOR rate methods
   async getLatestWiborRates(): Promise<WiborRate[]> {
-    if (this.wiborRates.size === 0) {
+    // Get the most recent fetch date
+    const [latestRate] = await db
+      .select()
+      .from(wiborRates)
+      .orderBy(desc(wiborRates.id))
+      .limit(1);
+      
+    if (!latestRate) {
       return [];
     }
     
-    // Group WIBOR rates by type and get the latest for each type
-    const ratesByType = new Map<string, WiborRate>();
-    
-    for (const rate of this.wiborRates.values()) {
-      const currentLatest = ratesByType.get(rate.type);
-      
-      if (!currentLatest || rate.id > currentLatest.id) {
-        ratesByType.set(rate.type, rate);
-      }
-    }
-    
-    return Array.from(ratesByType.values());
+    // Get all rates with the same fetch date
+    return await db
+      .select()
+      .from(wiborRates)
+      .where(eq(wiborRates.fetchDate, latestRate.fetchDate));
   }
   
-  async createWiborRate(insertRate: InsertWiborRate): Promise<WiborRate> {
-    const id = this.wiborRateCurrentId++;
-    const rate: WiborRate = { ...insertRate, id };
-    this.wiborRates.set(id, rate);
-    return rate;
+  async createWiborRate(rate: InsertWiborRate): Promise<WiborRate> {
+    const [wiborRate] = await db.insert(wiborRates).values(rate).returning();
+    return wiborRate;
   }
   
   // Bank offer methods
   async getLatestBankOffers(): Promise<BankOffer[]> {
-    if (this.bankOffers.size === 0) {
+    // Get the most recent fetch date
+    const [latestOffer] = await db
+      .select()
+      .from(bankOffers)
+      .orderBy(desc(bankOffers.id))
+      .limit(1);
+      
+    if (!latestOffer) {
       return [];
     }
     
-    // Group bank offers by bank name and get the latest for each bank
-    const offersByBank = new Map<string, BankOffer>();
-    
-    for (const offer of this.bankOffers.values()) {
-      const currentLatest = offersByBank.get(offer.bankName);
-      
-      if (!currentLatest || offer.id > currentLatest.id) {
-        offersByBank.set(offer.bankName, offer);
-      }
-    }
-    
-    // Return all offers sorted by total rate (ascending)
-    const result = Array.from(offersByBank.values());
-    result.sort((a, b) => parseFloat(a.totalRate) - parseFloat(b.totalRate));
-    
-    return result;
+    // Get all offers with the same fetch date
+    return await db
+      .select()
+      .from(bankOffers)
+      .where(eq(bankOffers.fetchDate, latestOffer.fetchDate));
   }
   
-  async createBankOffer(insertOffer: InsertBankOffer): Promise<BankOffer> {
-    const id = this.bankOfferCurrentId++;
-    
-    // Ensure additionalInfo is null if undefined
-    const additionalInfo = insertOffer.additionalInfo === undefined ? null : insertOffer.additionalInfo;
-    
-    const offer: BankOffer = { 
-      ...insertOffer, 
-      id,
-      additionalInfo
-    };
-    
-    this.bankOffers.set(id, offer);
-    return offer;
+  async createBankOffer(offer: InsertBankOffer): Promise<BankOffer> {
+    const [bankOffer] = await db.insert(bankOffers).values(offer).returning();
+    return bankOffer;
   }
   
   // Property price methods
   async getPropertyPricesByCity(city: string): Promise<PropertyPrice[]> {
-    if (this.propertyPrices.size === 0) {
+    // Get all property prices for the specified city
+    // Each city's data will be a group with the same fetch date
+    // We need to find the latest fetch date for the specified city
+    
+    // First, check if we have any data for this city
+    const [latestPrice] = await db
+      .select()
+      .from(propertyPrices)
+      .where(eq(propertyPrices.city, city))
+      .orderBy(desc(propertyPrices.id))
+      .limit(1);
+    
+    if (!latestPrice) {
       return [];
     }
     
-    // Filter prices by city and sort by district
-    const prices = Array.from(this.propertyPrices.values())
-      .filter(price => price.city.toLowerCase() === city.toLowerCase());
-    
-    prices.sort((a, b) => a.district.localeCompare(b.district));
-    
-    return prices;
+    // Then get all prices for this city with the same fetch date
+    return await db
+      .select()
+      .from(propertyPrices)
+      .where(
+        and(
+          eq(propertyPrices.city, city),
+          eq(propertyPrices.fetchDate, latestPrice.fetchDate)
+        )
+      );
   }
   
-  async createPropertyPrice(insertPrice: InsertPropertyPrice): Promise<PropertyPrice> {
-    const id = this.propertyPriceCurrentId++;
-    const price: PropertyPrice = { ...insertPrice, id };
-    this.propertyPrices.set(id, price);
-    return price;
+  async createPropertyPrice(price: InsertPropertyPrice): Promise<PropertyPrice> {
+    const [propertyPrice] = await db.insert(propertyPrices).values(price).returning();
+    return propertyPrice;
   }
 }
 
-export const storage = new MemStorage();
+export const storage = new DatabaseStorage();

@@ -116,7 +116,10 @@ export default function PropertyMarketAnalysis() {
                 
                 <Button 
                   variant="outline"
-                  onClick={() => refetch()}
+                  onClick={() => {
+                    queryClient.invalidateQueries({ queryKey: ['/api/property-prices'] });
+                    refetch();
+                  }}
                   disabled={isLoading}
                   className="flex items-center gap-2"
                 >

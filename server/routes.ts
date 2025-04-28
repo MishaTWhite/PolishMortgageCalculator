@@ -11,14 +11,25 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get("/api/property-prices", async (req, res) => {
     try {
       const city = req.query.city as string || "warsaw"; // Default to Warsaw if no city provided
+      const forceRefresh = req.query.refresh === "true"; // Optional parameter to force refresh
       
-      // Get property prices from storage
-      const prices = await storage.getPropertyPricesByCity(city);
+      // Get property prices from storage, filtered by the normalized city name
+      const normalizedCity = city.toLowerCase();
+      let prices = await storage.getPropertyPricesByCity(normalizedCity);
       
-      if (prices.length > 0) {
+      // Convert city to proper display name
+      const cityDisplayNames: Record<string, string> = {
+        "warsaw": "Warszawa",
+        "krakow": "Kraków",
+        "wroclaw": "Wrocław",
+        "gdansk": "Gdańsk"
+      };
+      
+      // If we have data for this city and not forcing refresh, return it
+      if (prices.length > 0 && !forceRefresh) {
         // Group prices by city (should all be the same city)
         const cityData = {
-          city: prices[0].city,
+          city: cityDisplayNames[normalizedCity] || prices[0].city,
           prices: prices.map(price => ({
             district: price.district,
             averagePricePerSqm: parseInt(price.averagePricePerSqm.toString()),
@@ -33,11 +44,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.json(cityData);
       }
       
-      // If no data in storage, create sample data for the requested city
+      // If no data in storage or forcing refresh, create sample data for the requested city
       const currentDate = format(new Date(), "dd.MM.yyyy");
       
       // Create sample property data for testing purposes
-      const sampleData = await generateSamplePropertyData(city, currentDate);
+      const sampleData = await generateSamplePropertyData(normalizedCity, currentDate);
       
       return res.json(sampleData);
     } catch (error) {

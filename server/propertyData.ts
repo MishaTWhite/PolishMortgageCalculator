@@ -84,17 +84,25 @@ async function scrapeOtodomPropertyData(cityUrl: string, districtSearchTerm: str
   numberOfListings: number;
   minPrice: number;
   maxPrice: number;
+  roomBreakdown: {
+    oneRoom: { count: number; avgPrice: number; };
+    twoRoom: { count: number; avgPrice: number; };
+    threeRoom: { count: number; avgPrice: number; };
+    fourPlusRoom: { count: number; avgPrice: number; };
+  };
 }> {
   try {
-    // Construct the URL to search for apartments in the specified city and district
-    // Try different URL formats for Otodom as they sometimes change their URL structure
-    const url = `https://www.otodom.pl/pl/oferty/sprzedaz/mieszkanie/${cityUrl}/${districtSearchTerm}`;
-    const alternateUrl = `https://www.otodom.pl/pl/wyniki/sprzedaz/mieszkanie/${cityUrl}/${districtSearchTerm}`;
+    // Base URL for the district
+    const baseUrl = `https://www.otodom.pl/pl/oferty/sprzedaz/mieszkanie/${cityUrl}/${districtSearchTerm}`;
+    console.log(`Base URL for scraping: ${baseUrl}`);
     
-    // Choose which URL to use
-    const finalUrl = url;
-    
-    console.log(`Fetching data from URL: ${finalUrl}`);
+    // Stats for room types
+    const roomStats = {
+      oneRoom: { count: 0, totalPrice: 0, avgPrice: 0 },
+      twoRoom: { count: 0, totalPrice: 0, avgPrice: 0 },
+      threeRoom: { count: 0, totalPrice: 0, avgPrice: 0 },
+      fourPlusRoom: { count: 0, totalPrice: 0, avgPrice: 0 }
+    };
     
     // Set headers to mimic a browser request
     const headers = {
@@ -116,144 +124,191 @@ async function scrapeOtodomPropertyData(cityUrl: string, districtSearchTerm: str
     };
     
     console.log(`Scraping Otodom data for ${cityUrl}/${districtSearchTerm}`);
-    const response = await axios.get(finalUrl, { headers });
-    const html = response.data;
-    const $ = cheerio.load(html);
     
-    // Extract the number of listings
-    let numberOfListings = 0;
-    let averagePricePerSqm = 0;
+    // Variables to collect all data
+    let totalListings = 0;
     let prices: number[] = [];
     let pricesPerSqm: number[] = [];
     
-    // Extracting listings count (this selector might need updating as the website changes)
-    // Look for text that contains numbers followed by "ogłoszeń" or "ogłoszenia" or "ogłoszenie"
-    const listingsText = $('div[data-cy="search.listing-panel.label.ads-number"]').text() || 
-                         $('h1:contains("ogłosz")').text() || 
-                         $('h3:contains("ogłosz")').text() || 
-                         $('span:contains("ogłosz")').text() || 
-                         $('div:contains("ogłosz")').first().text();
+    // First page response to extract total pages count
+    const firstPageResponse = await axios.get(baseUrl, { headers });
+    const firstPageHtml = firstPageResponse.data;
+    const $firstPage = cheerio.load(firstPageHtml);
+    
+    // Extract the number of total listings
+    const listingsText = $firstPage('div[data-cy="search.listing-panel.label.ads-number"]').text() || 
+                         $firstPage('h1:contains("ogłosz")').text() || 
+                         $firstPage('h3:contains("ogłosz")').text() || 
+                         $firstPage('span:contains("ogłosz")').text() || 
+                         $firstPage('div:contains("ogłosz")').first().text();
     
     console.log(`Listings text found: "${listingsText}"`);
     
-    // Try multiple regex patterns to find listing count
     const listingsMatch = listingsText.match(/(\d+)\s+ogłosz/i) || 
                           listingsText.match(/znaleziono\s+(\d+)/i) || 
                           listingsText.match(/(\d+)\s+ofert/i) || 
-                          listingsText.match(/(\d+)\s+mieszk/i) ||
+                          listingsMatch || listingsText.match(/(\d+)\s+mieszk/i) ||
                           listingsText.match(/(\d+)/);
                           
     if (listingsMatch) {
-      numberOfListings = parseInt(listingsMatch[1], 10);
-      console.log(`Found ${numberOfListings} listings`);
+      totalListings = parseInt(listingsMatch[1], 10);
+      console.log(`Found total of ${totalListings} listings`);
     }
     
-    // Extract prices and calculate price per square meter
-    // Try with multiple selectors to increase chances of finding data
-    const propertyItems = $('article') || $('.css-1q7njkh') || $('.css-1oji9jw') || $('.css-1hfoviz') || $('.offer-item');
-    let listingsFound = 0;
+    // Find pagination to determine number of pages
+    let maxPages = 1;
+    const paginationElements = $firstPage('li[data-cy^="pagination.page-"]');
     
-    console.log(`Found ${propertyItems.length} property items on the page`);
-    
-    propertyItems.each((_, element) => {
-      try {
-        // Different potential selectors for price
-        let priceText = '';
-        let areaText = '';
-        
-        // Try various selectors for price
-        const priceSelectors = [
-          'span:contains("zł")',
-          'div[data-cy="Price"]',
-          'p:contains("zł")',
-          'div:contains("zł")' 
-        ];
-        
-        for (const selector of priceSelectors) {
-          priceText = $(element).find(selector).first().text();
-          if (priceText.includes('zł')) break;
-        }
-        
-        // Try various selectors for area
-        const areaSelectors = [
-          'span:contains("m²")',
-          'div[data-cy="Area"]',
-          'span:contains("m2")',
-          'p:contains("m²")',
-          'div:contains("m²")'
-        ];
-        
-        for (const selector of areaSelectors) {
-          areaText = $(element).find(selector).first().text();
-          if (areaText.includes('m²') || areaText.includes('m2')) break;
-        }
-        
-        console.log(`Found listing: Price=${priceText}, Area=${areaText}`);
-        
-        // Extract numbers from text
-        const priceMatch = priceText.match(/(\d[\d\s,.]*)/);
-        const areaMatch = areaText.match(/(\d[\d\s,.]*)/);
-        
-        if (priceMatch && areaMatch) {
-          // Parse price and area, remove spaces
-          // First replace commas with dots, then remove all spaces
-          const cleanPriceText = priceMatch[1].replace(/\s/g, '').replace(',', '.');
-          const cleanAreaText = areaMatch[1].replace(/\s/g, '').replace(',', '.');
-          
-          const price = parseInt(cleanPriceText, 10);
-          const area = parseFloat(cleanAreaText);
-          
-          if (!isNaN(price) && !isNaN(area) && area > 0 && price > 10000) { // Basic sanity check
-            prices.push(price);
-            const pricePerSqm = Math.round(price / area);
-            pricesPerSqm.push(pricePerSqm);
-            listingsFound++;
-            console.log(`Successfully parsed: price=${price}, area=${area}, price/m²=${pricePerSqm}`);
-          }
-        }
-      } catch (err) {
-        console.error("Error parsing listing:", err);
+    if (paginationElements.length > 0) {
+      // Get the last pagination element to determine total pages
+      const lastPageElement = paginationElements.last();
+      const pageNumber = lastPageElement.attr('data-cy')?.replace('pagination.page-', '');
+      if (pageNumber && !isNaN(parseInt(pageNumber, 10))) {
+        maxPages = parseInt(pageNumber, 10);
       }
-    });
+    }
     
-    console.log(`Successfully parsed ${listingsFound} listings`);
+    console.log(`Found ${maxPages} pages to scrape`);
     
-    // If we found only a few properties, try again with alternative selectors
-    if (listingsFound < 5) {
-      console.log("Few listings found, trying alternative selectors...");
+    // Limit to 5 pages maximum to avoid overloading the website
+    const pagesToScrape = Math.min(maxPages, 5);
+    console.log(`Will scrape ${pagesToScrape} pages`);
+    
+    // Process each page
+    for (let page = 1; page <= pagesToScrape; page++) {
+      const pageUrl = page === 1 ? baseUrl : `${baseUrl}?page=${page}`;
+      console.log(`Scraping page ${page}/${pagesToScrape}: ${pageUrl}`);
       
-      // Try to find listings in different ways (common for real estate sites)
-      $('.property-item, .listing-item, .offer-item, .real-estate-item, .css-3ohnye').each((_, element) => {
+      // Skip refetching page 1 since we already have it
+      let $ = $firstPage;
+      if (page > 1) {
+        const response = await axios.get(pageUrl, { headers });
+        const html = response.data;
+        $ = cheerio.load(html);
+        
+        // Add a small delay between page requests to be respectful
+        await new Promise(resolve => setTimeout(resolve, 1500));
+      }
+      
+      // Extract listings from this page
+      const propertyItems = $('article') || $('.css-1q7njkh') || $('.css-1oji9jw') || $('.css-1hfoviz') || $('.offer-item');
+      console.log(`Found ${propertyItems.length} property items on page ${page}`);
+      
+      propertyItems.each((_, element) => {
         try {
-          // Get all text from the element
-          const itemText = $(element).text();
+          // Extract price, area, and rooms
+          let priceText = '';
+          let areaText = '';
+          let roomsText = '';
           
-          // Look for price pattern (common in real estate listings)
-          const priceMatch = itemText.match(/(\d[\d\s,.]*)\s*zł/) || 
-                            itemText.match(/(\d[\d\s,.]*)\s*PLN/i);
+          // Try various selectors for price
+          const priceSelectors = [
+            'span:contains("zł")',
+            'div[data-cy="Price"]',
+            'p:contains("zł")',
+            'div:contains("zł")' 
+          ];
           
-          // Look for area pattern (common in real estate listings)
-          const areaMatch = itemText.match(/(\d[\d\s,.]*)\s*m²/) || 
-                           itemText.match(/(\d[\d\s,.]*)\s*m2/);
+          for (const selector of priceSelectors) {
+            priceText = $(element).find(selector).first().text();
+            if (priceText.includes('zł')) break;
+          }
+          
+          // Try various selectors for area
+          const areaSelectors = [
+            'span:contains("m²")',
+            'div[data-cy="Area"]',
+            'span:contains("m2")',
+            'p:contains("m²")',
+            'div:contains("m²")'
+          ];
+          
+          for (const selector of areaSelectors) {
+            areaText = $(element).find(selector).first().text();
+            if (areaText.includes('m²') || areaText.includes('m2')) break;
+          }
+          
+          // Look for room count
+          const roomSelectors = [
+            'span:contains("pokój")',
+            'span:contains("pokoje")',
+            'div:contains("pokój")',
+            'div:contains("pokoje")'
+          ];
+          
+          for (const selector of roomSelectors) {
+            roomsText = $(element).find(selector).first().text();
+            if (roomsText.includes('pokój') || roomsText.includes('pokoje')) break;
+          }
+          
+          console.log(`Found listing: Price=${priceText}, Area=${areaText}, Rooms=${roomsText}`);
+          
+          // Parse price, area, and rooms
+          const priceMatch = priceText.match(/(\d[\d\s,.]*)/);
+          const areaMatch = areaText.match(/(\d[\d\s,.]*)/);
+          
+          // Parse room count
+          let roomCount = 0;
+          if (roomsText) {
+            const roomMatch = roomsText.match(/(\d+)\s*pok/);
+            if (roomMatch) {
+              roomCount = parseInt(roomMatch[1], 10);
+            }
+          }
           
           if (priceMatch && areaMatch) {
-            const price = parseInt(priceMatch[1].replace(/\s/g, '').replace(',', '.'), 10);
-            const area = parseFloat(areaMatch[1].replace(/\s/g, '').replace(',', '.'));
+            // Clean and parse values
+            const cleanPriceText = priceMatch[1].replace(/\s/g, '').replace(',', '.');
+            const cleanAreaText = areaMatch[1].replace(/\s/g, '').replace(',', '.');
             
+            const price = parseInt(cleanPriceText, 10);
+            const area = parseFloat(cleanAreaText);
+            
+            // Validate price and area
             if (!isNaN(price) && !isNaN(area) && area > 0 && price > 10000) {
               prices.push(price);
               const pricePerSqm = Math.round(price / area);
               pricesPerSqm.push(pricePerSqm);
-              listingsFound++;
+              
+              // Update room statistics
+              if (roomCount === 1) {
+                roomStats.oneRoom.count++;
+                roomStats.oneRoom.totalPrice += price;
+              } else if (roomCount === 2) {
+                roomStats.twoRoom.count++;
+                roomStats.twoRoom.totalPrice += price;
+              } else if (roomCount === 3) {
+                roomStats.threeRoom.count++;
+                roomStats.threeRoom.totalPrice += price;
+              } else if (roomCount >= 4) {
+                roomStats.fourPlusRoom.count++;
+                roomStats.fourPlusRoom.totalPrice += price;
+              }
+              
+              console.log(`Successfully parsed: price=${price}, area=${area}, price/m²=${pricePerSqm}, rooms=${roomCount}`);
             }
           }
         } catch (err) {
-          console.error("Error with alternative parsing:", err);
+          console.error("Error parsing listing:", err);
         }
       });
-      
-      console.log(`After alternative parsing, found ${listingsFound} listings`);
     }
+    
+    // Calculate averages for each room type
+    roomStats.oneRoom.avgPrice = roomStats.oneRoom.count > 0 ? 
+      Math.round(roomStats.oneRoom.totalPrice / roomStats.oneRoom.count) : 0;
+      
+    roomStats.twoRoom.avgPrice = roomStats.twoRoom.count > 0 ? 
+      Math.round(roomStats.twoRoom.totalPrice / roomStats.twoRoom.count) : 0;
+      
+    roomStats.threeRoom.avgPrice = roomStats.threeRoom.count > 0 ? 
+      Math.round(roomStats.threeRoom.totalPrice / roomStats.threeRoom.count) : 0;
+      
+    roomStats.fourPlusRoom.avgPrice = roomStats.fourPlusRoom.count > 0 ? 
+      Math.round(roomStats.fourPlusRoom.totalPrice / roomStats.fourPlusRoom.count) : 0;
+    
+    console.log(`Successfully parsed ${prices.length} listings across ${pagesToScrape} pages`);
+    console.log(`Room breakdown: 1 room: ${roomStats.oneRoom.count}, 2 rooms: ${roomStats.twoRoom.count}, 3 rooms: ${roomStats.threeRoom.count}, 4+ rooms: ${roomStats.fourPlusRoom.count}`);
     
     // If we couldn't extract any prices, return empty result
     if (pricesPerSqm.length === 0) {
@@ -261,7 +316,7 @@ async function scrapeOtodomPropertyData(cityUrl: string, districtSearchTerm: str
     }
     
     // Calculate average price per square meter
-    averagePricePerSqm = Math.round(
+    const averagePricePerSqm = Math.round(
       pricesPerSqm.reduce((sum, price) => sum + price, 0) / pricesPerSqm.length
     );
     
@@ -271,9 +326,27 @@ async function scrapeOtodomPropertyData(cityUrl: string, districtSearchTerm: str
     
     return {
       averagePricePerSqm,
-      numberOfListings: numberOfListings || pricesPerSqm.length,
+      numberOfListings: totalListings || prices.length,
       minPrice,
-      maxPrice
+      maxPrice,
+      roomBreakdown: {
+        oneRoom: {
+          count: roomStats.oneRoom.count,
+          avgPrice: roomStats.oneRoom.avgPrice
+        },
+        twoRoom: {
+          count: roomStats.twoRoom.count,
+          avgPrice: roomStats.twoRoom.avgPrice
+        },
+        threeRoom: {
+          count: roomStats.threeRoom.count,
+          avgPrice: roomStats.threeRoom.avgPrice
+        },
+        fourPlusRoom: {
+          count: roomStats.fourPlusRoom.count,
+          avgPrice: roomStats.fourPlusRoom.avgPrice
+        }
+      }
     };
   } catch (error) {
     console.error(`Error scraping Otodom data for ${districtSearchTerm}:`, error);
@@ -281,8 +354,8 @@ async function scrapeOtodomPropertyData(cityUrl: string, districtSearchTerm: str
   }
 }
 
-// Helper function to generate property price data from Otodom or fallback to sample data
-export async function generateSamplePropertyData(city: string, fetchDate: string) {
+// Fetch and process property price data from Otodom for a specific city
+export async function fetchPropertyPriceData(city: string, fetchDate: string) {
   // Get config for requested city or default to Warsaw
   const config = cityConfig[city.toLowerCase()] || cityConfig.warsaw;
   const prices = [];
@@ -301,16 +374,43 @@ export async function generateSamplePropertyData(city: string, fetchDate: string
         numberOfListings: scrapedData.numberOfListings,
         minPrice: scrapedData.minPrice,
         maxPrice: scrapedData.maxPrice,
+        oneRoomCount: scrapedData.roomBreakdown.oneRoom.count,
+        oneRoomAvgPrice: scrapedData.roomBreakdown.oneRoom.avgPrice,
+        twoRoomCount: scrapedData.roomBreakdown.twoRoom.count,
+        twoRoomAvgPrice: scrapedData.roomBreakdown.twoRoom.avgPrice,
+        threeRoomCount: scrapedData.roomBreakdown.threeRoom.count,
+        threeRoomAvgPrice: scrapedData.roomBreakdown.threeRoom.avgPrice,
+        fourPlusRoomCount: scrapedData.roomBreakdown.fourPlusRoom.count,
+        fourPlusRoomAvgPrice: scrapedData.roomBreakdown.fourPlusRoom.avgPrice,
         source: "Otodom",
         fetchDate
       };
       
+      // Create a response structure with room breakdown
       prices.push({
         district: district.name,
         averagePricePerSqm: scrapedData.averagePricePerSqm,
         numberOfListings: scrapedData.numberOfListings,
         minPrice: scrapedData.minPrice,
-        maxPrice: scrapedData.maxPrice
+        maxPrice: scrapedData.maxPrice,
+        roomBreakdown: {
+          oneRoom: {
+            count: scrapedData.roomBreakdown.oneRoom.count,
+            avgPrice: scrapedData.roomBreakdown.oneRoom.avgPrice
+          },
+          twoRoom: {
+            count: scrapedData.roomBreakdown.twoRoom.count,
+            avgPrice: scrapedData.roomBreakdown.twoRoom.avgPrice
+          },
+          threeRoom: {
+            count: scrapedData.roomBreakdown.threeRoom.count,
+            avgPrice: scrapedData.roomBreakdown.threeRoom.avgPrice
+          },
+          fourPlusRoom: {
+            count: scrapedData.roomBreakdown.fourPlusRoom.count,
+            avgPrice: scrapedData.roomBreakdown.fourPlusRoom.avgPrice
+          }
+        }
       });
       
       console.log(`Successfully scraped data for ${district.name}: ${JSON.stringify(scrapedData)}`);
@@ -332,6 +432,18 @@ export async function generateSamplePropertyData(city: string, fetchDate: string
       const minPrice = Math.floor(avgPrice * 0.8) * 10000;
       const maxPrice = Math.floor(avgPrice * 1.2) * 10000;
       
+      // Create fallback room data - distribute listings across room types
+      const oneRoomCount = Math.floor(listings * 0.2); // 20% 1-room
+      const twoRoomCount = Math.floor(listings * 0.45); // 45% 2-room
+      const threeRoomCount = Math.floor(listings * 0.25); // 25% 3-room
+      const fourPlusRoomCount = listings - oneRoomCount - twoRoomCount - threeRoomCount; // remaining
+      
+      // Create price variation by room count
+      const oneRoomAvgPrice = Math.floor(avgPrice * 0.9); // 1-room slightly cheaper per sqm
+      const twoRoomAvgPrice = avgPrice; // 2-room is baseline
+      const threeRoomAvgPrice = Math.floor(avgPrice * 1.05); // 3-room slightly more expensive
+      const fourPlusRoomAvgPrice = Math.floor(avgPrice * 1.1); // 4+ rooms most expensive
+      
       // Create fallback data
       const districtData = {
         city: config.name,
@@ -340,6 +452,14 @@ export async function generateSamplePropertyData(city: string, fetchDate: string
         numberOfListings: listings,
         minPrice,
         maxPrice,
+        oneRoomCount,
+        oneRoomAvgPrice,
+        twoRoomCount,
+        twoRoomAvgPrice,
+        threeRoomCount,
+        threeRoomAvgPrice,
+        fourPlusRoomCount,
+        fourPlusRoomAvgPrice,
         source: "Otodom (fallback)",
         fetchDate
       };
@@ -349,7 +469,25 @@ export async function generateSamplePropertyData(city: string, fetchDate: string
         averagePricePerSqm: avgPrice,
         numberOfListings: listings,
         minPrice,
-        maxPrice
+        maxPrice,
+        roomBreakdown: {
+          oneRoom: {
+            count: oneRoomCount,
+            avgPrice: oneRoomAvgPrice * 40 // approx size of 1-room apt in sqm
+          },
+          twoRoom: {
+            count: twoRoomCount,
+            avgPrice: twoRoomAvgPrice * 55 // approx size of 2-room apt in sqm
+          },
+          threeRoom: {
+            count: threeRoomCount,
+            avgPrice: threeRoomAvgPrice * 75 // approx size of 3-room apt in sqm
+          },
+          fourPlusRoom: {
+            count: fourPlusRoomCount,
+            avgPrice: fourPlusRoomAvgPrice * 100 // approx size of 4+ room apt in sqm
+          }
+        }
       });
       
       console.log(`Using fallback data for ${district.name}`);
@@ -370,6 +508,14 @@ export async function generateSamplePropertyData(city: string, fetchDate: string
       numberOfListings: Number(price.numberOfListings),
       minPrice: Number(price.minPrice),
       maxPrice: Number(price.maxPrice),
+      oneRoomCount: price.roomBreakdown?.oneRoom.count || 0,
+      oneRoomAvgPrice: price.roomBreakdown?.oneRoom.avgPrice || 0,
+      twoRoomCount: price.roomBreakdown?.twoRoom.count || 0,
+      twoRoomAvgPrice: price.roomBreakdown?.twoRoom.avgPrice || 0,
+      threeRoomCount: price.roomBreakdown?.threeRoom.count || 0,
+      threeRoomAvgPrice: price.roomBreakdown?.threeRoom.avgPrice || 0,
+      fourPlusRoomCount: price.roomBreakdown?.fourPlusRoom.count || 0,
+      fourPlusRoomAvgPrice: price.roomBreakdown?.fourPlusRoom.avgPrice || 0,
       source: "Otodom",
       fetchDate
     });

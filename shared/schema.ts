@@ -227,6 +227,15 @@ export const propertyPrices = pgTable("property_prices", {
   numberOfListings: integer("number_of_listings").notNull(),
   minPrice: integer("min_price").notNull(),
   maxPrice: integer("max_price").notNull(),
+  // Room breakdown data
+  oneRoomCount: integer("one_room_count").default(0),
+  oneRoomAvgPrice: integer("one_room_avg_price").default(0),
+  twoRoomCount: integer("two_room_count").default(0),
+  twoRoomAvgPrice: integer("two_room_avg_price").default(0),
+  threeRoomCount: integer("three_room_count").default(0),
+  threeRoomAvgPrice: integer("three_room_avg_price").default(0),
+  fourPlusRoomCount: integer("four_plus_room_count").default(0),
+  fourPlusRoomAvgPrice: integer("four_plus_room_avg_price").default(0),
   fetchDate: text("fetch_date").notNull(),
   source: text("source").notNull(),
 });
@@ -238,6 +247,14 @@ export const insertPropertyPriceSchema = createInsertSchema(propertyPrices).pick
   numberOfListings: true,
   minPrice: true,
   maxPrice: true,
+  oneRoomCount: true,
+  oneRoomAvgPrice: true,
+  twoRoomCount: true,
+  twoRoomAvgPrice: true,
+  threeRoomCount: true,
+  threeRoomAvgPrice: true,
+  fourPlusRoomCount: true,
+  fourPlusRoomAvgPrice: true,
   fetchDate: true,
   source: true,
 });
@@ -253,6 +270,24 @@ export const propertyPriceResponseSchema = z.object({
     numberOfListings: z.number(),
     minPrice: z.number(),
     maxPrice: z.number(),
+    roomBreakdown: z.object({
+      oneRoom: z.object({
+        count: z.number(),
+        avgPrice: z.number(),
+      }),
+      twoRoom: z.object({
+        count: z.number(),
+        avgPrice: z.number(),
+      }),
+      threeRoom: z.object({
+        count: z.number(),
+        avgPrice: z.number(),
+      }),
+      fourPlusRoom: z.object({
+        count: z.number(),
+        avgPrice: z.number(),
+      }),
+    }).optional(),
   })),
   lastUpdated: z.string(),
   source: z.string(),

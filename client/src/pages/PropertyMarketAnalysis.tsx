@@ -29,6 +29,7 @@ import { PropertyPriceResponse } from "@shared/schema";
 // Room breakdown interface
 interface RoomBreakdown {
   count: number;
+  reportedCount?: number;
   avgPrice: number;
 }
 
@@ -109,36 +110,40 @@ export default function PropertyMarketAnalysis() {
   const calculateRoomTypeStats = (prices: PropertyPrice[] | undefined) => {
     if (!prices || prices.length === 0) {
       return {
-        oneRoom: { count: 0, avgPrice: 0 },
-        twoRoom: { count: 0, avgPrice: 0 },
-        threeRoom: { count: 0, avgPrice: 0 },
-        fourPlusRoom: { count: 0, avgPrice: 0 }
+        oneRoom: { count: 0, reportedCount: 0, avgPrice: 0 },
+        twoRoom: { count: 0, reportedCount: 0, avgPrice: 0 },
+        threeRoom: { count: 0, reportedCount: 0, avgPrice: 0 },
+        fourPlusRoom: { count: 0, reportedCount: 0, avgPrice: 0 }
       };
     }
     
     // Initialize counters and sums
-    let oneRoomCount = 0, oneRoomTotalPrice = 0;
-    let twoRoomCount = 0, twoRoomTotalPrice = 0;
-    let threeRoomCount = 0, threeRoomTotalPrice = 0;
-    let fourPlusRoomCount = 0, fourPlusRoomTotalPrice = 0;
+    let oneRoomCount = 0, oneRoomReportedCount = 0, oneRoomTotalPrice = 0;
+    let twoRoomCount = 0, twoRoomReportedCount = 0, twoRoomTotalPrice = 0;
+    let threeRoomCount = 0, threeRoomReportedCount = 0, threeRoomTotalPrice = 0;
+    let fourPlusRoomCount = 0, fourPlusRoomReportedCount = 0, fourPlusRoomTotalPrice = 0;
     
     // Process each district's room data
     prices.forEach(district => {
       if (district.roomBreakdown) {
         // One-room apartments
         oneRoomCount += district.roomBreakdown.oneRoom.count;
+        oneRoomReportedCount += district.roomBreakdown.oneRoom.reportedCount || district.roomBreakdown.oneRoom.count;
         oneRoomTotalPrice += district.roomBreakdown.oneRoom.count * district.roomBreakdown.oneRoom.avgPrice;
         
         // Two-room apartments
         twoRoomCount += district.roomBreakdown.twoRoom.count;
+        twoRoomReportedCount += district.roomBreakdown.twoRoom.reportedCount || district.roomBreakdown.twoRoom.count;
         twoRoomTotalPrice += district.roomBreakdown.twoRoom.count * district.roomBreakdown.twoRoom.avgPrice;
         
         // Three-room apartments
         threeRoomCount += district.roomBreakdown.threeRoom.count;
+        threeRoomReportedCount += district.roomBreakdown.threeRoom.reportedCount || district.roomBreakdown.threeRoom.count;
         threeRoomTotalPrice += district.roomBreakdown.threeRoom.count * district.roomBreakdown.threeRoom.avgPrice;
         
         // Four-plus-room apartments
         fourPlusRoomCount += district.roomBreakdown.fourPlusRoom.count;
+        fourPlusRoomReportedCount += district.roomBreakdown.fourPlusRoom.reportedCount || district.roomBreakdown.fourPlusRoom.count;
         fourPlusRoomTotalPrice += district.roomBreakdown.fourPlusRoom.count * district.roomBreakdown.fourPlusRoom.avgPrice;
       }
     });
@@ -147,18 +152,22 @@ export default function PropertyMarketAnalysis() {
     return {
       oneRoom: {
         count: oneRoomCount,
+        reportedCount: oneRoomReportedCount,
         avgPrice: oneRoomCount > 0 ? Math.round(oneRoomTotalPrice / oneRoomCount) : 0
       },
       twoRoom: {
         count: twoRoomCount,
+        reportedCount: twoRoomReportedCount,
         avgPrice: twoRoomCount > 0 ? Math.round(twoRoomTotalPrice / twoRoomCount) : 0
       },
       threeRoom: {
         count: threeRoomCount,
+        reportedCount: threeRoomReportedCount,
         avgPrice: threeRoomCount > 0 ? Math.round(threeRoomTotalPrice / threeRoomCount) : 0
       },
       fourPlusRoom: {
         count: fourPlusRoomCount,
+        reportedCount: fourPlusRoomReportedCount,
         avgPrice: fourPlusRoomCount > 0 ? Math.round(fourPlusRoomTotalPrice / fourPlusRoomCount) : 0
       }
     };
@@ -319,7 +328,14 @@ export default function PropertyMarketAnalysis() {
                                 <span className="text-lg font-semibold">{formatPrice(cityRoomStats.oneRoom.avgPrice / 40)}</span>
                                 <span className="text-xs text-muted-foreground">/ m²</span>
                               </div>
-                              <div className="text-xs text-muted-foreground">{cityRoomStats.oneRoom.count} {t.listings || "listings"}</div>
+                              <div className="text-xs text-muted-foreground">
+                                <span>{cityRoomStats.oneRoom.count} {t.processedListings || "processed"}</span>
+                                {cityRoomStats.oneRoom.reportedCount > cityRoomStats.oneRoom.count && (
+                                  <span className="ml-1 text-gray-400">
+                                    ({t.reportedCount || "reported"}: {cityRoomStats.oneRoom.reportedCount})
+                                  </span>
+                                )}
+                              </div>
                             </div>
                             
                             {/* Two-room apartments */}
@@ -332,7 +348,14 @@ export default function PropertyMarketAnalysis() {
                                 <span className="text-lg font-semibold">{formatPrice(cityRoomStats.twoRoom.avgPrice / 60)}</span>
                                 <span className="text-xs text-muted-foreground">/ m²</span>
                               </div>
-                              <div className="text-xs text-muted-foreground">{cityRoomStats.twoRoom.count} {t.listings || "listings"}</div>
+                              <div className="text-xs text-muted-foreground">
+                                <span>{cityRoomStats.twoRoom.count} {t.processedListings || "processed"}</span>
+                                {cityRoomStats.twoRoom.reportedCount > cityRoomStats.twoRoom.count && (
+                                  <span className="ml-1 text-gray-400">
+                                    ({t.reportedCount || "reported"}: {cityRoomStats.twoRoom.reportedCount})
+                                  </span>
+                                )}
+                              </div>
                             </div>
                             
                             {/* Three-room apartments */}

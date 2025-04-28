@@ -25,30 +25,57 @@ export async function registerRoutes(app: Express): Promise<Server> {
         "gdansk": "Gdańsk"
       };
       
-      // If we have data for this city and not forcing refresh, return it
-      if (prices.length > 0 && !forceRefresh) {
-        // Group prices by city (should all be the same city)
-        const cityData = {
-          city: cityDisplayNames[normalizedCity] || prices[0].city,
-          prices: prices.map(price => ({
-            district: price.district,
-            averagePricePerSqm: parseInt(price.averagePricePerSqm.toString()),
-            numberOfListings: parseInt(price.numberOfListings.toString()),
-            minPrice: parseInt(price.minPrice.toString()),
-            maxPrice: parseInt(price.maxPrice.toString())
-          })),
-          lastUpdated: prices[0].fetchDate,
-          source: prices[0].source
-        };
-        
-        return res.json(cityData);
-      }
-      
-      // If no data in storage or forcing refresh, create sample data for the requested city
       const currentDate = format(new Date(), "dd.MM.yyyy");
       
-      // Create sample property data for testing purposes
+      // Check if we already have data for this city
+      if (prices.length > 0) {
+        // Check if data is fresh (less than 24 hours old) or if not forcing refresh
+        const [lastFetchDay, lastFetchMonth, lastFetchYear] = prices[0].fetchDate.split('.').map(Number);
+        const lastFetchDate = new Date(lastFetchYear, lastFetchMonth - 1, lastFetchDay);
+        const now = new Date();
+        const hoursSinceLastFetch = (now.getTime() - lastFetchDate.getTime()) / (1000 * 60 * 60);
+        
+        // If data is fresh or we're not forcing refresh, return existing data
+        if (hoursSinceLastFetch < 24 || !forceRefresh) {
+          // Group prices by city (should all be the same city)
+          const cityData = {
+            city: cityDisplayNames[normalizedCity] || prices[0].city,
+            prices: prices.map(price => ({
+              district: price.district,
+              averagePricePerSqm: parseInt(price.averagePricePerSqm.toString()),
+              numberOfListings: parseInt(price.numberOfListings.toString()),
+              minPrice: parseInt(price.minPrice.toString()),
+              maxPrice: parseInt(price.maxPrice.toString())
+            })),
+            lastUpdated: prices[0].fetchDate,
+            source: prices[0].source
+          };
+          
+          return res.json(cityData);
+        }
+      }
+      
+      // If no data in storage, or data is old and forcing refresh, create new data
+      console.log(`Generating new property data for ${normalizedCity} (force refresh: ${forceRefresh})`);
+      
+      // Create sample property data (in a real app, we would fetch this from a real estate API)
       const sampleData = await generateSamplePropertyData(normalizedCity, currentDate);
+      
+      // Save the property data to the database for future use
+      if (sampleData && sampleData.prices) {
+        for (const district of sampleData.prices) {
+          await storage.createPropertyPrice({
+            city: normalizedCity,
+            district: district.district,
+            averagePricePerSqm: district.averagePricePerSqm,
+            numberOfListings: district.numberOfListings,
+            minPrice: district.minPrice,
+            maxPrice: district.maxPrice,
+            fetchDate: currentDate,
+            source: sampleData.source || "Otodom"
+          });
+        }
+      }
       
       return res.json(sampleData);
     } catch (error) {
@@ -358,7 +385,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           bankMargin: offer.bankMargin.toString(),
           wiborType: offer.wiborType,
           totalRate: offer.totalRate.toString(),
-          additionalInfo: offer.additionalInfo || null,
+          additionalInfo: (offer as any).additionalInfo || null,
           fetchDate: currentDate
         });
       }

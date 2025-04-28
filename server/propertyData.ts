@@ -266,7 +266,7 @@ async function scrapeOtodomPropertyData(cityUrl: string, districtSearchTerm: str
       maxPrice,
       roomBreakdown: {
         oneRoom: {
-          // Use actual counts of processed listings, not reported counts
+          // Show actual processed counts on the frontend instead of reported counts
           count: roomConfigs[0].prices.length,
           avgPrice: avgPriceByRoomType.oneRoom
         },
@@ -378,6 +378,7 @@ export async function fetchPropertyPriceData(city: string, fetchDate: string) {
       const scrapedData = await scrapeOtodomPropertyData(config.otodomUrl, district.searchTerm);
       
       // Create and store the district data
+      // Modify the counts to reflect the actual processed listings
       const districtData = {
         city: config.name,
         district: district.name,

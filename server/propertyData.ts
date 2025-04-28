@@ -151,14 +151,14 @@ async function scrapeOtodomPropertyData(cityUrl: string, districtSearchTerm: str
       const firstHtml = firstResponse.data;
       const $ = cheerio.load(firstHtml);
       
-      // Extract the number of listings for this room config
+      // Extract the reported number of listings (what Otodom claims exists)
       const listingsText = $('div[data-cy="search.listing-panel.label.ads-number"]').text() || 
                           $('h1:contains("ogłosz")').text() || 
                           $('h3:contains("ogłosz")').text() || 
                           $('span:contains("ogłosz")').text() || 
                           $('div:contains("ogłosz")').first().text();
       
-      let listingCount = 0;
+      let reportedListingCount = 0;
       let regexMatch = listingsText.match(/(\d+)\s+ogłosz/i) || 
                       listingsText.match(/znaleziono\s+(\d+)/i) || 
                       listingsText.match(/(\d+)\s+ofert/i) || 
@@ -166,10 +166,15 @@ async function scrapeOtodomPropertyData(cityUrl: string, districtSearchTerm: str
                       listingsText.match(/(\d+)/);
                           
       if (regexMatch) {
-        listingCount = parseInt(regexMatch[1], 10);
-        roomConfig.count = listingCount;
-        totalListings += listingCount;
-        console.log(`Found ${listingCount} listings for ${roomConfig.name}`);
+        reportedListingCount = parseInt(regexMatch[1], 10);
+        roomConfig.reportedCount = reportedListingCount; // Store as reportedCount
+        totalListings += reportedListingCount;
+        console.log(`Otodom reports ${reportedListingCount} listings for ${roomConfig.name}`);
+        
+        // Also get the actual number of listing items on the page
+        const propertyItems = $('article') || $('.css-1q7njkh') || $('.css-1oji9jw') || $('.css-1hfoviz') || $('.offer-item');
+        roomConfig.count = propertyItems.length; // This will be the actual visible count
+        console.log(`Found ${propertyItems.length} visible property items for ${roomConfig.name}`);
       } else {
         console.log(`No listings found for ${roomConfig.name}`);
         continue; // Skip to next room config
@@ -257,10 +262,10 @@ async function scrapeOtodomPropertyData(cityUrl: string, districtSearchTerm: str
     
     console.log(`Successfully processed a total of ${allPrices.length} listings`);
     console.log(`Room breakdown:
-      1 room: ${roomConfigs[0].count} (processed: ${roomConfigs[0].prices.length}), avg price: ${avgPriceByRoomType.oneRoom}
-      2 rooms: ${roomConfigs[1].count} (processed: ${roomConfigs[1].prices.length}), avg price: ${avgPriceByRoomType.twoRoom}
-      3 rooms: ${roomConfigs[2].count} (processed: ${roomConfigs[2].prices.length}), avg price: ${avgPriceByRoomType.threeRoom}
-      4+ rooms: ${roomConfigs[3].count} (processed: ${roomConfigs[3].prices.length}), avg price: ${avgPriceByRoomType.fourPlusRoom}`);
+      1 room: ${roomConfigs[0].reportedCount} (reported) vs ${roomConfigs[0].prices.length} (processed), avg price: ${avgPriceByRoomType.oneRoom}
+      2 rooms: ${roomConfigs[1].reportedCount} (reported) vs ${roomConfigs[1].prices.length} (processed), avg price: ${avgPriceByRoomType.twoRoom}
+      3 rooms: ${roomConfigs[2].reportedCount} (reported) vs ${roomConfigs[2].prices.length} (processed), avg price: ${avgPriceByRoomType.threeRoom}
+      4+ rooms: ${roomConfigs[3].reportedCount} (reported) vs ${roomConfigs[3].prices.length} (processed), avg price: ${avgPriceByRoomType.fourPlusRoom}`);
     
     // Use actual processed counts instead of reported counts for accuracy
     const processedTotalListings = roomConfigs[0].prices.length + 
@@ -279,22 +284,22 @@ async function scrapeOtodomPropertyData(cityUrl: string, districtSearchTerm: str
         oneRoom: {
           // Store both reported count and actual processed count
           count: roomConfigs[0].prices.length,
-          reportedCount: roomConfigs[0].count,
+          reportedCount: roomConfigs[0].reportedCount,
           avgPrice: avgPriceByRoomType.oneRoom
         },
         twoRoom: {
           count: roomConfigs[1].prices.length,
-          reportedCount: roomConfigs[1].count,
+          reportedCount: roomConfigs[1].reportedCount,
           avgPrice: avgPriceByRoomType.twoRoom
         },
         threeRoom: {
           count: roomConfigs[2].prices.length,
-          reportedCount: roomConfigs[2].count,
+          reportedCount: roomConfigs[2].reportedCount,
           avgPrice: avgPriceByRoomType.threeRoom
         },
         fourPlusRoom: {
           count: roomConfigs[3].prices.length, 
-          reportedCount: roomConfigs[3].count,
+          reportedCount: roomConfigs[3].reportedCount,
           avgPrice: avgPriceByRoomType.fourPlusRoom
         }
       }

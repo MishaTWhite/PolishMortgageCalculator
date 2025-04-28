@@ -176,11 +176,14 @@ export class DatabaseStorage implements IStorage {
     // Each city's data will be a group with the same fetch date
     // We need to find the latest fetch date for the specified city
     
+    // Normalize city name for case-insensitive search
+    const cityLowerCase = city.toLowerCase();
+    
     // First, check if we have any data for this city
     const [latestPrice] = await db
       .select()
       .from(propertyPrices)
-      .where(eq(propertyPrices.city, city))
+      .where(eq(propertyPrices.city, cityLowerCase))
       .orderBy(desc(propertyPrices.id))
       .limit(1);
     
@@ -194,7 +197,7 @@ export class DatabaseStorage implements IStorage {
       .from(propertyPrices)
       .where(
         and(
-          eq(propertyPrices.city, city),
+          eq(propertyPrices.city, cityLowerCase),
           eq(propertyPrices.fetchDate, latestPrice.fetchDate)
         )
       );

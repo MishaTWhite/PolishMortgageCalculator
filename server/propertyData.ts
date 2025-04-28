@@ -307,30 +307,74 @@ export async function fetchPropertyPriceData(
         districtResults.maxPrice = districtResults.averagePricePerSqm * 120; // Approx max for a large apartment
       }
       
-      // Create a property price record for storage
+      // Validate data before creating the property price record
+      // Define price range limits
+      const MAX_VALID_PRICE = 10000000; // 10 million zł
+      const MAX_VALID_PRICE_PER_SQM = 100000; // 100,000 zł/m²
+      
+      // Helper function to safely convert and validate numeric values
+      const safeNumber = (value: any, defaultValue: number, maxValue: number): number => {
+        if (value === undefined || value === null) return defaultValue;
+        
+        let num: number;
+        try {
+          num = Number(value);
+          // Check if the number is valid and within range
+          if (isNaN(num) || !isFinite(num) || num < 0 || num > maxValue) {
+            console.warn(`Invalid number value: ${value}, using default: ${defaultValue}`);
+            return defaultValue;
+          }
+          return num;
+        } catch (error) {
+          console.warn(`Error converting value to number: ${value}, using default: ${defaultValue}`);
+          return defaultValue;
+        }
+      };
+      
+      // Create a property price record with validated data
       const propertyPrice = {
         city: normalizedCity,
         district: district.name,
-        averagePricePerSqm: Number(districtResults.averagePricePerSqm),
-        numberOfListings: Number(districtResults.numberOfListings),
-        minPrice: Number(districtResults.minPrice),
-        maxPrice: Number(districtResults.maxPrice),
-        // Add these properties for compatibility with the database schema
-        // but they'll be ignored in favor of the roomBreakdown JSON 
-        oneRoomCount: districtResults.roomBreakdown.oneRoom.count,
-        oneRoomReportedCount: districtResults.roomBreakdown.oneRoom.reportedCount,
-        oneRoomAvgPrice: districtResults.roomBreakdown.oneRoom.avgPrice,
-        twoRoomCount: districtResults.roomBreakdown.twoRoom.count,
-        twoRoomReportedCount: districtResults.roomBreakdown.twoRoom.reportedCount,
-        twoRoomAvgPrice: districtResults.roomBreakdown.twoRoom.avgPrice,
-        threeRoomCount: districtResults.roomBreakdown.threeRoom.count,
-        threeRoomReportedCount: districtResults.roomBreakdown.threeRoom.reportedCount,
-        threeRoomAvgPrice: districtResults.roomBreakdown.threeRoom.avgPrice,
-        fourPlusRoomCount: districtResults.roomBreakdown.fourPlusRoom.count,
-        fourPlusRoomReportedCount: districtResults.roomBreakdown.fourPlusRoom.reportedCount,
-        fourPlusRoomAvgPrice: districtResults.roomBreakdown.fourPlusRoom.avgPrice,
-        // Store the roomBreakdown as JSON string in a separate field
-        roomBreakdown: JSON.stringify(districtResults.roomBreakdown),
+        averagePricePerSqm: Math.round(safeNumber(districtResults.averagePricePerSqm, 0, MAX_VALID_PRICE_PER_SQM)),
+        numberOfListings: Math.round(safeNumber(districtResults.numberOfListings, 0, 1000)),
+        minPrice: Math.round(safeNumber(districtResults.minPrice, 0, MAX_VALID_PRICE)),
+        maxPrice: Math.round(safeNumber(districtResults.maxPrice, 0, MAX_VALID_PRICE)),
+        // Add these properties with validation
+        oneRoomCount: Math.round(safeNumber(districtResults.roomBreakdown.oneRoom.count, 0, 500)),
+        oneRoomReportedCount: Math.round(safeNumber(districtResults.roomBreakdown.oneRoom.reportedCount, 0, 500)),
+        oneRoomAvgPrice: Math.round(safeNumber(districtResults.roomBreakdown.oneRoom.avgPrice, 0, MAX_VALID_PRICE_PER_SQM)),
+        twoRoomCount: Math.round(safeNumber(districtResults.roomBreakdown.twoRoom.count, 0, 500)),
+        twoRoomReportedCount: Math.round(safeNumber(districtResults.roomBreakdown.twoRoom.reportedCount, 0, 500)),
+        twoRoomAvgPrice: Math.round(safeNumber(districtResults.roomBreakdown.twoRoom.avgPrice, 0, MAX_VALID_PRICE_PER_SQM)),
+        threeRoomCount: Math.round(safeNumber(districtResults.roomBreakdown.threeRoom.count, 0, 500)),
+        threeRoomReportedCount: Math.round(safeNumber(districtResults.roomBreakdown.threeRoom.reportedCount, 0, 500)),
+        threeRoomAvgPrice: Math.round(safeNumber(districtResults.roomBreakdown.threeRoom.avgPrice, 0, MAX_VALID_PRICE_PER_SQM)),
+        fourPlusRoomCount: Math.round(safeNumber(districtResults.roomBreakdown.fourPlusRoom.count, 0, 500)),
+        fourPlusRoomReportedCount: Math.round(safeNumber(districtResults.roomBreakdown.fourPlusRoom.reportedCount, 0, 500)),
+        fourPlusRoomAvgPrice: Math.round(safeNumber(districtResults.roomBreakdown.fourPlusRoom.avgPrice, 0, MAX_VALID_PRICE_PER_SQM)),
+        // Store the validated roomBreakdown as JSON string
+        roomBreakdown: JSON.stringify({
+          oneRoom: {
+            count: Math.round(safeNumber(districtResults.roomBreakdown.oneRoom.count, 0, 500)),
+            reportedCount: Math.round(safeNumber(districtResults.roomBreakdown.oneRoom.reportedCount, 0, 500)),
+            avgPrice: Math.round(safeNumber(districtResults.roomBreakdown.oneRoom.avgPrice, 0, MAX_VALID_PRICE_PER_SQM))
+          },
+          twoRoom: {
+            count: Math.round(safeNumber(districtResults.roomBreakdown.twoRoom.count, 0, 500)),
+            reportedCount: Math.round(safeNumber(districtResults.roomBreakdown.twoRoom.reportedCount, 0, 500)),
+            avgPrice: Math.round(safeNumber(districtResults.roomBreakdown.twoRoom.avgPrice, 0, MAX_VALID_PRICE_PER_SQM))
+          },
+          threeRoom: {
+            count: Math.round(safeNumber(districtResults.roomBreakdown.threeRoom.count, 0, 500)),
+            reportedCount: Math.round(safeNumber(districtResults.roomBreakdown.threeRoom.reportedCount, 0, 500)),
+            avgPrice: Math.round(safeNumber(districtResults.roomBreakdown.threeRoom.avgPrice, 0, MAX_VALID_PRICE_PER_SQM))
+          },
+          fourPlusRoom: {
+            count: Math.round(safeNumber(districtResults.roomBreakdown.fourPlusRoom.count, 0, 500)),
+            reportedCount: Math.round(safeNumber(districtResults.roomBreakdown.fourPlusRoom.reportedCount, 0, 500)),
+            avgPrice: Math.round(safeNumber(districtResults.roomBreakdown.fourPlusRoom.avgPrice, 0, MAX_VALID_PRICE_PER_SQM))
+          }
+        }),
         source: "Otodom",
         fetchDate
       };

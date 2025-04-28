@@ -25,12 +25,24 @@ import { Badge } from "@/components/ui/badge";
 // Define interfaces for property data
 import { PropertyPriceResponse } from "@shared/schema";
 
+// Room breakdown interface
+interface RoomBreakdown {
+  count: number;
+  avgPrice: number;
+}
+
 interface PropertyPrice {
   district: string;
   averagePricePerSqm: number;
   numberOfListings: number;
   minPrice: number;
   maxPrice: number;
+  roomBreakdown?: {
+    oneRoom: RoomBreakdown;
+    twoRoom: RoomBreakdown;
+    threeRoom: RoomBreakdown;
+    fourPlusRoom: RoomBreakdown;
+  };
 }
 
 // Use the response type from the schema
@@ -91,6 +103,67 @@ export default function PropertyMarketAnalysis() {
   };
   
   const cityAverage = calculateCityAverage(propertyData?.prices);
+  
+  // Calculate city statistics by room type
+  const calculateRoomTypeStats = (prices: PropertyPrice[] | undefined) => {
+    if (!prices || prices.length === 0) {
+      return {
+        oneRoom: { count: 0, avgPrice: 0 },
+        twoRoom: { count: 0, avgPrice: 0 },
+        threeRoom: { count: 0, avgPrice: 0 },
+        fourPlusRoom: { count: 0, avgPrice: 0 }
+      };
+    }
+    
+    // Initialize counters and sums
+    let oneRoomCount = 0, oneRoomTotalPrice = 0;
+    let twoRoomCount = 0, twoRoomTotalPrice = 0;
+    let threeRoomCount = 0, threeRoomTotalPrice = 0;
+    let fourPlusRoomCount = 0, fourPlusRoomTotalPrice = 0;
+    
+    // Process each district's room data
+    prices.forEach(district => {
+      if (district.roomBreakdown) {
+        // One-room apartments
+        oneRoomCount += district.roomBreakdown.oneRoom.count;
+        oneRoomTotalPrice += district.roomBreakdown.oneRoom.count * district.roomBreakdown.oneRoom.avgPrice;
+        
+        // Two-room apartments
+        twoRoomCount += district.roomBreakdown.twoRoom.count;
+        twoRoomTotalPrice += district.roomBreakdown.twoRoom.count * district.roomBreakdown.twoRoom.avgPrice;
+        
+        // Three-room apartments
+        threeRoomCount += district.roomBreakdown.threeRoom.count;
+        threeRoomTotalPrice += district.roomBreakdown.threeRoom.count * district.roomBreakdown.threeRoom.avgPrice;
+        
+        // Four-plus-room apartments
+        fourPlusRoomCount += district.roomBreakdown.fourPlusRoom.count;
+        fourPlusRoomTotalPrice += district.roomBreakdown.fourPlusRoom.count * district.roomBreakdown.fourPlusRoom.avgPrice;
+      }
+    });
+    
+    // Calculate averages
+    return {
+      oneRoom: {
+        count: oneRoomCount,
+        avgPrice: oneRoomCount > 0 ? Math.round(oneRoomTotalPrice / oneRoomCount) : 0
+      },
+      twoRoom: {
+        count: twoRoomCount,
+        avgPrice: twoRoomCount > 0 ? Math.round(twoRoomTotalPrice / twoRoomCount) : 0
+      },
+      threeRoom: {
+        count: threeRoomCount,
+        avgPrice: threeRoomCount > 0 ? Math.round(threeRoomTotalPrice / threeRoomCount) : 0
+      },
+      fourPlusRoom: {
+        count: fourPlusRoomCount,
+        avgPrice: fourPlusRoomCount > 0 ? Math.round(fourPlusRoomTotalPrice / fourPlusRoomCount) : 0
+      }
+    };
+  };
+  
+  const cityRoomStats = calculateRoomTypeStats(propertyData?.prices);
   
   return (
     <div className="bg-gray-100 font-sans text-text-primary">

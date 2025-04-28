@@ -182,8 +182,9 @@ async function scrapeOtodomPropertyData(cityUrl: string, districtSearchTerm: str
       
       console.log(`Found ${maxPages} pages for ${roomConfig.name}`);
       
-      // Limit to 3 pages maximum for each room type to be respectful
-      const pagesToScrape = Math.min(maxPages, 3);
+      // Scrape all available pages for each room type to get complete data
+      // Limit to max 10 pages to avoid overwhelming the server
+      const pagesToScrape = Math.min(maxPages, 10);
       
       // If more than one page, process additional pages
       for (let page = 2; page <= pagesToScrape; page++) {
@@ -250,27 +251,35 @@ async function scrapeOtodomPropertyData(cityUrl: string, districtSearchTerm: str
       3 rooms: ${roomConfigs[2].count} (processed: ${roomConfigs[2].prices.length}), avg price: ${avgPriceByRoomType.threeRoom}
       4+ rooms: ${roomConfigs[3].count} (processed: ${roomConfigs[3].prices.length}), avg price: ${avgPriceByRoomType.fourPlusRoom}`);
     
+    // Use actual processed counts instead of reported counts for accuracy
+    const processedTotalListings = roomConfigs[0].prices.length + 
+                                  roomConfigs[1].prices.length + 
+                                  roomConfigs[2].prices.length + 
+                                  roomConfigs[3].prices.length;
+    
     // Return the compiled data
     return {
       averagePricePerSqm,
-      numberOfListings: totalListings,
+      // Use processed count if available, fall back to reported count
+      numberOfListings: processedTotalListings > 0 ? processedTotalListings : totalListings,
       minPrice,
       maxPrice,
       roomBreakdown: {
         oneRoom: {
-          count: roomConfigs[0].count,
+          // Use actual counts of processed listings, not reported counts
+          count: roomConfigs[0].prices.length,
           avgPrice: avgPriceByRoomType.oneRoom
         },
         twoRoom: {
-          count: roomConfigs[1].count,
+          count: roomConfigs[1].prices.length,
           avgPrice: avgPriceByRoomType.twoRoom
         },
         threeRoom: {
-          count: roomConfigs[2].count,
+          count: roomConfigs[2].prices.length,
           avgPrice: avgPriceByRoomType.threeRoom
         },
         fourPlusRoom: {
-          count: roomConfigs[3].count,
+          count: roomConfigs[3].prices.length,
           avgPrice: avgPriceByRoomType.fourPlusRoom
         }
       }

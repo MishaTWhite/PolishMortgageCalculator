@@ -2,6 +2,18 @@ import { storage } from "./storage";
 import axios from "axios";
 import * as cheerio from "cheerio";
 
+// Helper function to normalize city names for database storage and API comparison
+function normalizeCity(cityName: string): string {
+  const cityMap: Record<string, string> = {
+    'Wrocław': 'wroclaw',
+    'Warszawa': 'warsaw',
+    'Kraków': 'krakow',
+    'Gdańsk': 'gdansk'
+  };
+  
+  return cityMap[cityName] || cityName.toLowerCase();
+}
+
 // City configurations with mapping to Otodom URLs and district names
 const cityConfig: { 
   [key: string]: { 
@@ -347,7 +359,7 @@ export async function generateSamplePropertyData(city: string, fetchDate: string
   // Save the final data to the database
   for (const price of prices) {
     await storage.createPropertyPrice({
-      city: config.name,
+      city: normalizeCity(config.name),
       district: price.district,
       averagePricePerSqm: Number(price.averagePricePerSqm),
       numberOfListings: Number(price.numberOfListings),

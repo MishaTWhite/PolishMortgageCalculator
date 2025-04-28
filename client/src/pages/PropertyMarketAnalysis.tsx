@@ -136,19 +136,21 @@ export default function PropertyMarketAnalysis() {
                   <Button 
                     variant="default"
                     onClick={() => {
-                      // Force refresh from Otodom by adding refresh=true parameter
-                      fetch(`/api/property-prices?city=${selectedCity}&refresh=true`)
+                      // Force refresh from Otodom by adding refresh=true and forceOtodom=true parameters
+                      setIsLoading(true);
+                      fetch(`/api/property-prices?city=${selectedCity}&refresh=true&forceOtodom=true`)
                         .then(res => res.json())
                         .then(() => {
                           queryClient.invalidateQueries({ queryKey: ['/api/property-prices', selectedCity] });
                           refetch();
-                        });
+                        })
+                        .finally(() => setIsLoading(false));
                     }}
                     disabled={isLoading}
                     className="flex items-center gap-2"
                   >
                     <RefreshCw size={16} className={isLoading ? "animate-spin" : ""} />
-                    {t.forceRefresh || "Update Current City"}
+                    {t.forceRefresh || "Update from Otodom"}
                   </Button>
                   
                   <Button 

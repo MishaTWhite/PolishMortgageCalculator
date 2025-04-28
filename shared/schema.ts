@@ -240,6 +240,8 @@ export const propertyPrices = pgTable("property_prices", {
   fourPlusRoomCount: integer("four_plus_room_count").default(0),
   fourPlusRoomReportedCount: integer("four_plus_room_reported_count").default(0),
   fourPlusRoomAvgPrice: integer("four_plus_room_avg_price").default(0),
+  // Add room breakdown JSON field to store additional data
+  roomBreakdown: text("room_breakdown"),
   fetchDate: text("fetch_date").notNull(),
   source: text("source").notNull(),
 });
@@ -263,6 +265,7 @@ export const insertPropertyPriceSchema = createInsertSchema(propertyPrices).pick
   fourPlusRoomCount: true,
   fourPlusRoomReportedCount: true,
   fourPlusRoomAvgPrice: true,
+  roomBreakdown: true,
   fetchDate: true,
   source: true,
 });

@@ -470,6 +470,7 @@ export const translations: Translations = {
     dataDisclaimer: "Застереження: Дані отримані з",
     dataDisclaimerDetails: "Ціни можуть відрізнятися від фактичних угод і залежать від багатьох факторів, включаючи стандарт оздоблення, поверх, доступність тощо.",
     noDataAvailable: "Дані відсутні. Спробуйте пізніше.",
+    lastUpdated: "Останнє оновлення",
     
     // Calculator parameters section
     parametersTitle: "Параметри кредиту",

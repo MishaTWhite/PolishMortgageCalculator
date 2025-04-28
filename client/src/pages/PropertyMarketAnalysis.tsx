@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import React, { useState, useEffect } from "react";
 import { useLanguage } from "@/context/LanguageContext";
 import { useTranslations } from "@/lib/translations";
 import { useQuery } from "@tanstack/react-query";
@@ -315,7 +315,10 @@ export default function PropertyMarketAnalysis() {
                                 <Bed size={16} className="text-primary" />
                                 <span className="text-sm font-medium">{t.oneRoom || "1 Room"}</span>
                               </div>
-                              <div className="text-lg font-semibold">{formatPrice(cityRoomStats.oneRoom.avgPrice)}</div>
+                              <div className="flex items-center gap-1">
+                                <span className="text-lg font-semibold">{formatPrice(cityRoomStats.oneRoom.avgPrice / 40)}</span>
+                                <span className="text-xs text-muted-foreground">/ m²</span>
+                              </div>
                               <div className="text-xs text-muted-foreground">{cityRoomStats.oneRoom.count} {t.listings || "listings"}</div>
                             </div>
                             
@@ -325,7 +328,10 @@ export default function PropertyMarketAnalysis() {
                                 <Layers size={16} className="text-primary" />
                                 <span className="text-sm font-medium">{t.twoRoom || "2 Rooms"}</span>
                               </div>
-                              <div className="text-lg font-semibold">{formatPrice(cityRoomStats.twoRoom.avgPrice)}</div>
+                              <div className="flex items-center gap-1">
+                                <span className="text-lg font-semibold">{formatPrice(cityRoomStats.twoRoom.avgPrice / 60)}</span>
+                                <span className="text-xs text-muted-foreground">/ m²</span>
+                              </div>
                               <div className="text-xs text-muted-foreground">{cityRoomStats.twoRoom.count} {t.listings || "listings"}</div>
                             </div>
                             
@@ -335,7 +341,10 @@ export default function PropertyMarketAnalysis() {
                                 <Layers size={16} className="text-primary" />
                                 <span className="text-sm font-medium">{t.threeRoom || "3 Rooms"}</span>
                               </div>
-                              <div className="text-lg font-semibold">{formatPrice(cityRoomStats.threeRoom.avgPrice)}</div>
+                              <div className="flex items-center gap-1">
+                                <span className="text-lg font-semibold">{formatPrice(cityRoomStats.threeRoom.avgPrice / 80)}</span>
+                                <span className="text-xs text-muted-foreground">/ m²</span>
+                              </div>
                               <div className="text-xs text-muted-foreground">{cityRoomStats.threeRoom.count} {t.listings || "listings"}</div>
                             </div>
                             
@@ -345,7 +354,10 @@ export default function PropertyMarketAnalysis() {
                                 <Box size={16} className="text-primary" />
                                 <span className="text-sm font-medium">{t.fourPlusRoom || "4+ Rooms"}</span>
                               </div>
-                              <div className="text-lg font-semibold">{formatPrice(cityRoomStats.fourPlusRoom.avgPrice)}</div>
+                              <div className="flex items-center gap-1">
+                                <span className="text-lg font-semibold">{formatPrice(cityRoomStats.fourPlusRoom.avgPrice / 100)}</span>
+                                <span className="text-xs text-muted-foreground">/ m²</span>
+                              </div>
                               <div className="text-xs text-muted-foreground">{cityRoomStats.fourPlusRoom.count} {t.listings || "listings"}</div>
                             </div>
                           </div>
@@ -381,12 +393,18 @@ export default function PropertyMarketAnalysis() {
                       {propertyData.prices
                         .sort((a: PropertyPrice, b: PropertyPrice) => b.averagePricePerSqm - a.averagePricePerSqm)
                         .map((district: PropertyPrice, index: number) => (
-                        <>
-                          <TableRow key={index}>
+                        <React.Fragment key={`district-${index}`}>
+                          <TableRow>
                             <TableCell className="font-medium">{district.district}</TableCell>
                             <TableCell>
-                              {formatPrice(district.averagePricePerSqm)}
-                              <div className="mt-1">
+                              {/* Main average price */}
+                              <div className="flex items-center gap-1 mb-2">
+                                <span className="font-medium">{formatPrice(district.averagePricePerSqm)}</span>
+                                <span className="text-xs text-muted-foreground">/ m²</span>
+                              </div>
+                              
+                              {/* Price comparison badge */}
+                              <div className="mb-2">
                                 {district.averagePricePerSqm > cityAverage * 1.1 ? (
                                   <Badge variant="outline" className="bg-red-50 text-red-600 hover:bg-red-50">
                                     +{Math.round((district.averagePricePerSqm / cityAverage - 1) * 100)}% {t.aboveAvg || "above avg"}
@@ -401,6 +419,33 @@ export default function PropertyMarketAnalysis() {
                                   </Badge>
                                 )}
                               </div>
+                              
+                              {/* Room breakdown for this district */}
+                              {district.roomBreakdown && (
+                                <div className="grid grid-cols-1 gap-1 mt-2">
+                                  <div className="text-xs font-medium">{t.roomBreakdown || "Room breakdown"} (m²):</div>
+                                  <div className="flex items-center gap-1">
+                                    <span className="text-xs text-muted-foreground">{t.oneRoom || "1 Room"}:</span>
+                                    <span className="text-xs font-medium">{formatPrice(district.roomBreakdown.oneRoom.avgPrice / 40)}</span>
+                                    <span className="text-xs text-muted-foreground">({district.roomBreakdown.oneRoom.count})</span>
+                                  </div>
+                                  <div className="flex items-center gap-1">
+                                    <span className="text-xs text-muted-foreground">{t.twoRoom || "2 Rooms"}:</span>
+                                    <span className="text-xs font-medium">{formatPrice(district.roomBreakdown.twoRoom.avgPrice / 60)}</span>
+                                    <span className="text-xs text-muted-foreground">({district.roomBreakdown.twoRoom.count})</span>
+                                  </div>
+                                  <div className="flex items-center gap-1">
+                                    <span className="text-xs text-muted-foreground">{t.threeRoom || "3 Rooms"}:</span>
+                                    <span className="text-xs font-medium">{formatPrice(district.roomBreakdown.threeRoom.avgPrice / 80)}</span>
+                                    <span className="text-xs text-muted-foreground">({district.roomBreakdown.threeRoom.count})</span>
+                                  </div>
+                                  <div className="flex items-center gap-1">
+                                    <span className="text-xs text-muted-foreground">{t.fourPlusRoom || "4+ Rooms"}:</span>
+                                    <span className="text-xs font-medium">{formatPrice(district.roomBreakdown.fourPlusRoom.avgPrice / 100)}</span>
+                                    <span className="text-xs text-muted-foreground">({district.roomBreakdown.fourPlusRoom.count})</span>
+                                  </div>
+                                </div>
+                              )}
                             </TableCell>
                             <TableCell className="text-right">{district.numberOfListings}</TableCell>
                             <TableCell className="text-right">
@@ -409,38 +454,7 @@ export default function PropertyMarketAnalysis() {
                               <div>{formatPrice(district.maxPrice)}</div>
                             </TableCell>
                           </TableRow>
-                          
-                          {/* Room breakdown for this district */}
-                          {district.roomBreakdown && (
-                            <TableRow className="bg-gray-50/50">
-                              <TableCell colSpan={4} className="py-2">
-                                <div className="text-xs font-medium mb-1">{t.roomBreakdown || "Room breakdown"}</div>
-                                <div className="grid grid-cols-4 gap-2">
-                                  <div>
-                                    <div className="text-xs text-muted-foreground">{t.oneRoom || "1 Room"}</div>
-                                    <div className="text-sm">{formatPrice(district.roomBreakdown.oneRoom.avgPrice)}</div>
-                                    <div className="text-xs text-muted-foreground">{district.roomBreakdown.oneRoom.count} {t.listings || "listings"}</div>
-                                  </div>
-                                  <div>
-                                    <div className="text-xs text-muted-foreground">{t.twoRoom || "2 Rooms"}</div>
-                                    <div className="text-sm">{formatPrice(district.roomBreakdown.twoRoom.avgPrice)}</div>
-                                    <div className="text-xs text-muted-foreground">{district.roomBreakdown.twoRoom.count} {t.listings || "listings"}</div>
-                                  </div>
-                                  <div>
-                                    <div className="text-xs text-muted-foreground">{t.threeRoom || "3 Rooms"}</div>
-                                    <div className="text-sm">{formatPrice(district.roomBreakdown.threeRoom.avgPrice)}</div>
-                                    <div className="text-xs text-muted-foreground">{district.roomBreakdown.threeRoom.count} {t.listings || "listings"}</div>
-                                  </div>
-                                  <div>
-                                    <div className="text-xs text-muted-foreground">{t.fourPlusRoom || "4+ Rooms"}</div>
-                                    <div className="text-sm">{formatPrice(district.roomBreakdown.fourPlusRoom.avgPrice)}</div>
-                                    <div className="text-xs text-muted-foreground">{district.roomBreakdown.fourPlusRoom.count} {t.listings || "listings"}</div>
-                                  </div>
-                                </div>
-                              </TableCell>
-                            </TableRow>
-                          )}
-                        </>
+                        </React.Fragment>
                       ))}
                     </TableBody>
                   </Table>

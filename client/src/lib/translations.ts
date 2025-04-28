@@ -322,8 +322,6 @@ export const translations: Translations = {
   en: {
     // Navigation
     mortgageCalculator: "Mortgage Calculator",
-    investmentCalculator: "Investment Calculator",
-    currencyConverter: "Currency Converter",
     propertyMarketAnalysis: "Property Market Analysis",
     
     // Application title and header
@@ -480,8 +478,6 @@ export const translations: Translations = {
   ua: {
     // Navigation
     mortgageCalculator: "Іпотечний калькулятор",
-    investmentCalculator: "Інвестиційний калькулятор",
-    currencyConverter: "Конвертер валют",
     propertyMarketAnalysis: "Аналіз ринку нерухомості",
     
     // Application title and header

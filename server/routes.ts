@@ -11,6 +11,55 @@ import {
 } from "./propertyData";
 
 export async function registerRoutes(app: Express): Promise<Server> {
+  // Get scraping status and tasks
+  app.get("/api/property-prices/scraping-status", async (req, res) => {
+    try {
+      // Get scraping status from the imported function in propertyData.ts
+      const status = getScrapingStatus();
+      
+      // Get all tasks (pending, in progress, and completed)
+      const { getPendingTasks, getCompletedTasks, getCurrentTask } = require('./scrapeTaskManager');
+      const pendingTasks = getPendingTasks();
+      const currentTask = getCurrentTask();
+      const completedTasks = getCompletedTasks();
+      
+      // Combine all tasks for response
+      const allTasks = [
+        ...(currentTask ? [currentTask] : []),
+        ...pendingTasks.slice(0, 20), // Limit to 20 pending tasks
+        ...completedTasks.slice(0, 20), // Limit to 20 completed tasks
+      ];
+      
+      // Map tasks to a simplified format
+      const simplifiedTasks = allTasks.map(task => ({
+        id: task.id,
+        district: task.districtName,
+        roomType: task.roomType,
+        status: task.status
+      }));
+      
+      res.json({
+        success: true,
+        status,
+        tasks: simplifiedTasks
+      });
+    } catch (error) {
+      console.error("Error getting scraping status:", error);
+      res.status(500).json({ 
+        success: false, 
+        error: "Failed to get scraping status",
+        status: {
+          isProcessing: false,
+          totalTasks: 0,
+          pendingTasks: 0,
+          completedTasks: 0,
+          failedTasks: 0,
+          updatedAt: new Date().toISOString()
+        }
+      });
+    }
+  });
+
   // Scrape current property prices from Otodom using the legacy scraper (with targeted options)
   app.get("/api/property-prices/update", async (req, res) => {
     try {
@@ -72,23 +121,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
   
-  // Get the status of the Playwright scraper task queue
-  app.get("/api/property-prices/scraping-status", (req, res) => {
-    try {
-      const status = getScrapingStatus();
-      res.json({
-        success: true,
-        status
-      });
-    } catch (error) {
-      console.error("Error getting scraping status:", error);
-      res.status(500).json({ 
-        success: false, 
-        message: "Error getting scraping status",
-        error: error instanceof Error ? error.message : String(error)
-      });
-    }
-  });
+  // This endpoint is now handled by the comprehensive scraping-status endpoint above
   // Get property prices by city
   app.get("/api/property-prices", async (req, res) => {
     try {

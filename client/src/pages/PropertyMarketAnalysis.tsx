@@ -120,7 +120,7 @@ export default function PropertyMarketAnalysis() {
     data: scraperData,
     isLoading: isScraperStatusLoading,
     refetch: refetchScraperStatus
-  } = useQuery<ScraperResponse>({
+  } = useQuery<PlaywrightScraperResponse>({
     queryKey: ['/api/property-prices/scraping-status'],
     enabled: showScraperStatus,
     refetchInterval: showScraperStatus ? 3000 : false, // Poll every 3 seconds when visible
@@ -137,6 +137,10 @@ export default function PropertyMarketAnalysis() {
   useEffect(() => {
     if (scraperData && scraperData.status) {
       setScraperStatus(scraperData.status);
+      // Update task list if available
+      if (scraperData.tasks) {
+        setPlaywrightTasks(scraperData.tasks);
+      }
     }
   }, [scraperData]);
   

@@ -309,8 +309,13 @@ export async function fetchPropertyPriceData(
       
       // Validate data before creating the property price record
       // Define price range limits
+      const MIN_VALID_PRICE = 50000; // 50,000 zł
       const MAX_VALID_PRICE = 10000000; // 10 million zł
+      const MIN_VALID_AREA = 10; // 10 m²
+      const MAX_VALID_AREA = 1000; // 1000 m²
+      const MIN_VALID_PRICE_PER_SQM = 1000; // 1,000 zł per m²
       const MAX_VALID_PRICE_PER_SQM = 100000; // 100,000 zł/m²
+      const MAX_VALID_LISTINGS = 500; // Maximum reasonable number of listings per district + room type
       
       // Helper function to safely convert and validate numeric values
       const safeNumber = (value: any, defaultValue: number, maxValue: number): number => {

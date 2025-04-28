@@ -53,6 +53,14 @@ export default function PropertyMarketAnalysis() {
   } = useQuery<PropertyPriceResponse>({
     queryKey: ['/api/property-prices', selectedCity],
     staleTime: 1000 * 60 * 60 * 24, // 24 hours
+    queryFn: async () => {
+      // Make explicit query with the selected city parameter
+      const response = await fetch(`/api/property-prices?city=${selectedCity}`);
+      if (!response.ok) {
+        throw new Error('Network response was not ok');
+      }
+      return response.json();
+    }
   });
   
   // Combine both loading states

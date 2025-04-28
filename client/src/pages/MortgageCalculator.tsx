@@ -56,6 +56,10 @@ export default function MortgageCalculator() {
   const [monthlyPaymentMin, setMonthlyPaymentMin] = useState(1000);
   const [monthlyPaymentMax, setMonthlyPaymentMax] = useState(10000);
   
+  // Interest rate related states
+  const [selectedWiborType, setSelectedWiborType] = useState("");
+  const [baseRateSource, setBaseRateSource] = useState("NBP Reference Rate");
+  
   // Currency related states
   const [selectedCurrency, setSelectedCurrency] = useState("PLN");
 
@@ -206,15 +210,38 @@ export default function MortgageCalculator() {
 
   // Effect to update interest rate when base rate or bank margin changes
   useEffect(() => {
-    if (interestRateData) {
+    // Обработка базовой ставки NBP
+    if (selectedWiborType === "" && interestRateData) {
       const typedData = interestRateData as InterestRateResponse;
       if (typedData.rate) {
         const newTotalRate = typedData.rate + bankMargin;
         setTotalInterestRate(newTotalRate);
+        setBaseRateSource("NBP Reference Rate");
         recalculate();
       }
+    } 
+    // Обработка выбранной ставки WIBOR
+    else if (selectedWiborType !== "" && wiborRates && wiborRates.rates && wiborRates.rates[selectedWiborType]) {
+      const wiborRate = wiborRates.rates[selectedWiborType];
+      const newTotalRate = wiborRate + bankMargin;
+      setTotalInterestRate(newTotalRate);
+      setBaseRateSource(`WIBOR ${selectedWiborType}`);
+      recalculate();
     }
-  }, [interestRateData, bankMargin, recalculate]);
+  }, [interestRateData, bankMargin, recalculate, selectedWiborType, wiborRates]);
+  
+  // Обработчик выбора ставки WIBOR
+  const handleSelectWibor = (wiborType: string, rate: number) => {
+    setSelectedWiborType(wiborType);
+    // Изменение общей ставки произойдет в useEffect выше
+  };
+  
+  // Обработчик выбора банка
+  const handleSelectBank = (bankName: string, margin: number, wiborType: string, wiborRate: number) => {
+    setBankMargin(margin);
+    setSelectedWiborType(wiborType);
+    // Изменение общей ставки произойдет в useEffect выше
+  };
 
   // Handler for monthly payment changes
   const handleMonthlyPaymentChange = (newMonthlyPayment: number) => {
@@ -422,6 +449,9 @@ export default function MortgageCalculator() {
               wiborLastUpdate={wiborRates?.fetchDate}
               bankOffers={bankOffers?.offers}
               bankOffersLastUpdate={bankOffers?.fetchDate}
+              onSelectWibor={handleSelectWibor}
+              onSelectBank={handleSelectBank}
+              selectedWiborType={selectedWiborType}
             />
           </div>
         </div>

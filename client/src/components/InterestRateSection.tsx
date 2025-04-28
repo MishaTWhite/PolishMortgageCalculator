@@ -124,9 +124,16 @@ export default function InterestRateSection({
       
       {/* Total Interest Rate */}
       <div className="mt-4 p-3 bg-gray-50 rounded-md">
-        <div className="flex justify-between items-center">
-          <span className="text-sm">{t.totalInterestRate}</span>
-          <span className="text-lg font-medium text-primary">{totalInterestRate.toFixed(2)}%</span>
+        <div className="flex flex-col">
+          <div className="flex justify-between items-center">
+            <span className="text-sm">{t.totalInterestRate}</span>
+            <span className="text-lg font-medium text-primary">{totalInterestRate.toFixed(2)}%</span>
+          </div>
+          {selectedWiborType && (
+            <div className="text-xs text-muted-foreground mt-1">
+              {`Based on WIBOR ${selectedWiborType} (${wiborRates?.[selectedWiborType]?.toFixed(2) || "?"}%) + Bank Margin (${bankMargin.toFixed(2)}%)`}
+            </div>
+          )}
         </div>
       </div>
       
@@ -215,7 +222,10 @@ export default function InterestRateSection({
               <p>* The actual rate may vary depending on your credit score, loan amount, and other factors.</p>
               {bankMargin > 0 && (
                 <div className="mt-2 p-2 bg-secondary/20 rounded-md">
-                  <p className="font-medium">Your current rate: {totalInterestRate.toFixed(2)}% (NBP Reference Rate + {bankMargin.toFixed(2)}% margin)</p>
+                  <p className="font-medium">
+                    Your current rate: {totalInterestRate.toFixed(2)}% 
+                    ({selectedWiborType ? `WIBOR ${selectedWiborType}` : "NBP Reference Rate"} + {bankMargin.toFixed(2)}% margin)
+                  </p>
                 </div>
               )}
             </div>

@@ -12,6 +12,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const city = req.query.city as string || "warsaw"; // Default to Warsaw if no city provided
       const forceRefresh = req.query.refresh === "true"; // Optional parameter to force refresh
+      const forceOtodom = req.query.forceOtodom === "true"; // Optional parameter to force fetch from Otodom
       
       // Get property prices from storage, filtered by the normalized city name
       const normalizedCity = city.toLowerCase();
@@ -28,7 +29,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const currentDate = format(new Date(), "dd.MM.yyyy");
       
       // Check if we already have data for this city
-      if (prices.length > 0) {
+      if (prices.length > 0 && !forceOtodom) {
         // Check if data is fresh (less than 24 hours old) or if not forcing refresh
         const [lastFetchDay, lastFetchMonth, lastFetchYear] = prices[0].fetchDate.split('.').map(Number);
         const lastFetchDate = new Date(lastFetchYear, lastFetchMonth - 1, lastFetchDay);

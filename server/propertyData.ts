@@ -92,8 +92,8 @@ async function scrapeOtodomPropertyData(cityUrl: string, districtSearchTerm: str
   };
 }> {
   try {
-    // Base URL for the district
-    const baseUrl = `https://www.otodom.pl/pl/oferty/sprzedaz/mieszkanie/${cityUrl}/${districtSearchTerm}`;
+    // Base URL for the district using the new Otodom URL format (/pl/wyniki instead of /pl/oferty)
+    const baseUrl = `https://www.otodom.pl/pl/wyniki/sprzedaz/mieszkanie/${cityUrl}/${districtSearchTerm}`;
     console.log(`Base URL for scraping: ${baseUrl}`);
     
     // Set headers to mimic a browser request
@@ -132,11 +132,12 @@ async function scrapeOtodomPropertyData(cityUrl: string, districtSearchTerm: str
     };
     
     // Room configurations to scrape separately for more accurate results
+    // Using the updated Otodom query format (with maximum limit=72, view type, and proper room number formatting)
     const roomConfigs: RoomConfig[] = [
-      { name: "oneRoom", query: "?ownerTypeSingleSelect=ALL&roomsNumber=ONE", count: 0, totalPrice: 0, prices: [], pricesPerSqm: [] },
-      { name: "twoRoom", query: "?ownerTypeSingleSelect=ALL&roomsNumber=TWO", count: 0, totalPrice: 0, prices: [], pricesPerSqm: [] },
-      { name: "threeRoom", query: "?ownerTypeSingleSelect=ALL&roomsNumber=THREE", count: 0, totalPrice: 0, prices: [], pricesPerSqm: [] },
-      { name: "fourPlusRoom", query: "?ownerTypeSingleSelect=ALL&roomsNumber=FOUR", count: 0, totalPrice: 0, prices: [], pricesPerSqm: [] }
+      { name: "oneRoom", query: "?limit=72&ownerTypeSingleSelect=ALL&roomsNumber=%5BONE%5D&by=DEFAULT&direction=DESC&viewType=listing", count: 0, totalPrice: 0, prices: [], pricesPerSqm: [] },
+      { name: "twoRoom", query: "?limit=72&ownerTypeSingleSelect=ALL&roomsNumber=%5BTWO%5D&by=DEFAULT&direction=DESC&viewType=listing", count: 0, totalPrice: 0, prices: [], pricesPerSqm: [] },
+      { name: "threeRoom", query: "?limit=72&ownerTypeSingleSelect=ALL&roomsNumber=%5BTHREE%5D&by=DEFAULT&direction=DESC&viewType=listing", count: 0, totalPrice: 0, prices: [], pricesPerSqm: [] },
+      { name: "fourPlusRoom", query: "?limit=72&ownerTypeSingleSelect=ALL&roomsNumber=%5BFOUR%5D&by=DEFAULT&direction=DESC&viewType=listing", count: 0, totalPrice: 0, prices: [], pricesPerSqm: [] }
     ];
     
     console.log(`Scraping Otodom data for ${cityUrl}/${districtSearchTerm} by room counts`);

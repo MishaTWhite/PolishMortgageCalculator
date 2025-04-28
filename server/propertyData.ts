@@ -146,12 +146,19 @@ export async function fetchPropertyPriceData(
       for (const roomType of roomTypes) {
         console.log(`Scraping ${roomType} for ${district.name}`);
         
-        // Call our new room scraper function
-        const roomResults = await scrapeOtodomPropertyDataByRoomType(
-          cityData.otodomUrl,
-          district.searchTerm,
-          roomType
-        );
+        // Call our new room scraper function with error handling
+        let roomResults = null;
+        try {
+          roomResults = await scrapeOtodomPropertyDataByRoomType(
+            cityData.otodomUrl,
+            district.searchTerm,
+            roomType
+          );
+        } catch (error) {
+          console.error(`Error scraping ${roomType} for ${district.name}:`, error);
+          // Continue to next room type on error
+          continue;
+        }
         
         // Skip if no results for this room type
         if (!roomResults) {

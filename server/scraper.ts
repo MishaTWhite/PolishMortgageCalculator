@@ -73,9 +73,22 @@ export async function scrapeOtodomPropertyDataByRoomType(
   try {
     console.log(`Starting scrape for ${roomType} in ${cityUrl}/${districtSearchTerm}`);
     
-    // Base URL for Otodom - trying the correct URL format for the current version of Otodom
-    // Testing with a more direct approach to the search results
-    const baseUrl = `https://www.otodom.pl/pl/oferty/sprzedaz/mieszkanie/${cityUrl}/${districtSearchTerm}`;
+    // Base URL for Otodom - trying several URL formats as Otodom may have different URL structures
+    // Multiple URL patterns to try in case one doesn't work
+    const urlPatterns = [
+      // Pattern 1: Current format with region/city/district (used since ~2023)
+      `https://www.otodom.pl/pl/oferty/sprzedaz/mieszkanie/${cityUrl}/${districtSearchTerm}`,
+      // Pattern 2: Alternative format without region in path
+      `https://www.otodom.pl/pl/oferty/sprzedaz/mieszkanie/${districtSearchTerm}`,
+      // Pattern 3: Direct city search using the location parameter
+      `https://www.otodom.pl/pl/oferty/sprzedaz/mieszkanie?locations[]=${cityUrl}-${districtSearchTerm}`,
+      // Pattern 4: Legacy format (pre-2023)
+      `https://www.otodom.pl/sprzedaz/mieszkanie/${cityUrl}/${districtSearchTerm}`
+    ];
+    
+    // Use the first pattern by default, we'll try others if this fails
+    const baseUrl = urlPatterns[0];
+    console.log(`Starting with URL pattern: ${baseUrl}`);
     
     // Using mobile user agent as mobile sites might have simpler anti-scraping protections
     // Pretending to be an iPhone user visiting from Poland
@@ -123,8 +136,51 @@ export async function scrapeOtodomPropertyDataByRoomType(
       throw new Error(`Invalid room type: ${roomType}`);
     }
     
-    // Create URL for this room type
-    const roomUrl = `${baseUrl}${roomQueries[roomType]}`;
+    // Try each URL pattern until one works
+    let roomUrl;
+    let response;
+    let success = false;
+    
+    for (let i = 0; i < urlPatterns.length; i++) {
+      try {
+        const currentUrl = `${urlPatterns[i]}${roomQueries[roomType]}`;
+        console.log(`Trying URL pattern ${i+1}: ${currentUrl}`);
+        
+        // Simulate real browsing behavior before making the actual request
+        await simulateRealBrowsing(headers);
+        
+        // Add random X-Forwarded-For to simulate request coming from a random Polish IP
+        const randomPolishIP = generateRandomPolishIP();
+        headers['X-Forwarded-For'] = randomPolishIP;
+        console.log(`Using random Polish IP: ${randomPolishIP}`);
+        
+        // Test request with a 10 second timeout to quickly move to next pattern if this one fails
+        response = await axios.get(currentUrl, { 
+          headers, 
+          timeout: 10000,
+          maxRedirects: 5
+        });
+        
+        // Check if we got a valid response
+        if (response.status === 200 && response.data.includes('<article') || 
+            response.data.includes('data-cy="search.listing"')) {
+          console.log(`URL pattern ${i+1} works!`);
+          roomUrl = currentUrl;
+          success = true;
+          break;
+        } else {
+          console.log(`URL pattern ${i+1} returned status ${response.status} but no listings found`);
+        }
+      } catch (error) {
+        console.error(`URL pattern ${i+1} failed:`, error.message);
+        // Continue with the next pattern
+      }
+    }
+    
+    if (!success) {
+      console.error('All URL patterns failed, using default pattern');
+      roomUrl = `${baseUrl}${roomQueries[roomType]}`;
+    }
     console.log(`Requesting URL: ${roomUrl}`);
     
     // Variables to collect data
@@ -147,11 +203,19 @@ export async function scrapeOtodomPropertyDataByRoomType(
     
     // Get first page to check total listings and pagination
     console.log(`Now accessing the actual search results: ${roomUrl}`);
-    const firstResponse = await axios.get(roomUrl, { 
-      headers,
-      timeout: 30000, // 30 second timeout
-      maxRedirects: 5 // Allow up to 5 redirects
-    });
+    
+    // Use the response we already have if it exists from our URL testing
+    let firstResponse;
+    if (response && success) {
+      console.log('Reusing response from URL testing');
+      firstResponse = response;
+    } else {
+      firstResponse = await axios.get(roomUrl, { 
+        headers,
+        timeout: 30000, // 30 second timeout
+        maxRedirects: 5 // Allow up to 5 redirects
+      });
+    }
     const firstHtml = firstResponse.data;
     const $ = cheerio.load(firstHtml);
     

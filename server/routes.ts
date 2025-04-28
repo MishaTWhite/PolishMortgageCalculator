@@ -9,6 +9,12 @@ import {
   fetchPropertyPriceDataPlaywright,
   getScrapingStatus
 } from "./propertyData";
+import { 
+  getPendingTasks, 
+  getCompletedTasks, 
+  getCurrentTask,
+  enqueueCityTasks
+} from "./scrapeTaskManager";
 
 export async function registerRoutes(app: Express): Promise<Server> {
   // Get scraping status and tasks
@@ -18,7 +24,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const status = getScrapingStatus();
       
       // Get all tasks (pending, in progress, and completed)
-      const { getPendingTasks, getCompletedTasks, getCurrentTask } = require('./scrapeTaskManager');
       const pendingTasks = getPendingTasks();
       const currentTask = getCurrentTask();
       const completedTasks = getCompletedTasks();

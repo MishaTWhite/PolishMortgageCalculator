@@ -36,6 +36,10 @@ interface InterestRateSectionProps {
   wiborLastUpdate?: string;
   bankOffers?: BankOffer[];
   bankOffersLastUpdate?: string;
+  // Новые properties для выбора WIBOR и банка
+  onSelectWibor?: (wiborType: string, rate: number) => void;
+  onSelectBank?: (bankName: string, bankMargin: number, wiborType: string, wiborRate: number) => void;
+  selectedWiborType?: string;
 }
 
 export default function InterestRateSection({
@@ -49,7 +53,10 @@ export default function InterestRateSection({
   wiborRates,
   wiborLastUpdate,
   bankOffers,
-  bankOffersLastUpdate
+  bankOffersLastUpdate,
+  onSelectWibor,
+  onSelectBank,
+  selectedWiborType
 }: InterestRateSectionProps) {
   const { language } = useLanguage();
   const t = useTranslations(language);
@@ -138,9 +145,18 @@ export default function InterestRateSection({
           <CardContent>
             <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
               {Object.entries(wiborRates).map(([term, rate]) => (
-                <div key={term} className="border rounded-md p-3 text-center">
+                <div 
+                  key={term} 
+                  className={`border rounded-md p-3 text-center cursor-pointer hover:bg-gray-50 transition-colors ${selectedWiborType === term ? 'border-primary bg-primary/5' : ''}`}
+                  onClick={() => onSelectWibor && onSelectWibor(term, rate)}
+                >
                   <div className="text-sm text-muted-foreground">WIBOR {term}</div>
                   <div className="text-lg font-medium text-primary">{rate.toFixed(2)}%</div>
+                  {selectedWiborType === term && (
+                    <Badge variant="outline" className="mt-2 bg-primary/10 text-primary border-primary">
+                      Selected
+                    </Badge>
+                  )}
                 </div>
               ))}
             </div>
@@ -172,7 +188,21 @@ export default function InterestRateSection({
               </TableHeader>
               <TableBody>
                 {bankOffers.map((offer, index) => (
-                  <TableRow key={index}>
+                  <TableRow 
+                    key={index} 
+                    className="cursor-pointer hover:bg-gray-50 transition-colors"
+                    onClick={() => {
+                      // Найдем соответствующую ставку WIBOR, если она доступна
+                      if (onSelectBank && wiborRates && wiborRates[offer.wiborType]) {
+                        onSelectBank(
+                          offer.bankName, 
+                          offer.bankMargin, 
+                          offer.wiborType, 
+                          wiborRates[offer.wiborType]
+                        );
+                      }
+                    }}
+                  >
                     <TableCell className="font-medium">{offer.bankName}</TableCell>
                     <TableCell>{offer.bankMargin.toFixed(2)}%</TableCell>
                     <TableCell>WIBOR {offer.wiborType}</TableCell>

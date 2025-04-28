@@ -5,7 +5,8 @@ import {
   enqueueCityTasks, 
   getQueueStatus, 
   ScrapeTask, 
-  TaskStatus 
+  TaskStatus,
+  registerTaskProcessor
 } from "./scrapeTaskManager";
 import { logInfo, logError, logWarning } from "./scraperLogger";
 
@@ -101,6 +102,10 @@ export async function fetchPropertyPriceDataPlaywright(
 ) {
   try {
     logInfo(`Starting property data fetch using Playwright for ${city}`);
+    
+    // Make sure the task processor is registered
+    registerTaskProcessor(scrapePropertyData);
+    logInfo("Registered Playwright scraper as task processor");
     
     // Нормализация города
     const normalizedCity = normalizeCity(city);

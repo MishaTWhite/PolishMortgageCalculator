@@ -135,32 +135,12 @@ export default function PropertyMarketAnalysis() {
                   
                   <Button 
                     variant="default"
-                    onClick={() => {
-                      // Force refresh from Otodom by adding refresh=true and forceOtodom=true parameters
-                      setIsLoading(true);
-                      fetch(`/api/property-prices?city=${selectedCity}&refresh=true&forceOtodom=true`)
-                        .then(res => res.json())
-                        .then(() => {
-                          queryClient.invalidateQueries({ queryKey: ['/api/property-prices', selectedCity] });
-                          refetch();
-                        })
-                        .finally(() => setIsLoading(false));
-                    }}
-                    disabled={isLoading}
-                    className="flex items-center gap-2"
-                  >
-                    <RefreshCw size={16} className={isLoading ? "animate-spin" : ""} />
-                    {t.forceRefresh || "Update from Otodom"}
-                  </Button>
-                  
-                  <Button 
-                    variant="secondary"
                     onClick={async () => {
                       setIsLoading(true);
                       try {
                         const cities = ["warsaw", "krakow", "wroclaw", "gdansk"];
                         for (const city of cities) {
-                          await fetch(`/api/property-prices?city=${city}&refresh=true`)
+                          await fetch(`/api/property-prices?city=${city}&refresh=true&forceOtodom=true`)
                             .then(res => res.json());
                         }
                         // Invalidate all queries and refetch current one
@@ -174,7 +154,7 @@ export default function PropertyMarketAnalysis() {
                     className="flex items-center gap-2"
                   >
                     <RefreshCw size={16} className={isLoading ? "animate-spin" : ""} />
-                    {t.updateAllCities || "Update All Cities"}
+                    {t.updateAllData || "Update Property Data"}
                   </Button>
                 </div>
               </div>

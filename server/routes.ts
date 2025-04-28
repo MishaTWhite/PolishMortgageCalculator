@@ -42,10 +42,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
             city: cityDisplayNames[normalizedCity] || prices[0].city,
             prices: prices.map(price => ({
               district: price.district,
-              averagePricePerSqm: parseInt(price.averagePricePerSqm.toString()),
-              numberOfListings: parseInt(price.numberOfListings.toString()),
-              minPrice: parseInt(price.minPrice.toString()),
-              maxPrice: parseInt(price.maxPrice.toString())
+              averagePricePerSqm: Number(price.averagePricePerSqm),
+              numberOfListings: Number(price.numberOfListings),
+              minPrice: Number(price.minPrice),
+              maxPrice: Number(price.maxPrice)
             })),
             lastUpdated: prices[0].fetchDate,
             source: prices[0].source
@@ -67,10 +67,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
           await storage.createPropertyPrice({
             city: normalizedCity,
             district: district.district,
-            averagePricePerSqm: district.averagePricePerSqm,
-            numberOfListings: district.numberOfListings,
-            minPrice: district.minPrice,
-            maxPrice: district.maxPrice,
+            averagePricePerSqm: Number(district.averagePricePerSqm),
+            numberOfListings: Number(district.numberOfListings),
+            minPrice: Number(district.minPrice),
+            maxPrice: Number(district.maxPrice),
             fetchDate: currentDate,
             source: sampleData.source || "Otodom"
           });

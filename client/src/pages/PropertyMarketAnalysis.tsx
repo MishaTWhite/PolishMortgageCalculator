@@ -364,7 +364,7 @@ export default function PropertyMarketAnalysis() {
                   </Button>
                 </div>
                 <CardDescription>
-                  {t.lastUpdated || "Last updated"}: {new Date(scraperStatus.updatedAt || new Date()).toLocaleTimeString()}
+                  {t.lastUpdated || "Last updated"}: {new Date(scraperStatus?.updatedAt || new Date()).toLocaleTimeString()}
                 </CardDescription>
               </CardHeader>
               <CardContent>
@@ -373,17 +373,17 @@ export default function PropertyMarketAnalysis() {
                     <div>
                       <span className="text-sm font-medium">{t.taskProgress || "Task Progress"}:</span>
                       <span className="ml-2 text-sm">
-                        {scraperStatus.completedTasks} / {scraperStatus.totalTasks} {t.tasksCompleted || "tasks completed"}
+                        {scraperStatus?.completedTasks || 0} / {scraperStatus?.totalTasks || 0} {t.tasksCompleted || "tasks completed"}
                       </span>
                     </div>
-                    <Badge variant={scraperStatus.isProcessing ? "default" : "outline"}>
-                      {scraperStatus.isProcessing ? (t.processing || "Processing") : (t.idle || "Idle")}
+                    <Badge variant={scraperStatus?.isProcessing ? "default" : "outline"}>
+                      {scraperStatus?.isProcessing ? (t.processing || "Processing") : (t.idle || "Idle")}
                     </Badge>
                   </div>
                   
-                  <Progress value={(scraperStatus.completedTasks / Math.max(scraperStatus.totalTasks, 1)) * 100} />
+                  <Progress value={((scraperStatus?.completedTasks || 0) / Math.max(scraperStatus?.totalTasks || 1, 1)) * 100} />
                   
-                  {scraperStatus.lastError && (
+                  {scraperStatus?.lastError && (
                     <Alert variant="destructive" className="mt-4">
                       <AlertTitle>{t.error || "Error"}</AlertTitle>
                       <AlertDescription className="text-xs break-all">

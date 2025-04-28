@@ -185,15 +185,90 @@ async function scrapeOtodomPropertyData(cityUrl: string, districtSearchTerm: str
       
       // Find pagination to determine if we need to fetch more pages
       let maxPages = 1;
-      const paginationElements = $('li[data-cy^="pagination.page-"]');
       
-      if (paginationElements.length > 0) {
-        // Get the last pagination element to determine total pages
-        const lastPageElement = paginationElements.last();
-        const pageNumber = lastPageElement.attr('data-cy')?.replace('pagination.page-', '');
-        if (pageNumber && !isNaN(parseInt(pageNumber, 10))) {
-          maxPages = parseInt(pageNumber, 10);
+      // Try multiple pagination selectors, Otodom changes their markup periodically
+      const paginationSelectors = [
+        'li[data-cy^="pagination.page-"]',
+        'button[data-cy^="pagination.page-"]',
+        'a[data-cy^="pagination.page-"]',
+        '.pagination a',
+        '.pagination li',
+        '.pagination button',
+        'ul.pagination li',
+        'ul.pagination a',
+        'nav ul li a[href*="page="]',
+        'a[href*="page="]',
+        '.css-1m75adt', // Specific Otodom class for pagination
+        '.css-1oy3hhb', // Another specific Otodom class
+        'div[data-cy="pagination.next-page"]', // Next page button
+        'div[data-cy^="pagination"]',
+        'nav[aria-label="pagination"]',
+        'nav ul li'
+      ];
+      
+      let paginationElements = null;
+      
+      // Try each pagination selector until we find something
+      for (const selector of paginationSelectors) {
+        const elements = $(selector);
+        if (elements.length > 0) {
+          console.log(`Found pagination elements using selector: ${selector}`);
+          paginationElements = elements;
+          break;
         }
+      }
+      
+      if (paginationElements && paginationElements.length > 0) {
+        console.log(`Found ${paginationElements.length} pagination elements`);
+        
+        // Try to determine last page number from pagination
+        // Method 1: Using data-cy attribute
+        const lastPageElement = paginationElements.last();
+        const dataCyValue = lastPageElement.attr('data-cy');
+        
+        if (dataCyValue && dataCyValue.includes('page-')) {
+          const pageNumber = dataCyValue.replace('pagination.page-', '');
+          if (!isNaN(parseInt(pageNumber, 10))) {
+            maxPages = parseInt(pageNumber, 10);
+          }
+        } 
+        // Method 2: Using text content of pagination
+        else {
+          // Look for the highest number in pagination elements
+          paginationElements.each((_, el) => {
+            const text = $(el).text().trim();
+            const numberMatch = text.match(/\d+/);
+            if (numberMatch) {
+              const pageNum = parseInt(numberMatch[0], 10);
+              if (!isNaN(pageNum) && pageNum > maxPages) {
+                maxPages = pageNum;
+              }
+            }
+          });
+        }
+        
+        // Method 3: Check for href attributes with page parameters
+        paginationElements.each((_, el) => {
+          const href = $(el).attr('href');
+          if (href && href.includes('page=')) {
+            const pageMatch = href.match(/page=(\d+)/);
+            if (pageMatch && pageMatch[1]) {
+              const pageNum = parseInt(pageMatch[1], 10);
+              if (!isNaN(pageNum) && pageNum > maxPages) {
+                maxPages = pageNum;
+              }
+            }
+          }
+        });
+      }
+      
+      // If still no pagination detected, check if reportedCount suggests multiple pages
+      // Typical Otodom shows ~30 listings per page
+      if (maxPages === 1 && roomConfig.reportedCount && roomConfig.reportedCount > 40) {
+        const estimatedPages = Math.ceil(roomConfig.reportedCount / 30);
+        console.log(`No pagination detected, but reportedCount ${roomConfig.reportedCount} suggests ~${estimatedPages} pages`);
+        // Be conservative - try at least a few pages even without pagination
+        maxPages = Math.min(5, estimatedPages);
       }
       
       console.log(`Found ${maxPages} pages for ${roomConfig.name}`);

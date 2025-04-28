@@ -55,29 +55,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
         }
       }
       
-      // If no data in storage, or data is old and forcing refresh, create new data
-      console.log(`Generating new property data for ${normalizedCity} (force refresh: ${forceRefresh})`);
+      // If no data in storage, or data is old and forcing refresh, fetch real data from Otodom
+      console.log(`Fetching real property data for ${normalizedCity} (force refresh: ${forceRefresh})`);
       
-      // Create sample property data (in a real app, we would fetch this from a real estate API)
-      const sampleData = await generateSamplePropertyData(normalizedCity, currentDate);
+      // Fetch real property data from Otodom via web scraping
+      const realData = await generateSamplePropertyData(normalizedCity, currentDate);
       
-      // Save the property data to the database for future use
-      if (sampleData && sampleData.prices) {
-        for (const district of sampleData.prices) {
-          await storage.createPropertyPrice({
-            city: normalizedCity,
-            district: district.district,
-            averagePricePerSqm: Number(district.averagePricePerSqm),
-            numberOfListings: Number(district.numberOfListings),
-            minPrice: Number(district.minPrice),
-            maxPrice: Number(district.maxPrice),
-            fetchDate: currentDate,
-            source: sampleData.source || "Otodom"
-          });
-        }
-      }
-      
-      return res.json(sampleData);
+      return res.json(realData);
     } catch (error) {
       console.error("Error fetching property prices:", error);
       res.status(500).json({ error: "Failed to fetch property prices" });

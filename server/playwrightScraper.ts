@@ -413,30 +413,94 @@ function extractReportedCount(text: string): number {
 }
 
 /**
- * Парсит цену из текста объявления
+ * Парсит цену из текста объявления с валидацией
  */
 function parsePrice(priceText: string): number {
-  // Удаляем все, кроме цифр
-  const digits = priceText.replace(/[^\d]/g, '');
-  return digits ? parseInt(digits, 10) : 0;
+  try {
+    // Проверка на "Zapytaj o cenę" (Спросить о цене)
+    if (priceText.toLowerCase().includes('zapytaj') || 
+        (priceText.toLowerCase().includes('cen') && !priceText.toLowerCase().includes('zł'))) {
+      logWarning(`Skipping "Zapytaj o cenę" listing (no price available)`);
+      return 0;
+    }
+    
+    // Удаляем все, кроме цифр
+    const digits = priceText.replace(/[^\d]/g, '');
+    if (!digits) return 0;
+    
+    const price = parseInt(digits, 10);
+    
+    // Валидация диапазона цен (50 тыс. - 10 млн. zł)
+    const MIN_VALID_PRICE = 50000;   // 50 тыс. zł
+    const MAX_VALID_PRICE = 10000000; // 10 млн. zł
+    
+    if (isNaN(price) || price < MIN_VALID_PRICE || price > MAX_VALID_PRICE) {
+      logWarning(`Price out of valid range: ${price} zł (valid: ${MIN_VALID_PRICE}-${MAX_VALID_PRICE} zł)`);
+      return 0;
+    }
+    
+    return price;
+  } catch (error) {
+    logError(`Error parsing price "${priceText}": ${error}`);
+    return 0;
+  }
 }
 
 /**
- * Парсит площадь из текста объявления
+ * Парсит площадь из текста объявления с валидацией
  */
 function parseArea(areaText: string): number {
-  // Извлекаем числа и заменяем запятую на точку
-  const cleaned = areaText.replace(/[^\d,.]/g, '').replace(',', '.');
-  return cleaned ? parseFloat(cleaned) : 0;
+  try {
+    // Извлекаем числа и заменяем запятую на точку
+    const cleaned = areaText.replace(/[^\d,.]/g, '').replace(',', '.');
+    if (!cleaned) return 0;
+    
+    const area = parseFloat(cleaned);
+    
+    // Валидация диапазона площади (10-1000 м²)
+    const MIN_VALID_AREA = 10;  // 10 м²
+    const MAX_VALID_AREA = 1000; // 1000 м²
+    
+    if (isNaN(area) || area < MIN_VALID_AREA || area > MAX_VALID_AREA) {
+      logWarning(`Area out of valid range: ${area} m² (valid: ${MIN_VALID_AREA}-${MAX_VALID_AREA} m²)`);
+      return 0;
+    }
+    
+    return area;
+  } catch (error) {
+    logError(`Error parsing area "${areaText}": ${error}`);
+    return 0;
+  }
 }
 
 /**
- * Рассчитывает среднее значение массива чисел
+ * Рассчитывает среднее значение массива чисел с защитой от переполнения
  */
 function calculateAverage(values: number[]): number {
-  if (values.length === 0) return 0;
-  const sum = values.reduce((acc, value) => acc + value, 0);
-  return Math.round(sum / values.length);
+  try {
+    if (values.length === 0) return 0;
+    
+    // Фильтруем нулевые значения и проверяем, что осталось хотя бы одно
+    const nonZeroValues = values.filter(value => value > 0);
+    if (nonZeroValues.length === 0) return 0;
+    
+    // Используем безопасный метод для суммирования
+    let sum = 0;
+    for (const value of nonZeroValues) {
+      // Проверка на переполнение
+      if (sum > Number.MAX_SAFE_INTEGER - value) {
+        logWarning(`Potential numeric overflow during average calculation`);
+        // Используем среднее арифметическое вместо суммы всех значений
+        return Math.round(sum / nonZeroValues.length);
+      }
+      sum += value;
+    }
+    
+    return Math.round(sum / nonZeroValues.length);
+  } catch (error) {
+    logError(`Error calculating average: ${error}`);
+    return 0;
+  }
 }
 
 /**

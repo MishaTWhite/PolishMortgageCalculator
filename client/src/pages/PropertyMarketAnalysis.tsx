@@ -498,7 +498,8 @@ export default function PropertyMarketAnalysis() {
                                     <span className="text-xs font-medium">{formatPrice(district.roomBreakdown.fourPlusRoom.avgPrice / 100)}</span>
                                     <span className="text-xs text-muted-foreground">
                                       ({district.roomBreakdown.fourPlusRoom.count}
-                                      {district.roomBreakdown.fourPlusRoom.reportedCount > district.roomBreakdown.fourPlusRoom.count && 
+                                      {district.roomBreakdown.fourPlusRoom.reportedCount && 
+                                       district.roomBreakdown.fourPlusRoom.reportedCount > district.roomBreakdown.fourPlusRoom.count && 
                                         ` / ${district.roomBreakdown.fourPlusRoom.reportedCount} ${t.reported || "rep"}`}
                                       )
                                     </span>

@@ -120,8 +120,19 @@ async function scrapeOtodomPropertyData(cityUrl: string, districtSearchTerm: str
     let allPrices: number[] = [];
     let allPricesPerSqm: number[] = [];
     
+    // Define the room configuration type 
+    type RoomConfig = {
+      name: string; 
+      query: string; 
+      count: number; 
+      reportedCount?: number;
+      totalPrice: number; 
+      prices: number[]; 
+      pricesPerSqm: number[];
+    };
+    
     // Room configurations to scrape separately for more accurate results
-    const roomConfigs = [
+    const roomConfigs: RoomConfig[] = [
       { name: "oneRoom", query: "?ownerTypeSingleSelect=ALL&roomsNumber=ONE", count: 0, totalPrice: 0, prices: [], pricesPerSqm: [] },
       { name: "twoRoom", query: "?ownerTypeSingleSelect=ALL&roomsNumber=TWO", count: 0, totalPrice: 0, prices: [], pricesPerSqm: [] },
       { name: "threeRoom", query: "?ownerTypeSingleSelect=ALL&roomsNumber=THREE", count: 0, totalPrice: 0, prices: [], pricesPerSqm: [] },
@@ -295,14 +306,7 @@ async function scrapeOtodomPropertyData(cityUrl: string, districtSearchTerm: str
 }
 
 // Helper function to process listings on a page
-async function processListingsOnPage($: cheerio.CheerioAPI, roomConfig: { 
-  name: string; 
-  query: string; 
-  count: number; 
-  totalPrice: number; 
-  prices: number[];
-  pricesPerSqm: number[];
-}) {
+async function processListingsOnPage($: cheerio.CheerioAPI, roomConfig: RoomConfig) {
   // Extract listings from the page
   const propertyItems = $('article') || $('.css-1q7njkh') || $('.css-1oji9jw') || $('.css-1hfoviz') || $('.offer-item');
   console.log(`Found ${propertyItems.length} property items on this page for ${roomConfig.name}`);

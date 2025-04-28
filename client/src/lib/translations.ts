@@ -3,10 +3,14 @@ import { Language } from "@/context/LanguageContext";
 type TranslationKeys = {
   // Navigation
   mortgageCalculator: string;
+  investmentCalculator: string;
+  currencyConverter: string;
+  propertyMarketAnalysis: string;
   
   // Application title and header  
   appTitle: string;
   appDescription: string;
+  propertyMarketAnalysisDescription: string;
   
   // Calculator parameters section
   parametersTitle: string;

@@ -7,6 +7,7 @@ import NotFound from "@/pages/not-found";
 import MortgageCalculator from "@/pages/MortgageCalculator";
 import InvestmentCalculator from "@/pages/InvestmentCalculator";
 import CurrencyConverterPage from "@/pages/CurrencyConverter";
+import PropertyMarketAnalysis from "@/pages/PropertyMarketAnalysis";
 import { LanguageProvider } from "@/context/LanguageContext";
 
 function Router() {
@@ -15,6 +16,7 @@ function Router() {
       <Route path="/" component={MortgageCalculator} />
       <Route path="/investment" component={InvestmentCalculator} />
       <Route path="/converter" component={CurrencyConverterPage} />
+      <Route path="/property-market" component={PropertyMarketAnalysis} />
       <Route component={NotFound} />
     </Switch>
   );

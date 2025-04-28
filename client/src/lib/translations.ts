@@ -44,6 +44,17 @@ type TranslationKeys = {
   lastUpdated: string;
   updateAllData: string;
   
+  // Playwright scraper
+  usePlaywrightScraper: string;
+  playwrightScraperStatus: string;
+  taskProgress: string;
+  tasksCompleted: string;
+  processing: string;
+  idle: string;
+  error: string;
+  taskDetails: string;
+  refreshStatus: string;
+  
   // Calculator parameters section
   parametersTitle: string;
   propertyPrice: string;
@@ -207,6 +218,17 @@ export const translations: Translations = {
     noDataAvailable: "Brak dostępnych danych. Spróbuj ponownie później.",
     lastUpdated: "Ostatnia aktualizacja",
     
+    // Playwright scraper
+    usePlaywrightScraper: "Użyj Playwright Scraper",
+    playwrightScraperStatus: "Status Playwright Scraper",
+    taskProgress: "Postęp zadania",
+    tasksCompleted: "zadań ukończonych",
+    processing: "Przetwarzanie",
+    idle: "Bezczynny",
+    error: "Błąd",
+    taskDetails: "Szczegóły zadania",
+    refreshStatus: "Odśwież status",
+    
     // Calculator parameters section
     parametersTitle: "Parametry kredytu",
     propertyPrice: "Cena nieruchomości",
@@ -266,7 +288,7 @@ export const translations: Translations = {
     amount: "Kwota",
     refreshRates: "Odśwież kursy",
     exchangeRatesFrom: "Kursy walut z",
-    lastUpdated: "ostatnia aktualizacja",
+    ratesLastUpdated: "ostatnia aktualizacja",
     exchangeRateTable: "Tabela kursów wymiany",
     loading: "Ładowanie kursów walut...",
     failedToLoad: "Nie udało się załadować kursów walut",
@@ -361,6 +383,17 @@ export const translations: Translations = {
     noDataAvailable: "No data available. Please try again later.",
     lastUpdated: "Last updated",
     
+    // Playwright scraper
+    usePlaywrightScraper: "Use Playwright Scraper",
+    playwrightScraperStatus: "Playwright Scraper Status",
+    taskProgress: "Task Progress",
+    tasksCompleted: "tasks completed",
+    processing: "Processing",
+    idle: "Idle",
+    error: "Error",
+    taskDetails: "Task Details",
+    refreshStatus: "Refresh Status",
+    
     // Calculator parameters section
     parametersTitle: "Loan Parameters",
     propertyPrice: "Property Price",
@@ -421,7 +454,7 @@ export const translations: Translations = {
     amount: "Amount",
     refreshRates: "Refresh Rates",
     exchangeRatesFrom: "Exchange rates from",
-    lastUpdated: "last updated",
+    ratesLastUpdated: "last updated",
     exchangeRateTable: "Exchange Rate Table",
     loading: "Loading exchange rates...",
     failedToLoad: "Failed to load exchange rates",
@@ -517,6 +550,17 @@ export const translations: Translations = {
     noDataAvailable: "Дані відсутні. Спробуйте пізніше.",
     lastUpdated: "Останнє оновлення",
     
+    // Playwright scraper
+    usePlaywrightScraper: "Використати Playwright скрапер",
+    playwrightScraperStatus: "Статус Playwright скрапера",
+    taskProgress: "Прогрес завдання",
+    tasksCompleted: "завдань виконано",
+    processing: "Обробка",
+    idle: "Очікування",
+    error: "Помилка",
+    taskDetails: "Деталі завдання",
+    refreshStatus: "Оновити статус",
+    
     // Calculator parameters section
     parametersTitle: "Параметри кредиту",
     propertyPrice: "Ціна нерухомості",
@@ -577,7 +621,7 @@ export const translations: Translations = {
     amount: "Сума",
     refreshRates: "Оновити курси",
     exchangeRatesFrom: "Курси валют з",
-    lastUpdated: "останнє оновлення",
+    ratesLastUpdated: "останнє оновлення",
     exchangeRateTable: "Таблиця курсів валют",
     loading: "Завантаження курсів валют...",
     failedToLoad: "Не вдалося завантажити курси валют",

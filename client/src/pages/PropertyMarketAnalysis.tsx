@@ -280,7 +280,7 @@ export default function PropertyMarketAnalysis() {
                       queryClient.invalidateQueries({ queryKey: ['/api/property-prices', selectedCity] });
                       refetch();
                     }}
-                    disabled={isLoading}
+                    disabled={isLoading || isPlaywrightLoading}
                     className="flex items-center gap-2"
                   >
                     <RefreshCw size={16} className={isLoading ? "animate-spin" : ""} />
@@ -288,7 +288,7 @@ export default function PropertyMarketAnalysis() {
                   </Button>
                   
                   <Button 
-                    variant="default"
+                    variant="outline"
                     onClick={async () => {
                       setIsLoading(true);
                       try {
@@ -304,16 +304,142 @@ export default function PropertyMarketAnalysis() {
                         setIsLoading(false);
                       }
                     }}
-                    disabled={isLoading}
+                    disabled={isLoading || isPlaywrightLoading}
                     className="flex items-center gap-2"
                   >
                     <RefreshCw size={16} className={isLoading ? "animate-spin" : ""} />
                     {t.updateAllCities || "Update Property Data"}
                   </Button>
+                  
+                  <Button 
+                    variant="default"
+                    onClick={async () => {
+                      setIsPlaywrightLoading(true);
+                      setShowScraperStatus(true);
+                      try {
+                        // Start Playwright scraper for the current city
+                        const response = await fetch(`/api/property-prices/update-playwright?city=${selectedCity}`);
+                        const result = await response.json() as PlaywrightScraperResponse;
+                        
+                        // Update tasks and status
+                        setPlaywrightTasks(result.tasks);
+                        setScraperStatus(result.queueStatus);
+                        
+                        // Trigger status refetch
+                        refetchScraperStatus();
+                      } catch (error) {
+                        console.error("Error starting Playwright scraper:", error);
+                      } finally {
+                        setIsPlaywrightLoading(false);
+                      }
+                    }}
+                    disabled={isLoading || isPlaywrightLoading}
+                    className="flex items-center gap-2"
+                  >
+                    <BarChart3 size={16} className={isPlaywrightLoading ? "animate-spin" : ""} />
+                    {t.usePlaywrightScraper || "Use Playwright Scraper"}
+                  </Button>
                 </div>
               </div>
             </CardContent>
           </Card>
+          
+          {/* Data Display */}
+          {/* Scraper Status Card */}
+          {showScraperStatus && scraperStatus && (
+            <Card>
+              <CardHeader className="pb-2">
+                <div className="flex items-center gap-2 justify-between">
+                  <div className="flex items-center gap-2">
+                    <BarChart3 className="h-5 w-5 text-primary" />
+                    <CardTitle>{t.playwrightScraperStatus || "Playwright Scraper Status"}</CardTitle>
+                  </div>
+                  <Button 
+                    variant="ghost" 
+                    size="sm" 
+                    onClick={() => setShowScraperStatus(false)}
+                    className="h-8 w-8 p-0 rounded-full"
+                  >
+                    ×
+                  </Button>
+                </div>
+                <CardDescription>
+                  {t.lastUpdated || "Last updated"}: {new Date(scraperStatus.updatedAt).toLocaleTimeString()}
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-4">
+                  <div className="flex justify-between items-center">
+                    <div>
+                      <span className="text-sm font-medium">{t.taskProgress || "Task Progress"}:</span>
+                      <span className="ml-2 text-sm">
+                        {scraperStatus.completedTasks} / {scraperStatus.totalTasks} {t.tasksCompleted || "tasks completed"}
+                      </span>
+                    </div>
+                    <Badge variant={scraperStatus.isProcessing ? "default" : "outline"}>
+                      {scraperStatus.isProcessing ? (t.processing || "Processing") : (t.idle || "Idle")}
+                    </Badge>
+                  </div>
+                  
+                  <Progress value={(scraperStatus.completedTasks / Math.max(scraperStatus.totalTasks, 1)) * 100} />
+                  
+                  {scraperStatus.lastError && (
+                    <Alert variant="destructive" className="mt-4">
+                      <AlertTitle>{t.error || "Error"}</AlertTitle>
+                      <AlertDescription className="text-xs break-all">
+                        {scraperStatus.lastError}
+                      </AlertDescription>
+                    </Alert>
+                  )}
+                  
+                  {playwrightTasks.length > 0 && (
+                    <div className="mt-4">
+                      <h3 className="text-sm font-medium mb-2">{t.taskDetails || "Task Details"}</h3>
+                      <div className="bg-gray-50 rounded-md p-3 max-h-40 overflow-y-auto">
+                        <div className="space-y-2">
+                          {playwrightTasks.map(task => (
+                            <div key={task.id} className="flex justify-between items-center text-xs">
+                              <span>
+                                <span className="font-medium">{task.district}</span>
+                                <span className="mx-1">-</span>
+                                <span>
+                                  {task.roomType === 'oneRoom' ? t.oneRoom || '1 Room' :
+                                   task.roomType === 'twoRoom' ? t.twoRoom || '2 Rooms' :
+                                   task.roomType === 'threeRoom' ? t.threeRoom || '3 Rooms' :
+                                   t.fourPlusRoom || '4+ Rooms'}
+                                </span>
+                              </span>
+                              <Badge variant={
+                                task.status === 'completed' ? 'outline' :
+                                task.status === 'failed' ? 'destructive' :
+                                task.status === 'in_progress' ? 'default' :
+                                'outline'
+                              } className={`text-xs ${task.status === 'completed' ? 'bg-green-100 text-green-800 hover:bg-green-100' : ''}`}>
+                                {task.status}
+                              </Badge>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    </div>
+                  )}
+                  
+                  <div className="flex justify-end mt-2">
+                    <Button 
+                      variant="outline" 
+                      size="sm" 
+                      onClick={() => refetchScraperStatus()}
+                      disabled={isScraperStatusLoading}
+                      className="text-xs"
+                    >
+                      <RefreshCw size={12} className={`mr-1 ${isScraperStatusLoading ? "animate-spin" : ""}`} />
+                      {t.refreshStatus || "Refresh Status"}
+                    </Button>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          )}
           
           {/* Data Display */}
           {isPageLoading ? (

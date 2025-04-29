@@ -103,15 +103,20 @@ export async function fetchPropertyPriceDataPlaywright(
   try {
     logInfo(`Starting property data fetch using Playwright for ${city}`);
     
-    // Make sure the task processor is registered
+    // Ensure Playwright scraper is registered as the task processor
+    // This is critical for the queue to process tasks correctly
     registerTaskProcessor(scrapePropertyData);
     logInfo("Registered Playwright scraper as task processor");
     
     // Нормализация города
     const normalizedCity = normalizeCity(city);
+    logInfo(`Normalized city name: ${city} -> ${normalizedCity}`);
+    
     const cityData = cityConfig[normalizedCity];
     
     if (!cityData) {
+      const availableCities = Object.keys(cityConfig).join(', ');
+      logError(`City not found: ${city}. Available cities: ${availableCities}`);
       throw new Error(`City not found: ${city}`);
     }
     
@@ -121,6 +126,8 @@ export async function fetchPropertyPriceDataPlaywright(
       : cityData.districts;
     
     if (specificDistrict && districtsToProcess.length === 0) {
+      const availableDistricts = cityData.districts.map(d => `${d.name} (${d.searchTerm})`).join(', ');
+      logError(`District not found: ${specificDistrict}. Available districts: ${availableDistricts}`);
       throw new Error(`District not found: ${specificDistrict}`);
     }
     
@@ -129,11 +136,18 @@ export async function fetchPropertyPriceDataPlaywright(
       ? [specificRoomType] 
       : ["oneRoom", "twoRoom", "threeRoom", "fourPlusRoom"];
     
+    logInfo(`Will process ${districtsToProcess.length} district(s) with ${roomTypes.length} room type(s)`);
+    logInfo(`Districts: ${districtsToProcess.map(d => d.name).join(', ')}`);
+    logInfo(`Room types: ${roomTypes.join(', ')}`);
+    
     // Если обрабатываем все районы и типы комнат, удаляем существующие данные
     if (!specificDistrict && !specificRoomType) {
       logInfo(`Deleting existing property price data for ${normalizedCity}`);
       await storage.deletePropertyPricesByCity(normalizedCity);
     }
+    
+    // Проверяем URL города для Otodom
+    logInfo(`Using Otodom URL segment: ${cityData.otodomUrl}`);
     
     // Создаем задачи для скрапинга в очереди
     const tasks = enqueueCityTasks(
@@ -144,13 +158,21 @@ export async function fetchPropertyPriceDataPlaywright(
       fetchDate
     );
     
+    const queueStatus = getQueueStatus();
     logInfo(`Added ${tasks.length} tasks to the queue for ${cityData.name}`);
+    logInfo(`Current queue status: ${queueStatus.pendingTasks} pending, ${queueStatus.completedTasks} completed`);
+    
+    // Log details about the first task to verify correct setup
+    if (tasks.length > 0) {
+      const sampleTask = tasks[0];
+      logInfo(`Sample task details - ID: ${sampleTask.id}, District: ${sampleTask.districtName}, Room type: ${sampleTask.roomType}`);
+    }
     
     // Возвращаем информацию о добавленных задачах
     return {
       status: "processing",
       message: `Started scraping tasks for ${cityData.name}. Processing will continue in the background.`,
-      queueStatus: getQueueStatus(),
+      queueStatus: queueStatus,
       tasks: tasks.map(t => ({
         id: t.id,
         district: t.districtName,

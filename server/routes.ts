@@ -103,19 +103,43 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const roomType = req.query.roomType as string || null; // Optional room type filter
       const fetchDate = format(new Date(), "dd.MM.yyyy");
       
-      console.log(`Scraping property price data from Otodom using Playwright for ${city}`);
-      if (district && roomType) {
-        console.log(`Targeting specific room type ${roomType} in district ${district}`);
-      } else if (roomType) {
-        console.log(`Targeting specific room type ${roomType} in all districts`);
-      } else if (district) {
-        console.log(`Targeting all room types in district ${district}`);
+      // Use more detailed logging
+      console.log(`====== SCRAPER REQUEST ======`);
+      console.log(`Starting Playwright scraper for ${city}`);
+      console.log(`Date: ${fetchDate}`);
+      console.log(`District filter: ${district || 'none'}`);
+      console.log(`Room type filter: ${roomType || 'none'}`);
+      console.log(`===========================`);
+      
+      // Validate room type if provided
+      if (roomType && !["oneRoom", "twoRoom", "threeRoom", "fourPlusRoom"].includes(roomType)) {
+        return res.status(400).json({ 
+          success: false, 
+          message: `Invalid room type: ${roomType}. Valid options are: oneRoom, twoRoom, threeRoom, fourPlusRoom`
+        });
       }
       
-      // Use the new Playwright-based scraper
+      // City validation happens in the scraper function
+      
+      // Use the new Playwright-based scraper with proper error handling
       const result = await fetchPropertyPriceDataPlaywright(city, fetchDate, district, roomType);
       
-      res.json(result);
+      // Check if result indicates successful task creation
+      if (result && result.tasks && result.tasks.length > 0) {
+        console.log(`Successfully created ${result.tasks.length} scraping tasks`);
+        res.json({
+          ...result,
+          success: true
+        });
+      } else {
+        // This should not happen normally, but handle the case
+        console.warn(`No tasks were created for scraping request`);
+        res.status(500).json({ 
+          success: false, 
+          message: "No scraping tasks were created",
+          queueStatus: result.queueStatus
+        });
+      }
     } catch (error) {
       console.error("Error scraping property prices with Playwright:", error);
       res.status(500).json({ 

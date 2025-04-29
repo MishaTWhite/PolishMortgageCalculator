@@ -741,8 +741,13 @@ async function handleCookieBanner(page: Page): Promise<boolean> {
               if (element) {
                 // Check if the element is actually visible
                 const style = window.getComputedStyle(element);
-                // Use HTMLElement for offsetParent check
-                if (style.display !== 'none' && style.visibility !== 'hidden' && (element as HTMLElement).offsetParent !== null) {
+                // Use a safer check for visibility based on bounding client rect
+                const rect = element.getBoundingClientRect();
+                const isVisible = style.display !== 'none' && 
+                                 style.visibility !== 'hidden' &&
+                                 rect.width > 0 && 
+                                 rect.height > 0;
+                if (isVisible) {
                   return true; // Banner is visible
                 }
               }
@@ -829,7 +834,13 @@ async function handleCookieBanner(page: Page): Promise<boolean> {
               if (element) {
                 // Проверка фактической видимости элемента
                 const style = window.getComputedStyle(element);
-                if (style.display !== 'none' && style.visibility !== 'hidden' && (element as HTMLElement).offsetParent !== null) {
+                // Use a safer check for visibility without depending on offsetParent
+                const rect = element.getBoundingClientRect();
+                const isVisible = style.display !== 'none' && 
+                                 style.visibility !== 'hidden' &&
+                                 rect.width > 0 && 
+                                 rect.height > 0;
+                if (isVisible) {
                   return true; // Баннер видим
                 }
               }

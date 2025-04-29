@@ -260,8 +260,10 @@ async function extractListings(page: Page, district: string, roomType: string): 
   await page.screenshot({ path: debugScreenshotPath, fullPage: true });
   console.log(`Debug screenshot with highlights saved to: ${debugScreenshotPath}`);
   
-  return page.evaluate(({ district, roomType, districtNameMap }) => {
-    const results: PropertyListing[] = [];
+  // Передаем только один объект с данными в функцию evaluate
+  return page.evaluate(params => {
+    const { district, roomType, districtNameMap } = params;
+    const results = []; // Убираем типизацию внутри контекста выполнения
     
     // Проверяем различные селекторы, которые могут определить карточки объявлений
     const selectors = [
@@ -272,7 +274,7 @@ async function extractListings(page: Page, district: string, roomType: string): 
     ];
     
     // Пробуем каждый селектор
-    let cards: NodeListOf<Element> = document.querySelectorAll('div');
+    let cards = document.querySelectorAll('div');
     for (const selector of selectors) {
       const foundCards = document.querySelectorAll(selector);
       if (foundCards.length > 0) {
@@ -309,7 +311,7 @@ async function extractListings(page: Page, district: string, roomType: string): 
           'li span.css-1k12h1c:nth-child(1)' // Новый селектор для площади
         ];
         
-        let priceElement: Element | null = null;
+        let priceElement = null;
         for (const selector of priceSelectors) {
           const element = card.querySelector(selector);
           if (element) {
@@ -319,7 +321,7 @@ async function extractListings(page: Page, district: string, roomType: string): 
           }
         }
         
-        let areaElement: Element | null = null;
+        let areaElement = null;
         for (const selector of areaSelectors) {
           const element = card.querySelector(selector);
           if (element) {

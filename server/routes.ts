@@ -175,13 +175,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const testTask: ScrapeTask = {
         id: `test_${Date.now()}`,
         cityName: city,
+        cityNormalized: 'warsaw', // Важное поле для скрапера - нормализованное имя города
+        cityUrl: 'warszawa', // Важное поле для скрапера - правильное имя города для URL
         districtName: district,
+        districtSearchTerm: district.toLowerCase().replace(/\s+/g, '-'), // Преобразуем для URL
         roomType: roomType,
         status: TaskStatus.PENDING,
         createdAt: new Date().toISOString(),
         updatedAt: new Date().toISOString(),
         priority: 1,
-        retryCount: 0
+        retryCount: 0,
+        fetchDate: fetchDate
       };
       
       // Выполняем скрапинг прямо в обработчике запроса (без очереди)

@@ -667,49 +667,52 @@ async function processCurrentPage(
   const areas: number[] = [];
   const pricesPerSqm: number[] = [];
   
+  // Сделаем скриншот страницы для отладки
+  try {
+    const screenshotPath = `./logs/page_${pageNum}_screenshot.png`;
+    await page.screenshot({ path: screenshotPath, fullPage: false });
+    logInfo(`Saved screenshot to ${screenshotPath}`);
+  } catch (screenshotError) {
+    logWarning(`Failed to save screenshot: ${screenshotError}`);
+  }
+
   // Извлекаем данные объявлений с текущей страницы
-  const listingsData = await page.$$eval(
-    'article, [data-cy="listing-item"], [data-cy="search.listing"]', 
-    (listings) => {
-      return listings.map(listing => {
-        // Функция для поиска элементов с определенным текстом
-        const findElementWithText = (parent: Element, textPart: string): string => {
-          // Поиск по атрибутам
-          const dataEl = parent.querySelector(
-            `[data-cy*="${textPart}"], [data-testid*="${textPart}"]`
-          );
-          if (dataEl) return dataEl.textContent || '';
-          
-          // Поиск по содержимому текста в разных типах элементов
-          for (const selector of ['p', 'span', 'div', 'strong']) {
-            for (const el of Array.from(parent.querySelectorAll(selector))) {
-              if (el.textContent && el.textContent.includes(textPart)) {
-                return el.textContent;
-              }
-            }
-          }
-          
-          // Поиск в любых элементах
-          for (const el of Array.from(parent.querySelectorAll('*'))) {
-            if (el.textContent && el.textContent.includes(textPart)) {
-              return el.textContent;
-            }
-          }
-          
-          return '';
-        };
-        
-        // Извлечение текста с ценой и площадью
-        const priceText = findElementWithText(listing, 'zł');
-        const areaText = findElementWithText(listing, 'm²');
-        
-        // Полный текст объявления для запасного варианта
-        const fullText = listing.textContent || '';
-        
-        return { priceText, areaText, fullText };
-      });
-    }
-  ).catch(error => {
+  // Использование более простого и надежного кода внутри эвала
+  const listingsData = await page.evaluate(() => {
+    // Получаем все элементы объявлений
+    const listings = Array.from(document.querySelectorAll('article, [data-cy="listing-item"], [data-cy="search.listing"]'));
+    
+    return listings.map(listing => {
+      // Извлечение текста с ценой
+      let priceText = '';
+      // Ищем элементы с ценой
+      const priceElements = listing.querySelectorAll('p, span, div, strong');
+      for (const el of priceElements) {
+        const text = el.textContent || '';
+        if (text.includes('zł')) {
+          priceText = text;
+          break;
+        }
+      }
+      
+      // Извлечение текста с площадью
+      let areaText = '';
+      // Ищем элементы с площадью
+      const areaElements = listing.querySelectorAll('p, span, div, strong');
+      for (const el of areaElements) {
+        const text = el.textContent || '';
+        if (text.includes('m²')) {
+          areaText = text;
+          break;
+        }
+      }
+      
+      // Полный текст объявления для запасного варианта
+      const fullText = listing.textContent || '';
+      
+      return { priceText, areaText, fullText };
+    });
+  }).catch(error => {
     logError(`Error extracting listing data: ${error}`);
     return [];
   });

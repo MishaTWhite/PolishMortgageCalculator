@@ -678,9 +678,44 @@ async function processCurrentPage(
 
   // Извлекаем данные объявлений с текущей страницы
   // Использование более простого и надежного кода внутри эвала
+  // Логируем текущий URL страницы
+  const currentUrl = page.url();
+  logInfo(`Current page URL: ${currentUrl}`);
+  
+  // Логируем HTML страницы для анализа
+  const pageContent = await page.content();
+  logInfo(`Page HTML length: ${pageContent.length} characters`);
+  
+  // Логируем основное содержимое страницы
+  const mainContent = await page.evaluate(() => {
+    const mainElement = document.querySelector('main');
+    return mainElement ? mainElement.innerHTML.substring(0, 1000) : 'No main element found';
+  });
+  logInfo(`Main content preview: ${mainContent.substring(0, 200)}...`);
+  
   const listingsData = await page.evaluate(() => {
-    // Получаем все элементы объявлений
-    const listings = Array.from(document.querySelectorAll('article, [data-cy="listing-item"], [data-cy="search.listing"]'));
+    // Получаем все элементы объявлений и логируем результат
+    const selectors = [
+      'article', 
+      '[data-cy="listing-item"]', 
+      '[data-cy="search.listing"]',
+      'article[data-cy]',
+      '[data-testid="listing-box"]',
+      '.css-1qz6v50',
+      '[data-cy="search-listing-item"]'
+    ];
+    
+    // Логируем количество элементов по каждому селектору отдельно
+    const counts = {};
+    selectors.forEach(selector => {
+      counts[selector] = document.querySelectorAll(selector).length;
+    });
+    
+    console.log('Listing elements counts:', JSON.stringify(counts));
+    
+    // Комбинированный селектор
+    const listings = Array.from(document.querySelectorAll(selectors.join(', ')));
+    console.log('Total combined listings found:', listings.length);
     
     return listings.map(listing => {
       // Извлечение текста с ценой
@@ -791,6 +826,37 @@ async function processFirstPage(
   const countText = await page.textContent(
     '[data-cy="search.listing-panel.label.ads-number"], h1, .css-1j1z8qy, [data-cy="search-listing.status.header"]'
   ) || '';
+  
+  // Дополнительное логирование элементов страницы для анализа
+  await page.evaluate(() => {
+    const allElements = document.querySelectorAll('*[data-cy]');
+    console.log(`Found ${allElements.length} elements with data-cy attributes`);
+    
+    const dataCyValues = Array.from(allElements).map(el => el.getAttribute('data-cy')).filter(Boolean);
+    console.log('data-cy attributes:', JSON.stringify(dataCyValues.slice(0, 20)));
+    
+    // Ищем элемент с количеством объявлений
+    const h1Elements = document.querySelectorAll('h1');
+    console.log(`Found ${h1Elements.length} h1 elements`);
+    if (h1Elements.length > 0) {
+      console.log('h1 texts:', JSON.stringify(Array.from(h1Elements).map(el => el.textContent)));
+    }
+    
+    // Ищем секцию с листингами
+    const mainElements = document.querySelectorAll('main');
+    console.log(`Found ${mainElements.length} main elements`);
+    
+    const articleElements = document.querySelectorAll('article');
+    console.log(`Found ${articleElements.length} article elements`);
+    if (articleElements.length > 0) {
+      console.log('First article classes:', articleElements[0].className);
+      console.log('First article data attributes:', JSON.stringify(
+        Array.from(articleElements[0].attributes)
+          .filter(attr => attr.name.startsWith('data-'))
+          .map(attr => `${attr.name}="${attr.value}"`)
+      ));
+    }
+  });
   
   logInfo(`Count text: "${countText}"`);
   

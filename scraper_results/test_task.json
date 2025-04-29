@@ -7,42 +7,42 @@
   "pricesPerSqm": [],
   "error": true,
   "errorMessage": "Failed after 3 retries for task \"First page processing\": page.$: Target page, context or browser has been closed",
-  "errorStack": "Error: Failed after 3 retries for task \"First page processing\": page.$: Target page, context or browser has been closed\n    at runWithRetry (/home/runner/workspace/server/playwrightScraper.ts:1607:9)\n    at async scrapePropertyData (/home/runner/workspace/server/playwrightScraper.ts:1814:30)\n    at async Timeout.processNextTask (/home/runner/workspace/server/scrapeTaskManager.ts:411:20)",
+  "errorStack": "Error: Failed after 3 retries for task \"First page processing\": page.$: Target page, context or browser has been closed\n    at runWithRetry (/home/runner/workspace/server/playwrightScraper.ts:1635:9)\n    at async scrapePropertyData (/home/runner/workspace/server/playwrightScraper.ts:1842:30)\n    at async Timeout.processNextTask (/home/runner/workspace/server/scrapeTaskManager.ts:411:20)",
   "botDetected": true,
   "task": {
-    "id": "ma2g1ahc15v",
-    "cityUrl": "dolnoslaskie/wroclaw/wroclaw/wroclaw",
-    "cityNormalized": "wroclaw",
-    "districtName": "Fabryczna",
-    "districtSearchTerm": "fabryczna",
-    "roomType": "oneRoom",
+    "id": "ma2fynpa5pk",
+    "cityUrl": "warszawa",
+    "cityNormalized": "warsaw",
+    "districtName": "Ursynów",
+    "districtSearchTerm": "ursynow",
+    "roomType": "twoRoom",
     "fetchDate": "29.04.2025",
     "status": "in_progress"
   },
   "diagnostics": {
-    "timestamp": "2025-04-29T12:10:31.493Z",
-    "executionTimeMs": 51668,
+    "timestamp": "2025-04-29T12:13:36.371Z",
+    "executionTimeMs": 92514,
     "environment": {
-      "memoryUsageMb": 250,
+      "memoryUsageMb": 262,
       "nodeVersion": "v20.18.1",
       "platform": "linux"
     },
     "error": {
       "message": "Failed after 3 retries for task \"First page processing\": page.$: Target page, context or browser has been closed",
-      "stack": "Error: Failed after 3 retries for task \"First page processing\": page.$: Target page, context or browser has been closed\n    at runWithRetry (/home/runner/workspace/server/playwrightScraper.ts:1607:9)\n    at async scrapePropertyData (/home/runner/workspace/server/playwrightScraper.ts:1814:30)\n    at async Timeout.processNextTask (/home/runner/workspace/server/scrapeTaskManager.ts:411:20)",
-      "timestamp": "2025-04-29T12:10:31.492Z",
+      "stack": "Error: Failed after 3 retries for task \"First page processing\": page.$: Target page, context or browser has been closed\n    at runWithRetry (/home/runner/workspace/server/playwrightScraper.ts:1635:9)\n    at async scrapePropertyData (/home/runner/workspace/server/playwrightScraper.ts:1842:30)\n    at async Timeout.processNextTask (/home/runner/workspace/server/scrapeTaskManager.ts:411:20)",
+      "timestamp": "2025-04-29T12:13:36.370Z",
       "errorType": "Error"
     },
     "screenshots": {
-      "error": "./logs/error_screenshot_ma2g1ahc15v.png",
-      "errorHtml": "./logs/error_page_ma2g1ahc15v.html"
+      "error": "./logs/error_screenshot_ma2fynpa5pk.png",
+      "errorHtml": "./logs/error_page_ma2fynpa5pk.html"
     },
     "cookieAttempted": true,
     "cookieAccepted": false,
     "cookieError": "Error: page.evaluate: Target page, context or browser has been closed",
     "listingElementsFound": false,
-    "pageUrl": "https://www.otodom.pl/pl/wyniki/sprzedaz/mieszkanie/cala-polska?limit=72&ownerTypeSingleSelect=ALL&roomsNumber=%5BONE%5D&by=DEFAULT&direction=DESC&viewType=listing",
-    "htmlSize": 1670263,
+    "pageUrl": "https://www.otodom.pl/pl/wyniki/sprzedaz/mieszkanie,2-pokoje/mazowieckie/warszawa/warszawa/warszawa/ursynow?limit=72&ownerTypeSingleSelect=ALL&by=DEFAULT&direction=DESC&viewType=listing",
+    "htmlSize": 1768254,
     "screenhotsTaken": [
       {
         "name": "after_first_page_processing.png",
@@ -52,12 +52,12 @@
       {
         "name": "cookie_banner_after.png",
         "path": "./logs/cookie_banner_after.png",
-        "timestamp": "2025-04-29T12:09:58.202Z"
+        "timestamp": "2025-04-29T12:13:03.055Z"
       },
       {
         "name": "cookie_banner_before.png",
         "path": "./logs/cookie_banner_before.png",
-        "timestamp": "2025-04-29T12:10:08.456Z"
+        "timestamp": "2025-04-29T12:13:12.426Z"
       },
       {
         "name": "page_1_screenshot.png",
@@ -70,18 +70,18 @@
         "timestamp": "2025-04-29T11:36:33.553Z"
       }
     ],
-    "browserMemoryUsage": 250,
+    "browserMemoryUsage": 262,
     "cookieRawData": {
       "cookieAttempted": true,
       "cookieAccepted": false,
       "cookieError": "Error: page.evaluate: Target page, context or browser has been closed",
-      "timestamp": "2025-04-29T12:10:17.479Z",
-      "url": "https://www.otodom.pl/pl/wyniki/sprzedaz/mieszkanie/cala-polska?limit=72&ownerTypeSingleSelect=ALL&roomsNumber=%5BONE%5D&by=DEFAULT&direction=DESC&viewType=listing",
+      "timestamp": "2025-04-29T12:13:22.351Z",
+      "url": "https://www.otodom.pl/pl/wyniki/sprzedaz/mieszkanie,2-pokoje/mazowieckie/warszawa/warszawa/warszawa/ursynow?limit=72&ownerTypeSingleSelect=ALL&by=DEFAULT&direction=DESC&viewType=listing",
       "jsEvalResult": {
         "clicked": false,
         "selector": null,
         "cookieBannerExists": true,
-        "bodyHtml": 1670263
+        "bodyHtml": 1768254
       }
     }
   }

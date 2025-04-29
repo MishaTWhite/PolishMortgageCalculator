@@ -377,23 +377,30 @@ function moveTaskToCompleted(task: ScrapeTask): void {
  * Обрабатывает следующую задачу из очереди
  */
 async function processNextTask(): Promise<void> {
-  // Проверяем, запущена ли уже обработка
-  if (isProcessing || !taskProcessor) {
-    return;
-  }
+  if (isProcessing) return;
+  isProcessing = true;
   
-  // Проверяем, есть ли задачи в очереди
-  if (taskQueue.length === 0) {
-    logInfo('Task queue is empty, nothing to process');
-    return;
-  }
+  // Локальная переменная для текущей задачи
+  let localTask: ScrapeTask | null = null;
   
   try {
-    // Устанавливаем флаг обработки
-    isProcessing = true;
+    // Если очередь пуста, выходим
+    if (taskQueue.length === 0) {
+      logInfo('Task queue is empty, nothing to process');
+      isProcessing = false;
+      return;
+    }
     
-    // Берем задачу с наивысшим приоритетом (с начала очереди)
-    const task = taskQueue[0];
+    // Получаем задачу с наивысшим приоритетом
+    const task = taskQueue.shift();
+    if (!task) {
+      logWarning("Shifted task from queue is null or undefined");
+      isProcessing = false;
+      return;
+    }
+    
+    // Сохраняем задачу как в глобальную, так и в локальную переменную
+    localTask = task;
     currentTask = task;
     
     // Обновляем статус задачи
@@ -406,6 +413,11 @@ async function processNextTask(): Promise<void> {
     saveQueue();
     
     logInfo(`Processing task ${task.id}: ${task.cityNormalized}/${task.districtName}/${task.roomType}`);
+    
+    // Проверяем, что обработчик задач зарегистрирован
+    if (!taskProcessor) {
+      throw new Error("Task processor is not registered");
+    }
     
     // Выполняем задачу
     const result = await taskProcessor(task);
@@ -421,8 +433,12 @@ async function processNextTask(): Promise<void> {
     
     logInfo(`Task ${task.id} completed successfully`);
   } catch (error: any) {
-    if (!currentTask) {
-      logError(`Error processing task but currentTask is null: ${error}`);
+    // Используем локальную переменную, так как currentTask может быть null
+    // если задачу не удалось получить из очереди или ее сбросили в другом потоке
+    const taskForError = localTask || currentTask;
+    
+    if (!taskForError) {
+      logError(`Error processing task but no task reference available: ${error}`);
       isProcessing = false;
       return;
     }
@@ -433,7 +449,7 @@ async function processNextTask(): Promise<void> {
     const retriable = isRetriable(errorType);
     const errorDesc = getErrorDescription(errorType);
     
-    logError(`Error processing task ${currentTask.id}: ${errorMessage} [Type: ${errorType}, Retriable: ${retriable}]`);
+    logError(`Error processing task ${taskForError.id}: ${errorMessage} [Type: ${errorType}, Retriable: ${retriable}]`);
     
     // Добавляем дополнительную диагностику в результаты
     const errorResult = {
@@ -445,53 +461,51 @@ async function processNextTask(): Promise<void> {
       timestamp: new Date().toISOString()
     };
     
-    // Если достигнуто максимальное число повторов или ошибка не retriable, помечаем как неудачную
-    if (currentTask.retryCount >= 3 || !retriable) {
-      currentTask.status = TaskStatus.FAILED;
-      currentTask.completedAt = new Date().toISOString();
-      currentTask.updatedAt = new Date().toISOString();
-      currentTask.error = `${errorDesc}: ${errorMessage}`;
-      currentTask.result = {
-        ...currentTask.result,
-        ...errorResult,
-        diagnostic: `Причина: ${errorDesc}. Повторные попытки: ${currentTask.retryCount}/3`
-      };
-      
-      // Перемещаем в выполненные (задача существует, т.к. мы уже проверили выше)
-      moveTaskToCompleted(currentTask);
-      
-      // Логируем финальный сбой с причиной
-      logError(`Task ${currentTask.id} failed after ${currentTask.retryCount} attempts: ${errorDesc}`);
-    } else {
-      // Иначе помечаем для повторного выполнения, если ошибка retriable
-      currentTask.status = TaskStatus.RETRY;
-      currentTask.retryCount++;
-      currentTask.updatedAt = new Date().toISOString();
-      currentTask.error = `${errorDesc}: ${errorMessage}`;
-      
-      // Логируем информацию о повторной попытке
-      logInfo(`Task ${currentTask.id} will be retried (${currentTask.retryCount}/3): ${errorDesc}`);
-      
-      // Перемещаем в конец очереди
-      if (currentTask && currentTask.id) { // Добавляем проверку на наличие currentTask и id
-        // Type assertion для TSC, чтобы убрать ошибку "currentTask is possibly null"
-        const task = currentTask as ScrapeTask;
-        const taskIndex = taskQueue.findIndex(t => t && t.id === task.id);
+    try {
+      // Если достигнуто максимальное число повторов или ошибка не retriable, помечаем как неудачную
+      if (taskForError.retryCount >= 3 || !retriable) {
+        taskForError.status = TaskStatus.FAILED;
+        taskForError.completedAt = new Date().toISOString();
+        taskForError.updatedAt = new Date().toISOString();
+        taskForError.error = `${errorDesc}: ${errorMessage}`;
+        taskForError.result = {
+          ...taskForError.result,
+          ...errorResult,
+          diagnostic: `Причина: ${errorDesc}. Повторные попытки: ${taskForError.retryCount}/3`
+        };
+        
+        // Перемещаем в выполненные
+        moveTaskToCompleted(taskForError);
+        
+        // Логируем финальный сбой с причиной
+        logError(`Task ${taskForError.id} failed after ${taskForError.retryCount} attempts: ${errorDesc}`);
+      } else {
+        // Иначе помечаем для повторного выполнения, если ошибка retriable
+        taskForError.status = TaskStatus.RETRY;
+        taskForError.retryCount++;
+        taskForError.updatedAt = new Date().toISOString();
+        taskForError.error = `${errorDesc}: ${errorMessage}`;
+        
+        // Логируем информацию о повторной попытке
+        logInfo(`Task ${taskForError.id} will be retried (${taskForError.retryCount}/3): ${errorDesc}`);
+        
+        // Добавляем в очередь
+        const taskIndex = taskQueue.findIndex(t => t && t.id === taskForError.id);
         if (taskIndex >= 0) {
           taskQueue.splice(taskIndex, 1);
         }
         
         // Добавляем с повышенным приоритетом (но не в самое начало)
-        // чтобы избежать блокировки обработки одной проблемной задачей
-        taskQueue.splice(Math.min(taskQueue.length, 5), 0, currentTask);
-      } else {
-        logWarning("Cannot requeue task: currentTask or currentTask.id is null/undefined");
+        taskQueue.splice(Math.min(taskQueue.length, 5), 0, taskForError);
       }
-      
-      saveQueue();
-      currentTask = null;
-      saveCurrentTask();
+    } catch (innerError) {
+      logError(`Error handling task failure: ${innerError}`);
     }
+    
+    // Сбрасываем переменные
+    currentTask = null;
+    saveCurrentTask();
+    saveQueue();
   } finally {
     // Сбрасываем флаг обработки
     isProcessing = false;

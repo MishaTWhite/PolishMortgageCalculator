@@ -8,5 +8,5 @@
   "error": true,
   "errorMessage": "Task timeout reached (90000ms)",
   "errorStack": "Error: Task timeout reached (90000ms)\n    at Timeout._onTimeout (/home/runner/workspace/server/playwrightScraper.ts:1942:14)\n    at listOnTimeout (node:internal/timers:581:17)\n    at process.processTimers (node:internal/timers:519:7)",
-  "botDetected": true
+  "botDetected": false
 }

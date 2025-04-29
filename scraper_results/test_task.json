@@ -6,8 +6,8 @@
   "prices": [],
   "pricesPerSqm": [],
   "error": true,
-  "errorMessage": "Task timeout reached (90000ms)",
-  "errorStack": "Error: Task timeout reached (90000ms)\n    at Timeout._onTimeout (/home/runner/workspace/server/playwrightScraper.ts:1942:14)\n    at listOnTimeout (node:internal/timers:581:17)\n    at process.processTimers (node:internal/timers:519:7)",
+  "errorMessage": "Failed after 3 retries for task \"Search page navigation\": page.goto: Target page, context or browser has been closed",
+  "errorStack": "Error: Failed after 3 retries for task \"Search page navigation\": page.goto: Target page, context or browser has been closed\n    at runWithRetry (/home/runner/workspace/server/playwrightScraper.ts:1807:9)\n    at async scrapeDataTask (/home/runner/workspace/server/playwrightScraper.ts:2012:7)\n    at async scrapePropertyData (/home/runner/workspace/server/playwrightScraper.ts:2042:5)\n    at async Timeout.processNextTask (/home/runner/workspace/server/scrapeTaskManager.ts:522:20)",
   "botDetected": true,
   "task": {
     "id": "ma2ikv899kq",
@@ -20,17 +20,17 @@
     "status": "in_progress"
   },
   "diagnostics": {
-    "timestamp": "2025-04-29T13:55:22.204Z",
-    "executionTimeMs": 90010,
+    "timestamp": "2025-04-29T14:10:10.911Z",
+    "executionTimeMs": 87035,
     "environment": {
-      "memoryUsageMb": 246,
+      "memoryUsageMb": 272,
       "nodeVersion": "v20.18.1",
       "platform": "linux"
     },
     "error": {
-      "message": "Task timeout reached (90000ms)",
-      "stack": "Error: Task timeout reached (90000ms)\n    at Timeout._onTimeout (/home/runner/workspace/server/playwrightScraper.ts:1942:14)\n    at listOnTimeout (node:internal/timers:581:17)\n    at process.processTimers (node:internal/timers:519:7)",
-      "timestamp": "2025-04-29T13:55:22.202Z",
+      "message": "Failed after 3 retries for task \"Search page navigation\": page.goto: Target page, context or browser has been closed",
+      "stack": "Error: Failed after 3 retries for task \"Search page navigation\": page.goto: Target page, context or browser has been closed\n    at runWithRetry (/home/runner/workspace/server/playwrightScraper.ts:1807:9)\n    at async scrapeDataTask (/home/runner/workspace/server/playwrightScraper.ts:2012:7)\n    at async scrapePropertyData (/home/runner/workspace/server/playwrightScraper.ts:2042:5)\n    at async Timeout.processNextTask (/home/runner/workspace/server/scrapeTaskManager.ts:522:20)",
+      "timestamp": "2025-04-29T14:10:10.910Z",
       "errorType": "Error"
     },
     "screenshots": {
@@ -41,8 +41,8 @@
     "cookieAccepted": true,
     "cookieError": "",
     "listingElementsFound": false,
-    "pageUrl": "https://www.otodom.pl/pl/wyniki/sprzedaz/mieszkanie/cala-polska",
-    "htmlSize": 1049513,
+    "pageUrl": "https://www.otodom.pl/",
+    "htmlSize": 0,
     "screenhotsTaken": [
       {
         "name": "after_first_page_processing.png",
@@ -62,12 +62,12 @@
       {
         "name": "cookie_banner_after.png",
         "path": "./logs/cookie_banner_after.png",
-        "timestamp": "2025-04-29T13:54:56.952Z"
+        "timestamp": "2025-04-29T14:09:15.083Z"
       },
       {
         "name": "cookie_banner_before.png",
         "path": "./logs/cookie_banner_before.png",
-        "timestamp": "2025-04-29T13:54:53.319Z"
+        "timestamp": "2025-04-29T14:09:13.964Z"
       },
       {
         "name": "minimal_main.png",
@@ -83,6 +83,11 @@
         "name": "proxy_main.png",
         "path": "./logs/proxy_main.png",
         "timestamp": "2025-04-29T13:34:18.226Z"
+      },
+      {
+        "name": "screenshot_success.png",
+        "path": "./logs/screenshot_success.png",
+        "timestamp": "2025-04-29T14:05:25.026Z"
       },
       {
         "name": "search_page_diagnostic.png",
@@ -115,21 +120,19 @@
         "timestamp": "2025-04-29T13:15:57.050Z"
       }
     ],
-    "browserMemoryUsage": 246,
+    "browserMemoryUsage": 273,
     "cookieRawData": {
       "cookieAttempted": true,
       "cookieAccepted": true,
       "cookieError": "",
-      "timestamp": "2025-04-29T13:54:57.039Z",
-      "url": "https://www.otodom.pl/pl/wyniki/sprzedaz/mieszkanie/cala-polska",
+      "timestamp": "2025-04-29T14:09:15.091Z",
+      "url": "https://www.otodom.pl/",
       "jsEvalResult": {
-        "clicked": false,
-        "selector": null,
-        "cookieBannerExists": true,
-        "bodyHtml": 1049513
+        "clicked": true,
+        "selector": "button[id=\"onetrust-accept-btn-handler\"]"
       },
-      "htmlSize": 1258076,
-      "listingElementsFound": true,
+      "htmlSize": 359473,
+      "listingElementsFound": false,
       "iframesCount": 1,
       "bodyClasses": "",
       "cookieBannerVisible": true

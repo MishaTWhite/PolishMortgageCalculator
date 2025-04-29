@@ -1,0 +1,12 @@
+{
+  "count": 0,
+  "reportedCount": 0,
+  "avgPrice": 0,
+  "avgPricePerSqm": 0,
+  "prices": [],
+  "pricesPerSqm": [],
+  "error": true,
+  "errorMessage": "Failed after 3 retries for task \"Natural browsing simulation\": page.goto: Target page, context or browser has been closed",
+  "errorStack": "Error: Failed after 3 retries for task \"Natural browsing simulation\": page.goto: Target page, context or browser has been closed\n    at runWithRetry (/home/runner/workspace/server/playwrightScraper.ts:1508:9)\n    at async scrapePropertyData (/home/runner/workspace/server/playwrightScraper.ts:1650:5)\n    at async Timeout.processNextTask (/home/runner/workspace/server/scrapeTaskManager.ts:412:20)",
+  "botDetected": true
+}

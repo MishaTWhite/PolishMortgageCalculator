@@ -76,7 +76,7 @@ async function scrapeOtodomPrices(city = 'warszawa', district = 'srodmiescie', r
     
     // Ждем загрузки контента
     console.log('Waiting for content to load...');
-    await page.waitForTimeout(3000);
+    await page.waitForSelector('body', { timeout: 3000 }).catch(() => console.log('Timeout waiting for body'));
     
     // Принимаем куки, если есть диалог
     try {
@@ -85,7 +85,7 @@ async function scrapeOtodomPrices(city = 'warszawa', district = 'srodmiescie', r
       if (cookieButton) {
         await cookieButton.click();
         console.log('Clicked on cookie consent button');
-        await page.waitForTimeout(1000);
+        await new Promise(resolve => setTimeout(resolve, 1000));
       } else {
         console.log('No cookie button found');
       }
@@ -113,7 +113,7 @@ async function scrapeOtodomPrices(city = 'warszawa', district = 'srodmiescie', r
     });
     
     // Ждем после скролла
-    await page.waitForTimeout(2000);
+    await new Promise(resolve => setTimeout(resolve, 2000));
     
     // Делаем скриншот страницы
     const screenshotPath = path.join(LOGS_DIR, `${city}_${district}_${roomType}_${Date.now()}.png`);
@@ -139,7 +139,7 @@ async function scrapeOtodomPrices(city = 'warszawa', district = 'srodmiescie', r
         'div[data-testid="listing-item"]'
       ];
       
-      const selectorResults = {};
+      const selectorResults: Record<string, number> = {};
       selectorTests.forEach(selector => {
         const elements = document.querySelectorAll(selector);
         selectorResults[selector] = elements.length;

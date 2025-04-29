@@ -10,39 +10,39 @@
   "errorStack": "Error: Task timeout reached (90000ms)\n    at Timeout._onTimeout (/home/runner/workspace/server/playwrightScraper.ts:1942:14)\n    at listOnTimeout (node:internal/timers:581:17)\n    at process.processTimers (node:internal/timers:519:7)",
   "botDetected": true,
   "task": {
-    "id": "ma2ikv73ft9",
+    "id": "ma2ikv6unsq",
     "cityUrl": "warszawa",
     "cityNormalized": "warsaw",
     "districtName": "Śródmieście",
     "districtSearchTerm": "srodmiescie",
-    "roomType": "threeRoom",
+    "roomType": "oneRoom",
     "fetchDate": "29.04.2025",
     "status": "in_progress"
   },
   "diagnostics": {
-    "timestamp": "2025-04-29T13:08:18.833Z",
-    "executionTimeMs": 90016,
+    "timestamp": "2025-04-29T13:14:16.557Z",
+    "executionTimeMs": 90011,
     "environment": {
-      "memoryUsageMb": 239,
+      "memoryUsageMb": 250,
       "nodeVersion": "v20.18.1",
       "platform": "linux"
     },
     "error": {
       "message": "Task timeout reached (90000ms)",
       "stack": "Error: Task timeout reached (90000ms)\n    at Timeout._onTimeout (/home/runner/workspace/server/playwrightScraper.ts:1942:14)\n    at listOnTimeout (node:internal/timers:581:17)\n    at process.processTimers (node:internal/timers:519:7)",
-      "timestamp": "2025-04-29T13:08:18.832Z",
+      "timestamp": "2025-04-29T13:14:16.552Z",
       "errorType": "Error"
     },
     "screenshots": {
-      "error": "./logs/error_screenshot_ma2ikv73ft9.png",
-      "errorHtml": "./logs/error_page_ma2ikv73ft9.html"
+      "error": "./logs/error_screenshot_ma2ikv6unsq.png",
+      "errorHtml": "./logs/error_page_ma2ikv6unsq.html"
     },
     "cookieAttempted": true,
-    "cookieAccepted": false,
-    "cookieError": "Error: page.evaluate: Target page, context or browser has been closed",
+    "cookieAccepted": true,
+    "cookieError": "",
     "listingElementsFound": false,
-    "pageUrl": "https://www.otodom.pl/pl/wyniki/sprzedaz/mieszkanie/cala-polska",
-    "htmlSize": 985613,
+    "pageUrl": "https://www.otodom.pl/",
+    "htmlSize": 0,
     "screenhotsTaken": [
       {
         "name": "after_first_page_processing.png",
@@ -52,12 +52,12 @@
       {
         "name": "cookie_banner_after.png",
         "path": "./logs/cookie_banner_after.png",
-        "timestamp": "2025-04-29T13:07:29.067Z"
+        "timestamp": "2025-04-29T13:13:28.353Z"
       },
       {
         "name": "cookie_banner_before.png",
         "path": "./logs/cookie_banner_before.png",
-        "timestamp": "2025-04-29T13:07:46.975Z"
+        "timestamp": "2025-04-29T13:13:27.243Z"
       },
       {
         "name": "page_1_screenshot.png",
@@ -68,21 +68,34 @@
         "name": "search_page_diagnostic.png",
         "path": "./logs/search_page_diagnostic.png",
         "timestamp": "2025-04-29T11:36:33.553Z"
+      },
+      {
+        "name": "simple_scraper_after_cookie.png",
+        "path": "./logs/simple_scraper_after_cookie.png",
+        "timestamp": "2025-04-29T13:11:09.467Z"
+      },
+      {
+        "name": "simple_scraper_homepage.png",
+        "path": "./logs/simple_scraper_homepage.png",
+        "timestamp": "2025-04-29T13:11:07.211Z"
       }
     ],
-    "browserMemoryUsage": 239,
+    "browserMemoryUsage": 250,
     "cookieRawData": {
       "cookieAttempted": true,
-      "cookieAccepted": false,
-      "cookieError": "Error: page.evaluate: Target page, context or browser has been closed",
-      "timestamp": "2025-04-29T13:07:48.844Z",
-      "url": "https://www.otodom.pl/pl/wyniki/sprzedaz/mieszkanie/cala-polska",
+      "cookieAccepted": true,
+      "cookieError": "",
+      "timestamp": "2025-04-29T13:13:28.359Z",
+      "url": "https://www.otodom.pl/",
       "jsEvalResult": {
-        "clicked": false,
-        "selector": null,
-        "cookieBannerExists": true,
-        "bodyHtml": 985613
-      }
+        "clicked": true,
+        "selector": "button[id=\"onetrust-accept-btn-handler\"]"
+      },
+      "htmlSize": 359232,
+      "listingElementsFound": false,
+      "iframesCount": 1,
+      "bodyClasses": "",
+      "cookieBannerVisible": true
     }
   }
 }

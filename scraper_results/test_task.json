@@ -7,42 +7,42 @@
   "pricesPerSqm": [],
   "error": true,
   "errorMessage": "Failed after 3 retries for task \"Search page navigation\": page.goto: Target page, context or browser has been closed",
-  "errorStack": "Error: Failed after 3 retries for task \"Search page navigation\": page.goto: Target page, context or browser has been closed\n    at runWithRetry (/home/runner/workspace/server/playwrightScraper.ts:1756:9)\n    at async scrapePropertyData (/home/runner/workspace/server/playwrightScraper.ts:1935:5)\n    at async processNextTask (/home/runner/workspace/server/scrapeTaskManager.ts:423:20)",
+  "errorStack": "Error: Failed after 3 retries for task \"Search page navigation\": page.goto: Target page, context or browser has been closed\n    at runWithRetry (/home/runner/workspace/server/playwrightScraper.ts:1756:9)\n    at async scrapePropertyData (/home/runner/workspace/server/playwrightScraper.ts:1935:5)\n    at async Timeout.processNextTask (/home/runner/workspace/server/scrapeTaskManager.ts:423:20)",
   "botDetected": true,
   "task": {
-    "id": "ma2g1ahh3hc",
-    "cityUrl": "dolnoslaskie/wroclaw/wroclaw/wroclaw",
-    "cityNormalized": "wroclaw",
-    "districtName": "Fabryczna",
-    "districtSearchTerm": "fabryczna",
-    "roomType": "threeRoom",
+    "id": "ma2h9qtnxe0",
+    "cityUrl": "warszawa",
+    "cityNormalized": "warsaw",
+    "districtName": "Śródmieście",
+    "districtSearchTerm": "srodmiescie",
+    "roomType": "oneRoom",
     "fetchDate": "29.04.2025",
     "status": "in_progress"
   },
   "diagnostics": {
-    "timestamp": "2025-04-29T12:19:57.346Z",
-    "executionTimeMs": 72303,
+    "timestamp": "2025-04-29T12:34:54.354Z",
+    "executionTimeMs": 37754,
     "environment": {
-      "memoryUsageMb": 249,
+      "memoryUsageMb": 318,
       "nodeVersion": "v20.18.1",
       "platform": "linux"
     },
     "error": {
       "message": "Failed after 3 retries for task \"Search page navigation\": page.goto: Target page, context or browser has been closed",
-      "stack": "Error: Failed after 3 retries for task \"Search page navigation\": page.goto: Target page, context or browser has been closed\n    at runWithRetry (/home/runner/workspace/server/playwrightScraper.ts:1756:9)\n    at async scrapePropertyData (/home/runner/workspace/server/playwrightScraper.ts:1935:5)\n    at async processNextTask (/home/runner/workspace/server/scrapeTaskManager.ts:423:20)",
-      "timestamp": "2025-04-29T12:19:57.344Z",
+      "stack": "Error: Failed after 3 retries for task \"Search page navigation\": page.goto: Target page, context or browser has been closed\n    at runWithRetry (/home/runner/workspace/server/playwrightScraper.ts:1756:9)\n    at async scrapePropertyData (/home/runner/workspace/server/playwrightScraper.ts:1935:5)\n    at async Timeout.processNextTask (/home/runner/workspace/server/scrapeTaskManager.ts:423:20)",
+      "timestamp": "2025-04-29T12:34:54.353Z",
       "errorType": "Error"
     },
     "screenshots": {
-      "error": "./logs/error_screenshot_ma2g1ahh3hc.png",
-      "errorHtml": "./logs/error_page_ma2g1ahh3hc.html"
+      "error": "./logs/error_screenshot_ma2h9qtnxe0.png",
+      "errorHtml": "./logs/error_page_ma2h9qtnxe0.html"
     },
     "cookieAttempted": true,
     "cookieAccepted": true,
     "cookieError": "",
     "listingElementsFound": false,
-    "pageUrl": "https://www.otodom.pl/pl/wyniki/sprzedaz/mieszkanie/cala-polska",
-    "htmlSize": 1062230,
+    "pageUrl": "https://www.otodom.pl/",
+    "htmlSize": 0,
     "screenhotsTaken": [
       {
         "name": "after_first_page_processing.png",
@@ -52,12 +52,12 @@
       {
         "name": "cookie_banner_after.png",
         "path": "./logs/cookie_banner_after.png",
-        "timestamp": "2025-04-29T12:19:15.289Z"
+        "timestamp": "2025-04-29T12:34:20.496Z"
       },
       {
         "name": "cookie_banner_before.png",
         "path": "./logs/cookie_banner_before.png",
-        "timestamp": "2025-04-29T12:19:10.657Z"
+        "timestamp": "2025-04-29T12:34:19.411Z"
       },
       {
         "name": "page_1_screenshot.png",
@@ -70,21 +70,19 @@
         "timestamp": "2025-04-29T11:36:33.553Z"
       }
     ],
-    "browserMemoryUsage": 249,
+    "browserMemoryUsage": 318,
     "cookieRawData": {
       "cookieAttempted": true,
       "cookieAccepted": true,
       "cookieError": "",
-      "timestamp": "2025-04-29T12:19:15.443Z",
-      "url": "https://www.otodom.pl/pl/wyniki/sprzedaz/mieszkanie/cala-polska",
+      "timestamp": "2025-04-29T12:34:20.503Z",
+      "url": "https://www.otodom.pl/",
       "jsEvalResult": {
-        "clicked": false,
-        "selector": null,
-        "cookieBannerExists": true,
-        "bodyHtml": 1062230
+        "clicked": true,
+        "selector": "button[id=\"onetrust-accept-btn-handler\"]"
       },
-      "htmlSize": 1285254,
-      "listingElementsFound": true,
+      "htmlSize": 359209,
+      "listingElementsFound": false,
       "iframesCount": 1,
       "bodyClasses": "",
       "cookieBannerVisible": true

@@ -1,0 +1,62 @@
+[
+  {
+    "name": "onap",
+    "value": "19681b554c0x5fa71139-1-19681b554c0x5fa71139-3-1745934667-19681b5577ex5b0bfa3a-olx-pl_organic_1745932867_1748524867",
+    "domain": "tracking.olx-st.com",
+    "path": "/h",
+    "expires": 1780492867.509981,
+    "httpOnly": false,
+    "secure": true,
+    "sameSite": "None"
+  },
+  {
+    "name": "OptanonConsent",
+    "value": "isGpcEnabled=0&datestamp=Tue+Apr+29+2025+15%3A21%3A06+GMT%2B0200+(czas+%C5%9Brodkowoeuropejski+letni)&version=202501.2.0&browserGpcFlag=0&isIABGlobal=false&hosts=&consentId=d5e9ba30-2ee4-4178-a1d4-ddb2d86c434c&interactionCount=0&isAnonUser=1&landingPath=https%3A%2F%2Fwww.otodom.pl%2F&groups=C0001%3A1%2CC0002%3A0%2CC0003%3A0%2CC0004%3A0%2Cgad%3A0",
+    "domain": ".otodom.pl",
+    "path": "/",
+    "expires": 1777468866,
+    "httpOnly": false,
+    "secure": false,
+    "sameSite": "Lax"
+  },
+  {
+    "name": "lqstatus",
+    "value": "1745934127|||||0",
+    "domain": ".otodom.pl",
+    "path": "/",
+    "expires": 1777468867,
+    "httpOnly": false,
+    "secure": true,
+    "sameSite": "Lax"
+  },
+  {
+    "name": "laquesis",
+    "value": "eure-31664@b#eure-32427@b#eure-32622@b#eure-32729@b#eure-33596@b#eure-33628@b#eure-33650@b#eure-33724@b#eure-33793@b#eure-33980@c#eure-33981@b#eure-34507@b#eure-34705@b#eure-34706@a#eure-35540@b#eure-35743@a",
+    "domain": ".otodom.pl",
+    "path": "/",
+    "expires": 1777468867,
+    "httpOnly": false,
+    "secure": true,
+    "sameSite": "Lax"
+  },
+  {
+    "name": "laquesisff",
+    "value": "euads-4389#gre-12226#rer-165#rer-166#rst-73#rst-74",
+    "domain": ".otodom.pl",
+    "path": "/",
+    "expires": 1777468867,
+    "httpOnly": false,
+    "secure": true,
+    "sameSite": "Lax"
+  },
+  {
+    "name": "onap",
+    "value": "19681b554c0x5fa71139-1-19681b554c0x5fa71139-3-1745934667",
+    "domain": ".otodom.pl",
+    "path": "/",
+    "expires": 1777036867,
+    "httpOnly": false,
+    "secure": true,
+    "sameSite": "Lax"
+  }
+]

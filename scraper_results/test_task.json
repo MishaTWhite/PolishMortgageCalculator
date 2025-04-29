@@ -7,35 +7,35 @@
   "pricesPerSqm": [],
   "error": true,
   "errorMessage": "Failed after 3 retries for task \"Search page navigation\": page.goto: Target page, context or browser has been closed",
-  "errorStack": "Error: Failed after 3 retries for task \"Search page navigation\": page.goto: Target page, context or browser has been closed\n    at runWithRetry (/home/runner/workspace/server/playwrightScraper.ts:1807:9)\n    at async scrapeDataTask (/home/runner/workspace/server/playwrightScraper.ts:2012:7)\n    at async scrapePropertyData (/home/runner/workspace/server/playwrightScraper.ts:2042:5)\n    at async Timeout.processNextTask (/home/runner/workspace/server/scrapeTaskManager.ts:522:20)",
+  "errorStack": "Error: Failed after 3 retries for task \"Search page navigation\": page.goto: Target page, context or browser has been closed\n    at runWithRetry (/home/runner/workspace/server/playwrightScraper.ts:1807:9)\n    at async scrapeDataTask (/home/runner/workspace/server/playwrightScraper.ts:2012:7)\n    at async scrapePropertyData (/home/runner/workspace/server/playwrightScraper.ts:2042:5)\n    at async processNextTask (/home/runner/workspace/server/scrapeTaskManager.ts:522:20)",
   "botDetected": true,
   "task": {
-    "id": "ma2ii9ionvv",
+    "id": "ma2ii9iqf07",
     "cityUrl": "warszawa",
     "cityNormalized": "warsaw",
-    "districtName": "Śródmieście",
-    "districtSearchTerm": "srodmiescie",
-    "roomType": "threeRoom",
+    "districtName": "Mokotów",
+    "districtSearchTerm": "mokotow",
+    "roomType": "oneRoom",
     "fetchDate": "29.04.2025",
     "status": "in_progress"
   },
   "diagnostics": {
-    "timestamp": "2025-04-29T13:17:17.002Z",
-    "executionTimeMs": 86080,
+    "timestamp": "2025-04-29T13:29:43.203Z",
+    "executionTimeMs": 62793,
     "environment": {
-      "memoryUsageMb": 295,
+      "memoryUsageMb": 246,
       "nodeVersion": "v20.18.1",
       "platform": "linux"
     },
     "error": {
       "message": "Failed after 3 retries for task \"Search page navigation\": page.goto: Target page, context or browser has been closed",
-      "stack": "Error: Failed after 3 retries for task \"Search page navigation\": page.goto: Target page, context or browser has been closed\n    at runWithRetry (/home/runner/workspace/server/playwrightScraper.ts:1807:9)\n    at async scrapeDataTask (/home/runner/workspace/server/playwrightScraper.ts:2012:7)\n    at async scrapePropertyData (/home/runner/workspace/server/playwrightScraper.ts:2042:5)\n    at async Timeout.processNextTask (/home/runner/workspace/server/scrapeTaskManager.ts:522:20)",
-      "timestamp": "2025-04-29T13:17:17.001Z",
+      "stack": "Error: Failed after 3 retries for task \"Search page navigation\": page.goto: Target page, context or browser has been closed\n    at runWithRetry (/home/runner/workspace/server/playwrightScraper.ts:1807:9)\n    at async scrapeDataTask (/home/runner/workspace/server/playwrightScraper.ts:2012:7)\n    at async scrapePropertyData (/home/runner/workspace/server/playwrightScraper.ts:2042:5)\n    at async processNextTask (/home/runner/workspace/server/scrapeTaskManager.ts:522:20)",
+      "timestamp": "2025-04-29T13:29:43.201Z",
       "errorType": "Error"
     },
     "screenshots": {
-      "error": "./logs/error_screenshot_ma2ii9ionvv.png",
-      "errorHtml": "./logs/error_page_ma2ii9ionvv.html"
+      "error": "./logs/error_screenshot_ma2ii9iqf07.png",
+      "errorHtml": "./logs/error_page_ma2ii9iqf07.html"
     },
     "cookieAttempted": true,
     "cookieAccepted": true,
@@ -50,14 +50,29 @@
         "timestamp": "2025-04-29T11:36:36.873Z"
       },
       {
+        "name": "bypass_main_page.png",
+        "path": "./logs/bypass_main_page.png",
+        "timestamp": "2025-04-29T13:17:48.141Z"
+      },
+      {
+        "name": "cloudfront_main.png",
+        "path": "./logs/cloudfront_main.png",
+        "timestamp": "2025-04-29T13:21:07.768Z"
+      },
+      {
         "name": "cookie_banner_after.png",
         "path": "./logs/cookie_banner_after.png",
-        "timestamp": "2025-04-29T13:16:22.681Z"
+        "timestamp": "2025-04-29T13:28:45.285Z"
       },
       {
         "name": "cookie_banner_before.png",
         "path": "./logs/cookie_banner_before.png",
-        "timestamp": "2025-04-29T13:16:21.585Z"
+        "timestamp": "2025-04-29T13:28:44.159Z"
+      },
+      {
+        "name": "minimal_main.png",
+        "path": "./logs/minimal_main.png",
+        "timestamp": "2025-04-29T13:28:58.121Z"
       },
       {
         "name": "page_1_screenshot.png",
@@ -67,7 +82,7 @@
       {
         "name": "search_page_diagnostic.png",
         "path": "./logs/search_page_diagnostic.png",
-        "timestamp": "2025-04-29T11:36:33.553Z"
+        "timestamp": "2025-04-29T13:22:53.318Z"
       },
       {
         "name": "simple_scraper_after_cookie.png",
@@ -80,23 +95,33 @@
         "timestamp": "2025-04-29T13:11:07.211Z"
       },
       {
+        "name": "stealth_before_sales_click.png",
+        "path": "./logs/stealth_before_sales_click.png",
+        "timestamp": "2025-04-29T13:27:20.849Z"
+      },
+      {
+        "name": "stealth_main.png",
+        "path": "./logs/stealth_main.png",
+        "timestamp": "2025-04-29T13:27:16.968Z"
+      },
+      {
         "name": "ultra_simple_result.png",
         "path": "./logs/ultra_simple_result.png",
         "timestamp": "2025-04-29T13:15:57.050Z"
       }
     ],
-    "browserMemoryUsage": 295,
+    "browserMemoryUsage": 247,
     "cookieRawData": {
       "cookieAttempted": true,
       "cookieAccepted": true,
       "cookieError": "",
-      "timestamp": "2025-04-29T13:16:22.689Z",
+      "timestamp": "2025-04-29T13:28:45.297Z",
       "url": "https://www.otodom.pl/",
       "jsEvalResult": {
         "clicked": true,
         "selector": "button[id=\"onetrust-accept-btn-handler\"]"
       },
-      "htmlSize": 358928,
+      "htmlSize": 423076,
       "listingElementsFound": false,
       "iframesCount": 1,
       "bodyClasses": "",

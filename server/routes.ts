@@ -5,6 +5,7 @@ import http from 'http';
 import { runScraper } from './searchSummaryScraper';
 import { scrapeOtodomPrices } from './simplePriceScraper';
 import { runAllRoomTypes } from './runAllRoomTypes';
+import { scrapeOtodomPrices as scrapePuppeteer } from './puppeteerScraper';
 
 interface PropertyListing {
   district: string;

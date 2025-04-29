@@ -70,6 +70,43 @@ let currentTask: ScrapeTask | null = null;
 let isProcessing = false;
 let taskProcessor: ((task: ScrapeTask) => Promise<any>) | null = null;
 
+// Статистика выполнения для отслеживания прогресса
+interface ScrapingStatistics {
+  total: number;
+  completed: number;
+  failed: number;
+  retried: number;
+  inProgress: number;
+  pending: number;
+  successRate: number;
+  withData: number; // задачи, где prices.length > 0
+  withDataRate: number;
+  startTime: string;
+  endTime: string | null;
+  runtime: number; // миллисекунды
+  errorsByType: Record<ErrorType, number>; // статистика по типам ошибок
+}
+
+// Инициализация статистики
+const scrapingStats: ScrapingStatistics = {
+  total: 0,
+  completed: 0,
+  failed: 0,
+  retried: 0,
+  inProgress: 0,
+  pending: 0,
+  successRate: 0,
+  withData: 0,
+  withDataRate: 0,
+  startTime: new Date().toISOString(),
+  endTime: null,
+  runtime: 0,
+  errorsByType: Object.values(ErrorType).reduce((acc, type) => {
+    acc[type] = 0;
+    return acc;
+  }, {} as Record<ErrorType, number>)
+};
+
 /**
  * Сохраняет очередь задач в файл
  */
@@ -582,6 +619,81 @@ export function getCurrentTask(): ScrapeTask | null {
 }
 
 /**
+ * Обновляет статистику выполнения задач
+ */
+function updateScrapingStatistics(): void {
+  // Считаем количество задач по статусам
+  scrapingStats.total = taskQueue.length + completedTasks.length + (currentTask ? 1 : 0);
+  scrapingStats.pending = taskQueue.filter(t => t.status === TaskStatus.PENDING).length;
+  scrapingStats.inProgress = currentTask && currentTask.status === TaskStatus.IN_PROGRESS ? 1 : 0;
+  scrapingStats.retried = taskQueue.filter(t => t.status === TaskStatus.RETRY).length;
+  
+  // Анализируем завершенные задачи
+  scrapingStats.completed = completedTasks.filter(t => t.status === TaskStatus.COMPLETED).length;
+  scrapingStats.failed = completedTasks.filter(t => t.status === TaskStatus.FAILED).length;
+  
+  // Считаем задачи с данными (prices.length > 0)
+  scrapingStats.withData = completedTasks.filter(t => {
+    return t.result && t.result.prices && Array.isArray(t.result.prices) && t.result.prices.length > 0;
+  }).length;
+  
+  // Считаем процент успеха
+  if (scrapingStats.completed + scrapingStats.failed > 0) {
+    scrapingStats.successRate = Math.round((scrapingStats.completed / (scrapingStats.completed + scrapingStats.failed)) * 100);
+    scrapingStats.withDataRate = Math.round((scrapingStats.withData / (scrapingStats.completed + scrapingStats.failed)) * 100);
+  }
+  
+  // Обновляем время работы
+  const startTime = new Date(scrapingStats.startTime).getTime();
+  scrapingStats.runtime = Date.now() - startTime;
+  
+  // Анализируем типы ошибок
+  completedTasks.forEach(task => {
+    if (task.status === TaskStatus.FAILED && task.errorType) {
+      scrapingStats.errorsByType[task.errorType] = (scrapingStats.errorsByType[task.errorType] || 0) + 1;
+    }
+  });
+}
+
+/**
+ * Выводит статистику выполнения
+ */
+export function printScrapingStatistics(): void {
+  updateScrapingStatistics();
+  
+  // Форматируем время выполнения
+  const runtimeMinutes = Math.floor(scrapingStats.runtime / 60000);
+  const runtimeSeconds = Math.floor((scrapingStats.runtime % 60000) / 1000);
+  
+  // Выводим сводку по статусам задач
+  logInfo('=== SCRAPING STATISTICS ===');
+  logInfo(`📊 Success rate: ${scrapingStats.successRate}% (completed: ${scrapingStats.completed}, failed: ${scrapingStats.failed})`);
+  logInfo(`📊 Data extraction rate: ${scrapingStats.withDataRate}% (tasks with data: ${scrapingStats.withData})`);
+  logInfo(`⏱ Runtime: ${runtimeMinutes}m ${runtimeSeconds}s`);
+  logInfo(`📋 Tasks: total=${scrapingStats.total}, pending=${scrapingStats.pending}, in_progress=${scrapingStats.inProgress}, retried=${scrapingStats.retried}`);
+  
+  // Выводим статистику по типам ошибок
+  if (scrapingStats.failed > 0) {
+    logInfo('🔍 Error types:');
+    for (const [errorType, count] of Object.entries(scrapingStats.errorsByType)) {
+      if (count > 0) {
+        logInfo(`   - ${errorType}: ${count} tasks (${Math.round((count / scrapingStats.failed) * 100)}%)`);
+      }
+    }
+  }
+  
+  logInfo('===========================');
+}
+
+/**
+ * Получает текущую статистику скрапинга
+ */
+export function getScrapingStatistics(): ScrapingStatistics {
+  updateScrapingStatistics();
+  return {...scrapingStats};
+}
+
+/**
  * Инициализирует менеджер задач
  */
 export function initTaskManager(): void {
@@ -590,27 +702,44 @@ export function initTaskManager(): void {
   loadCurrentTask();
   loadCompletedTasks();
   
+  // Инициализируем статистику
+  scrapingStats.startTime = new Date().toISOString();
+  
+  // Проверка максимального количества попыток
+  const MAX_RETRY_ATTEMPTS = 3;
+  
   // Если текущая задача была в процессе обработки, помечаем для повторного выполнения
   if (currentTask && currentTask.status === TaskStatus.IN_PROGRESS) {
     logWarning(`Found interrupted task ${currentTask.id}, marking for retry`);
     currentTask.status = TaskStatus.RETRY;
-    currentTask.retryCount++;
+    currentTask.retryCount = (currentTask.retryCount || 0) + 1;
     currentTask.updatedAt = new Date().toISOString();
     currentTask.error = 'Task interrupted by system restart';
+    currentTask.errorType = ErrorType.BROWSER_CRASHED; // Самая вероятная причина
     
-    // Добавляем в начало очереди для немедленного выполнения
-    taskQueue.unshift(currentTask);
-    currentTask = null;
-    
-    // Сохраняем изменения
-    saveQueue();
-    saveCurrentTask();
+    // Проверяем количество повторных попыток
+    if (currentTask.retryCount > MAX_RETRY_ATTEMPTS) {
+      logWarning(`Task ${currentTask.id} failed after ${MAX_RETRY_ATTEMPTS} attempts: ${currentTask.error || 'Unknown error'}`);
+      currentTask.status = TaskStatus.FAILED;
+      moveTaskToCompleted(currentTask);
+    } else {
+      // Добавляем в начало очереди для скорейшего выполнения
+      taskQueue.unshift(currentTask);
+      currentTask = null;
+      
+      // Сохраняем изменения
+      saveQueue();
+      saveCurrentTask();
+    }
   }
   
-  logInfo('Task manager initialized', { 
+  // Обновляем статистику
+  updateScrapingStatistics();
+  
+  logInfo(`Task manager initialized | ${JSON.stringify({
     pendingTasks: taskQueue.length,
     completedTasks: completedTasks.length
-  });
+  })}`);
 }
 
 // Инициализация при загрузке модуля

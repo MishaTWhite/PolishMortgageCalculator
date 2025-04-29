@@ -22,6 +22,12 @@ const QUEUE_FILE = path.join(TASKS_DIR, 'queue.json');
 const CURRENT_TASK_FILE = path.join(TASKS_DIR, 'current_task.json');
 const COMPLETED_TASKS_FILE = path.join(TASKS_DIR, 'completed_tasks.json');
 
+// Импортируем типы ошибок
+import { TaskStatus, ErrorType, ScrapeResult, DiagnosticInfo, determineErrorType, isRetriable, getErrorDescription } from './scraperTypes';
+
+// Реэкспортируем TaskStatus для других модулей
+export { TaskStatus };
+
 // Интерфейс задачи скрапинга
 export interface ScrapeTask {
   id: string;                    // Уникальный идентификатор задачи
@@ -42,14 +48,7 @@ export interface ScrapeTask {
   result?: any;                  // Результаты выполнения задачи (если есть)
 }
 
-// Статусы задачи
-export enum TaskStatus {
-  PENDING = 'pending',           // Ожидает выполнения
-  IN_PROGRESS = 'in_progress',   // В процессе выполнения
-  COMPLETED = 'completed',       // Успешно завершена
-  FAILED = 'failed',             // Завершена с ошибкой
-  RETRY = 'retry'                // Будет повторена
-}
+// Используем TaskStatus из scraperTypes.ts
 
 // Состояние очереди задач
 interface TaskQueueState {
@@ -428,25 +427,50 @@ async function processNextTask(): Promise<void> {
       return;
     }
     
-    // Обработка ошибки
+    // Используем типизацию ошибок для более точной обработки
     const errorMessage = error instanceof Error ? error.message : String(error);
-    logError(`Error processing task ${currentTask.id}: ${errorMessage}`);
+    const errorType = determineErrorType(error);
+    const retriable = isRetriable(errorType);
+    const errorDesc = getErrorDescription(errorType);
     
-    // Если достигнуто максимальное число повторов, помечаем как неудачную
-    if (currentTask.retryCount >= 3) {
+    logError(`Error processing task ${currentTask.id}: ${errorMessage} [Type: ${errorType}, Retriable: ${retriable}]`);
+    
+    // Добавляем дополнительную диагностику в результаты
+    const errorResult = {
+      errorType,
+      errorMessage,
+      errorStack: error instanceof Error ? error.stack : undefined,
+      retriable,
+      botDetected: errorType === ErrorType.BOT_DETECTED,
+      timestamp: new Date().toISOString()
+    };
+    
+    // Если достигнуто максимальное число повторов или ошибка не retriable, помечаем как неудачную
+    if (currentTask.retryCount >= 3 || !retriable) {
       currentTask.status = TaskStatus.FAILED;
       currentTask.completedAt = new Date().toISOString();
       currentTask.updatedAt = new Date().toISOString();
-      currentTask.error = errorMessage;
+      currentTask.error = `${errorDesc}: ${errorMessage}`;
+      currentTask.result = {
+        ...currentTask.result,
+        ...errorResult,
+        diagnostic: `Причина: ${errorDesc}. Повторные попытки: ${currentTask.retryCount}/3`
+      };
       
       // Перемещаем в выполненные
       moveTaskToCompleted(currentTask);
+      
+      // Логируем финальный сбой с причиной
+      logError(`Task ${currentTask.id} failed after ${currentTask.retryCount} attempts: ${errorDesc}`);
     } else {
-      // Иначе помечаем для повторного выполнения
+      // Иначе помечаем для повторного выполнения, если ошибка retriable
       currentTask.status = TaskStatus.RETRY;
       currentTask.retryCount++;
       currentTask.updatedAt = new Date().toISOString();
-      currentTask.error = errorMessage;
+      currentTask.error = `${errorDesc}: ${errorMessage}`;
+      
+      // Логируем информацию о повторной попытке
+      logInfo(`Task ${currentTask.id} will be retried (${currentTask.retryCount}/3): ${errorDesc}`);
       
       // Перемещаем в конец очереди
       const taskIndex = taskQueue.findIndex(t => t.id === currentTask!.id);

@@ -523,8 +523,10 @@ async function handleCookieBanner(page: Page): Promise<boolean> {
           
           if (element) {
             try {
-              element.click();
-              return { clicked: true, selector: String(selector) };
+              if ('click' in element) {
+                (element as HTMLElement).click();
+                return { clicked: true, selector: String(selector) };
+              }
             } catch (e) {
               console.error("Click error:", e);
             }
@@ -538,7 +540,8 @@ async function handleCookieBanner(page: Page): Promise<boolean> {
               btn.className?.toLowerCase().includes('cookie') ||
               btn.getAttribute('data-testid')?.toLowerCase().includes('cookie')) {
             try {
-              btn.click();
+              // HTMLButtonElement всегда имеет метод click()
+              (btn as HTMLButtonElement).click();
               return { clicked: true, selector: `button#${btn.id || 'unknown'}` };
             } catch (e) {
               console.error("Click error for cookie button:", e);
@@ -1524,7 +1527,19 @@ function saveIntermediateResults(task: ScrapeTask, results: any, diagnosticInfo?
     const testTaskPath = path.join(RESULTS_DIR, 'test_task.json');
     
     // Загружаем cookie диагностику, если файл существует
-    let cookieDiagnostic = {};
+    interface CookieDiagnostic {
+      cookieAttempted?: boolean;
+      cookieAccepted?: boolean;
+      cookieError?: string;
+      url?: string;
+      jsEvalResult?: {
+        listingElementsFound?: boolean;
+        bodyHtml?: number;
+      };
+      [key: string]: any;
+    }
+    
+    let cookieDiagnostic: CookieDiagnostic = {};
     try {
       const cookieDiagnosticPath = './logs/cookie_diagnostic.json';
       if (fs.existsSync(cookieDiagnosticPath)) {
@@ -1537,7 +1552,13 @@ function saveIntermediateResults(task: ScrapeTask, results: any, diagnosticInfo?
     }
     
     // Получаем информацию о состоянии страниц в логах
-    let pageScreenshots = [];
+    interface ScreenshotInfo {
+      name: string;
+      path: string;
+      timestamp: string;
+    }
+    
+    let pageScreenshots: ScreenshotInfo[] = [];
     try {
       const logDir = './logs';
       if (fs.existsSync(logDir)) {

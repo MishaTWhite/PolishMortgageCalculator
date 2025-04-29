@@ -224,7 +224,7 @@ async function performRandomScrolling(page: Page): Promise<void> {
       
       // Пауза между прокрутками
       const delay = getRandomDelay(300, 800);
-      await page.waitForTimeout(delay);
+      await new Promise(resolve => setTimeout(resolve, delay));
     }
   } catch (error) {
     logError(`Error during random scrolling: ${error}`);
@@ -235,7 +235,11 @@ async function performRandomScrolling(page: Page): Promise<void> {
  * Получает строку запроса для определенного типа комнат
  */
 function getRoomTypeQuery(roomType: string): string {
-  return ROOM_TYPE_QUERIES[roomType] || '';
+  if (roomType === 'oneRoom' || roomType === 'twoRoom' || 
+      roomType === 'threeRoom' || roomType === 'fourPlusRoom') {
+    return ROOM_TYPE_QUERIES[roomType];
+  }
+  return '';
 }
 
 /**

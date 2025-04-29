@@ -141,6 +141,65 @@ async function scrapeOtodomPrices(city = 'warszawa', district = 'srodmiescie', r
     await page.screenshot({ path: screenshotPath, fullPage: true });
     console.log(`Screenshot saved to ${screenshotPath}`);
     
+    // Анализируем структуру страницы перед извлечением данных
+    console.log('Analyzing page structure...');
+    await page.evaluate(() => {
+      console.log('=== PAGE ANALYSIS ===');
+      
+      // Проверяем, есть ли основные элементы
+      const bodyEl = document.body;
+      console.log('Body element exists:', !!bodyEl);
+      
+      // Проверяем, есть ли заголовок
+      const h1Elements = document.querySelectorAll('h1');
+      console.log('Found H1 elements:', h1Elements.length);
+      if (h1Elements.length > 0) {
+        console.log('First H1 text:', h1Elements[0].textContent);
+      }
+      
+      // Проверяем на наличие каптчи
+      const captchaElements = document.querySelectorAll('[id*="captcha"], [class*="captcha"], iframe[src*="captcha"]');
+      console.log('Possible captcha elements:', captchaElements.length);
+      
+      // Проверяем, есть ли элементы, которые могут быть ответственны за антибот защиту
+      const securityElements = document.querySelectorAll(
+        '[id*="security"], [class*="security"], [id*="bot"], [class*="bot"], [id*="challenge"], [class*="challenge"]'
+      );
+      console.log('Potential security elements:', securityElements.length);
+      
+      // Проверяем, есть ли Cloudflare
+      const cloudflareElements = document.querySelectorAll('#cf-wrapper, .cf-wrapper, [class*="cloudflare"]');
+      console.log('Cloudflare elements:', cloudflareElements.length);
+      
+      // Выводим общую структуру страницы (первые уровни)
+      console.log('=== PAGE STRUCTURE ===');
+      const mainChildren = document.body ? document.body.children : [];
+      console.log('Body has', mainChildren.length, 'direct children');
+      for (let i = 0; i < Math.min(mainChildren.length, 5); i++) {
+        const child = mainChildren[i];
+        console.log(`Child ${i}:`, child.tagName, child.id ? `id=${child.id}` : '', 
+                    child.className ? `class=${child.className}` : '');
+      }
+      
+      // Проверяем наличие карточек объявлений с разными селекторами
+      console.log('=== SELECTORS CHECK ===');
+      [
+        '[data-cy="listing-item"]',
+        'div[data-cy="search.listing"] li',
+        'div[data-cy="search.listing.organic"] li',
+        'li.css-p74l73',
+        '.listing-item',
+        'article[data-cy="listing-item"]',
+        'article',
+        'li[data-cy]',
+        'div[data-testid="search.listing.organic"]',
+        'div[data-testid="listing-item"]'
+      ].forEach(selector => {
+        const elements = document.querySelectorAll(selector);
+        console.log(`Selector "${selector}": ${elements.length} elements`);
+      });
+    });
+    
     // Извлекаем данные о ценах, используя самый простой JS
     console.log('Extracting price data...');
     const data = await page.evaluate(function() {
@@ -151,11 +210,14 @@ async function scrapeOtodomPrices(city = 'warszawa', district = 'srodmiescie', r
       var selectors = [
         '[data-cy="listing-item"]',
         'div[data-cy="search.listing"] li',
-        'div[data-cy="search.listing.organic"] li[data-cy="listing-item"]',
+        'div[data-cy="search.listing.organic"] li',
+        'li[data-cy]',
         'li.css-p74l73',
         '.listing-item',
         'article[data-cy="listing-item"]',
-        'article'
+        'article',
+        'div[data-testid="search.listing.organic"] li',
+        'div[data-testid="listing-item"]'
       ];
       
       for (var i = 0; i < selectors.length; i++) {

@@ -626,7 +626,7 @@ export default function PropertyMarketAnalysis() {
                       {propertyData.prices
                         .sort((a: PropertyPrice, b: PropertyPrice) => b.averagePricePerSqm - a.averagePricePerSqm)
                         .map((district: PropertyPrice, index: number) => (
-                        <TableRow key={`row-${index}`}>
+                        <TableRow key={`district-${district.district}-${index}`}>
                             <TableCell className="font-medium">{district.district}</TableCell>
                             <TableCell>
                               {/* Main average price */}

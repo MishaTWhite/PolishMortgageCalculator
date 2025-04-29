@@ -98,7 +98,7 @@ interface ScraperResponse {
   status: ScraperQueueStatus;
 }
 
-interface PlaywrightScraperResponse {
+interface OtodomScraperResponse {
   success: boolean;
   status: ScraperQueueStatus;
   tasks?: ScrapingTask[];

@@ -457,11 +457,15 @@ async function processNextTask(): Promise<void> {
         diagnostic: `Причина: ${errorDesc}. Повторные попытки: ${currentTask.retryCount}/3`
       };
       
-      // Перемещаем в выполненные
-      moveTaskToCompleted(currentTask);
-      
-      // Логируем финальный сбой с причиной
-      logError(`Task ${currentTask.id} failed after ${currentTask.retryCount} attempts: ${errorDesc}`);
+      // Перемещаем в выполненные (если задача существует)
+      if (currentTask) {
+        moveTaskToCompleted(currentTask);
+        
+        // Логируем финальный сбой с причиной
+        logError(`Task ${currentTask.id} failed after ${currentTask.retryCount} attempts: ${errorDesc}`);
+      } else {
+        logError(`Task failed but currentTask is null: ${errorDesc}`);
+      }
     } else {
       // Иначе помечаем для повторного выполнения, если ошибка retriable
       currentTask.status = TaskStatus.RETRY;

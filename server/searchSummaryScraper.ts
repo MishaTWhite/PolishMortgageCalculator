@@ -260,13 +260,16 @@ async function extractListings(page: Page, district: string, roomType: string): 
   await page.screenshot({ path: debugScreenshotPath, fullPage: true });
   console.log(`Debug screenshot with highlights saved to: ${debugScreenshotPath}`);
   
-  // Передаем только один объект с данными в функцию evaluate
-  return page.evaluate(params => {
-    const { district, roomType, districtNameMap } = params;
-    const results = []; // Убираем типизацию внутри контекста выполнения
+  // Используем строго ES5-стиль для функции внутри evaluate
+  // Это более совместимый подход, который должен работать со всеми версиями Playwright
+  return page.evaluate(function(params) {
+    var district = params.district;
+    var roomType = params.roomType;
+    var districtNameMap = params.districtNameMap;
+    var results = [];
     
     // Проверяем различные селекторы, которые могут определить карточки объявлений
-    const selectors = [
+    var selectors = [
       'div[data-cy="search.listing.organic"] li[data-cy="listing-item"]',
       '.listing-item', // Альтернативный селектор
       '.css-1j1jmia > li', // Еще один вариант
@@ -274,12 +277,13 @@ async function extractListings(page: Page, district: string, roomType: string): 
     ];
     
     // Пробуем каждый селектор
-    let cards = document.querySelectorAll('div');
-    for (const selector of selectors) {
-      const foundCards = document.querySelectorAll(selector);
+    var cards = document.querySelectorAll('div');
+    for (var i = 0; i < selectors.length; i++) {
+      var selector = selectors[i];
+      var foundCards = document.querySelectorAll(selector);
       if (foundCards.length > 0) {
         cards = foundCards;
-        console.log(`Found ${foundCards.length} cards with selector: ${selector}`);
+        console.log('Found ' + foundCards.length + ' cards with selector: ' + selector);
         break;
       }
     }
@@ -287,15 +291,18 @@ async function extractListings(page: Page, district: string, roomType: string): 
     // Если не нашли карточки, пробуем другой подход - ищем все элементы, которые могут быть объявлениями
     if (cards.length === 0) {
       // Ищем элементы, содержащие цену и площадь
-      const possibleCards = document.querySelectorAll('li, article, div[role="article"]');
+      var possibleCards = document.querySelectorAll('li, article, div[role="article"]');
       cards = possibleCards;
-      console.log(`Found ${possibleCards.length} possible cards as fallback`);
+      console.log('Found ' + possibleCards.length + ' possible cards as fallback');
     }
     
-    cards.forEach(card => {
+    // Используем for вместо forEach для лучшей совместимости
+    for (var cardIndex = 0; cardIndex < cards.length; cardIndex++) {
+      var card = cards[cardIndex];
+      
       try {
         // Расширенный список селекторов для цены
-        const priceSelectors = [
+        var priceSelectors = [
           '[data-cy="listing-item-price"]',
           '[aria-label="price"]',
           '[data-testid="price"]',
@@ -304,107 +311,109 @@ async function extractListings(page: Page, district: string, roomType: string): 
         ];
         
         // Расширенный список селекторов для площади
-        const areaSelectors = [
+        var areaSelectors = [
           'span[aria-label="area"] span',
           'div[data-testid="additional-information"] span:nth-child(1)',
           '[data-testid="property-parameters"] > div > span',
           'li span.css-1k12h1c:nth-child(1)' // Новый селектор для площади
         ];
         
-        let priceElement = null;
-        for (const selector of priceSelectors) {
-          const element = card.querySelector(selector);
-          if (element) {
-            priceElement = element;
-            console.log(`Found price element with selector: ${selector}`);
+        var priceElement = null;
+        for (var priceIndex = 0; priceIndex < priceSelectors.length; priceIndex++) {
+          var priceSelector = priceSelectors[priceIndex];
+          var priceElem = card.querySelector(priceSelector);
+          if (priceElem) {
+            priceElement = priceElem;
+            console.log('Found price element with selector: ' + priceSelector);
             break;
           }
         }
         
-        let areaElement = null;
-        for (const selector of areaSelectors) {
-          const element = card.querySelector(selector);
-          if (element) {
-            areaElement = element;
-            console.log(`Found area element with selector: ${selector}`);
+        var areaElement = null;
+        for (var areaIndex = 0; areaIndex < areaSelectors.length; areaIndex++) {
+          var areaSelector = areaSelectors[areaIndex];
+          var areaElem = card.querySelector(areaSelector);
+          if (areaElem) {
+            areaElement = areaElem;
+            console.log('Found area element with selector: ' + areaSelector);
             break;
           }
         }
         
         if (priceElement && areaElement) {
           // Улучшенный парсер цены
-          const priceText = priceElement.textContent || '';
-          console.log(`Raw price text: '${priceText}'`);
+          var priceText = priceElement.textContent || '';
+          console.log('Raw price text: ' + priceText);
           
           // Сначала пробуем поискать числа с пробелами или запятыми и пробелами
-          const priceMatch = priceText.match(/([0-9\s,.]+)\s*(zł|PLN)?/i);
-          let price = 0;
+          var priceMatch = priceText.match(/([0-9\s,.]+)\s*(zł|PLN)?/i);
+          var price = 0;
           
           if (priceMatch) {
-            console.log(`Price match: ${priceMatch[1]}`);
+            console.log('Price match: ' + priceMatch[1]);
             // Удаляем все нечисловые символы, кроме точки и запятой
-            let cleanedPrice = priceMatch[1].replace(/\s/g, '');
+            var cleanedPrice = priceMatch[1].replace(/\s/g, '');
             // Заменяем запятые на точки для корректного парсинга
             cleanedPrice = cleanedPrice.replace(',', '.');
             // Если есть несколько точек, оставляем только первую (может быть ошибка в форматировании)
-            const dotIndex = cleanedPrice.indexOf('.');
+            var dotIndex = cleanedPrice.indexOf('.');
             if (dotIndex !== -1) {
               cleanedPrice = cleanedPrice.substring(0, dotIndex + 1) + 
                             cleanedPrice.substring(dotIndex + 1).replace(/\./g, '');
             }
             
-            console.log(`Cleaned price: ${cleanedPrice}`);
+            console.log('Cleaned price: ' + cleanedPrice);
             price = parseFloat(cleanedPrice);
             
             // Если цена всё еще не распарсилась, попробуем просто найти числа
             if (isNaN(price)) {
-              const numbersOnly = priceText.match(/\d+/g);
+              var numbersOnly = priceText.match(/\d+/g);
               if (numbersOnly && numbersOnly.length > 0) {
-                console.log(`Fallback to numbers only: ${numbersOnly.join('')}`);
+                console.log('Fallback to numbers only: ' + numbersOnly.join(''));
                 price = parseInt(numbersOnly.join(''), 10);
               }
             }
           } else {
             // Если первый подход не сработал, попробуем просто найти все числа
-            const numbersOnly = priceText.match(/\d+/g);
+            var numbersOnly = priceText.match(/\d+/g);
             if (numbersOnly && numbersOnly.length > 0) {
-              console.log(`Fallback to numbers only: ${numbersOnly.join('')}`);
+              console.log('Fallback to numbers only: ' + numbersOnly.join(''));
               price = parseInt(numbersOnly.join(''), 10);
             }
           }
           
           // Улучшенный парсер площади
-          const areaText = areaElement.textContent || '';
-          console.log(`Raw area text: '${areaText}'`);
+          var areaText = areaElement.textContent || '';
+          console.log('Raw area text: ' + areaText);
           
           // Ищем числа с опциональной десятичной частью, за которыми следует m², m2 или просто m
-          const areaMatch = areaText.match(/([0-9]+[.,][0-9]+|[0-9]+)\s*(m²|m2|m)/i);
-          let area = 0;
+          var areaMatch = areaText.match(/([0-9]+[.,][0-9]+|[0-9]+)\s*(m²|m2|m)/i);
+          var area = 0;
           
           if (areaMatch) {
-            console.log(`Area match: ${areaMatch[1]}`);
-            const cleanedArea = areaMatch[1].replace(',', '.');
+            console.log('Area match: ' + areaMatch[1]);
+            var cleanedArea = areaMatch[1].replace(',', '.');
             area = parseFloat(cleanedArea);
             
             // Если площадь всё еще не распарсилась, попробуем просто найти числа
             if (isNaN(area)) {
-              const numbersOnly = areaText.match(/\d+/g);
-              if (numbersOnly && numbersOnly.length > 0) {
-                console.log(`Fallback to numbers only for area: ${numbersOnly[0]}`);
-                area = parseInt(numbersOnly[0], 10);
+              var areaNumbersOnly = areaText.match(/\d+/g);
+              if (areaNumbersOnly && areaNumbersOnly.length > 0) {
+                console.log('Fallback to numbers only for area: ' + areaNumbersOnly[0]);
+                area = parseInt(areaNumbersOnly[0], 10);
               }
             }
           } else {
             // Если первый подход не сработал, попробуем просто найти первое число
-            const numbersOnly = areaText.match(/\d+/g);
-            if (numbersOnly && numbersOnly.length > 0) {
-              console.log(`Fallback to numbers only for area: ${numbersOnly[0]}`);
-              area = parseInt(numbersOnly[0], 10);
+            var areaNumbersOnly = areaText.match(/\d+/g);
+            if (areaNumbersOnly && areaNumbersOnly.length > 0) {
+              console.log('Fallback to numbers only for area: ' + areaNumbersOnly[0]);
+              area = parseInt(areaNumbersOnly[0], 10);
             }
           }
           
           // Рассчитываем цену за м²
-          let pricePerSqm = 0;
+          var pricePerSqm = 0;
           if (price > 0 && area > 0) {
             pricePerSqm = Math.round(price / area);
           }
@@ -413,10 +422,10 @@ async function extractListings(page: Page, district: string, roomType: string): 
           if (price > 0 && area > 0) {
             results.push({
               district: districtNameMap[district] || district,
-              roomType,
-              price,
-              area,
-              pricePerSqm
+              roomType: roomType,
+              price: price,
+              area: area,
+              pricePerSqm: pricePerSqm
             });
           }
         }
@@ -424,7 +433,7 @@ async function extractListings(page: Page, district: string, roomType: string): 
         // Игнорируем ошибки в отдельных карточках
         console.error('Error processing card:', e);
       }
-    });
+    }
     
     return results;
   }, { district, roomType, districtNameMap: districtNames });

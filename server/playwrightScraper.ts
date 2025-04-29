@@ -949,11 +949,26 @@ async function processCurrentPage(
 }
 
 /**
- * Обрабатывает первую страницу результатов поиска с расширенной аналитикой
+ * Интерфейс для результатов анализа страницы
  */
-async function processFirstPage(
-  page: Page
-): Promise<{
+interface PageAnalysisResult {
+  dataCyAttributes: string[];
+  h1Texts: string[];
+  mainCount: number;
+  articleCount: number;
+  firstArticleData: any;
+  foundSelectors: Record<string, boolean>;
+  elementCountBySelector: Record<string, number>;
+  missingSelectors: string[];
+  possibleErrors: string[];
+  hasMainContent: boolean;
+  hasListings: boolean;
+}
+
+/**
+ * Интерфейс для результатов обработки первой страницы
+ */
+interface FirstPageResult {
   prices: number[];
   areas: number[];
   pricesPerSqm: number[];
@@ -968,7 +983,14 @@ async function processFirstPage(
     missingSelectors: string[];
     possibleErrors: string[];
   };
-}> {
+}
+
+/**
+ * Обрабатывает первую страницу результатов поиска с расширенной аналитикой
+ */
+async function processFirstPage(
+  page: Page
+): Promise<FirstPageResult> {
   logInfo('Processing first page of results with enhanced diagnostics');
   
   // Проверяем наличие cookie-баннера
@@ -1079,7 +1101,7 @@ async function processFirstPage(
     }
     
     // Проверяем наличие сообщений об ошибках или отсутствии результатов
-    const possibleErrors = [];
+    const possibleErrors: string[] = [];
     const errorSelectors = [
       '.css-18qrgpr', // Типичный селектор для сообщений об ошибках
       '[data-testid="error-message"]',
@@ -1299,17 +1321,50 @@ async function runWithRetry<T>(
 }
 
 /**
- * Сохраняет результаты скрапинга в промежуточный файл
+ * Сохраняет результаты скрапинга в промежуточный файл и отдельный test_task.json
  */
-function saveIntermediateResults(task: ScrapeTask, results: any): void {
+function saveIntermediateResults(task: ScrapeTask, results: any, diagnosticInfo?: any): void {
   try {
+    // Сохраняем стандартный файл результатов
     const filename = `${task.cityNormalized}_${task.districtSearchTerm}_${task.roomType}_${task.id}.json`;
     const filePath = path.join(RESULTS_DIR, filename);
     
     fs.writeFileSync(filePath, JSON.stringify(results, null, 2), 'utf8');
     logDebug(`Saved intermediate results for task ${task.id} to ${filename}`);
+    
+    // Сохраняем диагностический test_task.json
+    const testTaskPath = path.join(RESULTS_DIR, 'test_task.json');
+    
+    // Объединяем основные результаты с диагностической информацией
+    const extendedResults = {
+      ...results,
+      task: {
+        id: task.id,
+        cityUrl: task.cityUrl,
+        cityNormalized: task.cityNormalized,
+        districtName: task.districtName,
+        districtSearchTerm: task.districtSearchTerm,
+        roomType: task.roomType,
+        fetchDate: task.fetchDate,
+        status: task.status,
+      },
+      diagnostics: {
+        timestamp: new Date().toISOString(),
+        executionTimeMs: Date.now() - new Date(task.startedAt || Date.now()).getTime(),
+        environment: {
+          memoryUsageMb: getCurrentMemoryUsage(),
+          nodeVersion: process.version,
+          platform: process.platform
+        },
+        // Добавляем дополнительную диагностическую информацию, если она есть
+        ...diagnosticInfo
+      }
+    };
+    
+    fs.writeFileSync(testTaskPath, JSON.stringify(extendedResults, null, 2), 'utf8');
+    logInfo(`Saved diagnostic results to test_task.json`);
   } catch (error) {
-    logError(`Failed to save intermediate results: ${error}`);
+    logError(`Failed to save results: ${error}`);
   }
 }
 
@@ -1387,11 +1442,71 @@ async function scrapePropertyData(task: ScrapeTask): Promise<any> {
     // Иногда случайно посещаем объявление для имитации пользователя
     await visitRandomListing(page);
     
-    // Обрабатываем первую страницу
-    const { prices, areas, pricesPerSqm, reportedCount } = await runWithRetry(
+    // Обрабатываем первую страницу с расширенной диагностикой
+    const firstPageResults = await runWithRetry(
       () => processFirstPage(page!),
       'First page processing'
     );
+    
+    // Делаем скриншот состояния после обработки первой страницы
+    try {
+      const afterProcessingScreenshotPath = `./logs/after_first_page_processing.png`;
+      await page.screenshot({ path: afterProcessingScreenshotPath, fullPage: false });
+      logInfo(`Saved after-processing screenshot to ${afterProcessingScreenshotPath}`);
+    } catch (screenshotError) {
+      logWarning(`Failed to save after-processing screenshot: ${screenshotError}`);
+    }
+    
+    // Извлекаем базовые данные из результатов
+    const { 
+      prices, 
+      areas, 
+      pricesPerSqm, 
+      reportedCount,
+      hasCookieBanner,
+      foundSelectors,
+      elementCountBySelector,
+      h1Texts,
+      pageStatus
+    } = firstPageResults;
+    
+    // Создаем диагностическую информацию
+    const diagnosticInfo = {
+      pageStatus: {
+        ...pageStatus,
+        hasListings: pageStatus.hasListings,
+        hasMainContent: pageStatus.hasMainContent,
+        h1Texts,
+        hasCookieBanner
+      },
+      selectors: {
+        foundSelectors,
+        elementCountBySelector,
+        missingSelectors: pageStatus.missingSelectors
+      },
+      botDetection: {
+        botDetected: await checkForBotDetection(page!),
+        errors: pageStatus.possibleErrors
+      },
+      screenshots: {
+        beforeCookieBanner: './logs/cookie_banner_before.png',
+        afterCookieBanner: './logs/cookie_banner_after.png',
+        searchPage: './logs/search_page_diagnostic.png',
+        afterProcessing: './logs/after_first_page_processing.png'
+      }
+    };
+    
+    // Логируем подробную диагностическую информацию
+    logInfo(`Diagnostic info after first page processing:`);
+    logInfo(`Cookie banner detected: ${hasCookieBanner}`);
+    logInfo(`Bot detection result: ${diagnosticInfo.botDetection.botDetected}`);
+    logInfo(`Elements found: ${JSON.stringify(Object.keys(foundSelectors).filter(key => foundSelectors[key]))}`);
+    logInfo(`Main content present: ${pageStatus.hasMainContent}`);
+    logInfo(`Listings detected: ${pageStatus.hasListings}`);
+    
+    if (pageStatus.possibleErrors.length > 0) {
+      logWarning(`Page errors detected: ${JSON.stringify(pageStatus.possibleErrors)}`);
+    }
     
     // Инициализация счетчиков для пагинации
     let currentPage = 1;
@@ -1411,11 +1526,18 @@ async function scrapePropertyData(task: ScrapeTask): Promise<any> {
       avgPrice: calculateAverage(prices),
       avgPricePerSqm: calculateAverage(pricesPerSqm),
       prices,
-      pricesPerSqm
+      pricesPerSqm,
+      // Добавляем базовую диагностическую информацию в результаты
+      hasListings: pageStatus.hasListings,
+      botDetected: diagnosticInfo.botDetection.botDetected,
+      missingSelectors: pageStatus.missingSelectors.length > 0,
+      hasCookieBanner,
+      hasErrors: pageStatus.possibleErrors.length > 0,
+      errorMessages: pageStatus.possibleErrors
     };
     
-    // Сохраняем промежуточные результаты
-    saveIntermediateResults(task, results);
+    // Сохраняем промежуточные результаты с диагностической информацией
+    saveIntermediateResults(task, results, diagnosticInfo);
     
     // Обрабатываем дополнительные страницы (не более maxPages)
     while (currentPage < maxPages && consecutiveErrors < RETRY.MAX_RETRIES) {
@@ -1487,14 +1609,21 @@ async function scrapePropertyData(task: ScrapeTask): Promise<any> {
         areas.push(...pageData.areas);
         pricesPerSqm.push(...pageData.pricesPerSqm);
         
-        // Обновляем результаты
+        // Обновляем результаты с сохранением диагностической информации
         results = {
           count: prices.length,
           reportedCount,
           avgPrice: calculateAverage(prices),
           avgPricePerSqm: calculateAverage(pricesPerSqm),
           prices,
-          pricesPerSqm
+          pricesPerSqm,
+          // Сохраняем диагностическую информацию
+          hasListings: pageStatus.hasListings,
+          botDetected: diagnosticInfo.botDetection.botDetected,
+          missingSelectors: pageStatus.missingSelectors.length > 0,
+          hasCookieBanner,
+          hasErrors: pageStatus.possibleErrors.length > 0,
+          errorMessages: pageStatus.possibleErrors
         };
         
         // Сохраняем промежуточные результаты
@@ -1525,19 +1654,88 @@ async function scrapePropertyData(task: ScrapeTask): Promise<any> {
     const avgPrice = calculateAverage(prices);
     const avgPricePerSqm = calculateAverage(pricesPerSqm);
     
-    // Подготовка финального результата
+    // Подготовка финального результата с диагностической информацией
     const result = {
       count: prices.length,
       reportedCount,
       avgPrice,
       avgPricePerSqm,
       prices,
-      pricesPerSqm
+      pricesPerSqm,
+      // Сохраняем диагностическую информацию
+      hasListings: pageStatus.hasListings,
+      botDetected: diagnosticInfo.botDetection.botDetected,
+      missingSelectors: pageStatus.missingSelectors.length > 0,
+      hasCookieBanner,
+      hasErrors: pageStatus.possibleErrors.length > 0,
+      errorMessages: pageStatus.possibleErrors
     };
+    
+    // Сохраняем финальный результат в test_task.json
+    saveIntermediateResults(task, result, diagnosticInfo);
     
     logInfo(`Scraping completed for ${task.districtName} (${task.roomType}): ${prices.length} listings found`);
     return result;
   } catch (error) {
+    // Делаем скриншот при ошибке
+    try {
+      if (page) {
+        const errorScreenshotPath = `./logs/error_screenshot_${task.id}.png`;
+        await page.screenshot({ path: errorScreenshotPath, fullPage: false });
+        logInfo(`Saved error screenshot to ${errorScreenshotPath}`);
+      }
+    } catch (screenshotError) {
+      logWarning(`Failed to save error screenshot: ${screenshotError}`);
+    }
+    
+    // Сохраняем HTML страницы при ошибке
+    try {
+      if (page) {
+        const htmlContent = await page.content();
+        const errorHtmlPath = `./logs/error_page_${task.id}.html`;
+        fs.writeFileSync(errorHtmlPath, htmlContent);
+        logInfo(`Saved error page HTML to ${errorHtmlPath}`);
+      }
+    } catch (htmlError) {
+      logWarning(`Failed to save error page HTML: ${htmlError}`);
+    }
+    
+    // Создаем результат с информацией об ошибке
+    const errorResults = {
+      count: 0,
+      reportedCount: 0,
+      avgPrice: 0,
+      avgPricePerSqm: 0,
+      prices: [],
+      pricesPerSqm: [],
+      error: true,
+      errorMessage: error instanceof Error ? error.message : String(error),
+      errorStack: error instanceof Error ? error.stack : undefined,
+      botDetected: page ? await checkForBotDetection(page).catch(() => true) : true
+    };
+    
+    // Создаем диагностическую информацию об ошибке
+    const errorDiagnostics = {
+      error: {
+        message: error instanceof Error ? error.message : String(error),
+        stack: error instanceof Error ? error.stack : undefined,
+        timestamp: new Date().toISOString(),
+        errorType: error instanceof Error ? error.constructor.name : typeof error
+      },
+      screenshots: {
+        error: `./logs/error_screenshot_${task.id}.png`,
+        errorHtml: `./logs/error_page_${task.id}.html`
+      },
+      environment: {
+        memoryUsageMb: getCurrentMemoryUsage(),
+        nodeVersion: process.version,
+        platform: process.platform
+      }
+    };
+    
+    // Сохраняем информацию об ошибке в test_task.json
+    saveIntermediateResults(task, errorResults, errorDiagnostics);
+    
     logError(`Critical error during scraping task ${task.id}: ${error}`);
     throw error;
   } finally {

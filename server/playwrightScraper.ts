@@ -1730,7 +1730,7 @@ async function navigateToNextPage(page: Page, currentPageNum: number): Promise<b
 }
 
 /**
- * Функция для выполнения скрапинга с повторными попытками
+ * Функция для выполнения скрапинга с повторными попытками и улучшенной обработкой ошибок
  */
 async function runWithRetry<T>(
   task: () => Promise<T>,
@@ -1740,24 +1740,63 @@ async function runWithRetry<T>(
   let retryCount = 0;
   let lastError: Error | null = null;
   
+  // Функция для определения задержки перед повторной попыткой
+  // с учетом типа ошибки и счетчика повторов
+  const getRetryDelay = (error: Error, attempt: number): number => {
+    const isContextClosed = error.message.includes('Target page, context or browser has been closed');
+    const isNetworkError = error.message.includes('net::') || error.message.includes('ERR_CONNECTION');
+    
+    // Базовая задержка
+    let baseDelay = 1000;
+    
+    // Для ошибок с закрытым контекстом используем большую базовую задержку
+    if (isContextClosed) {
+      baseDelay = 3000;
+    }
+    
+    // Для сетевых ошибок тоже увеличиваем задержку
+    if (isNetworkError) {
+      baseDelay = 5000;
+    }
+    
+    // Экспоненциальный рост с более агрессивным коэффициентом для тяжелых ошибок
+    const factor = isContextClosed || isNetworkError ? 3 : 2;
+    
+    // Вычисляем задержку с экспоненциальным ростом
+    const delay = Math.min(
+      30000, // Максимальная задержка 30 секунд
+      baseDelay * Math.pow(factor, attempt - 1) // Экспоненциальный рост
+    );
+    
+    // Добавляем небольшую случайность (± 20%) для предотвращения "грозового стада"
+    const jitter = delay * 0.2 * (Math.random() - 0.5);
+    
+    return Math.floor(delay + jitter);
+  };
+  
   while (retryCount < maxRetries) {
     try {
       if (retryCount > 0) {
         logInfo(`Retry ${retryCount}/${maxRetries} for task: ${taskName}`);
       }
       
-      const result = await task();
+      // Выполняем задачу с таймаутом специально для этой конкретной функции
+      const taskTimeout = 45000; // 45 секунд на задачу
+      const result = await Promise.race([
+        task(),
+        new Promise<never>((_, reject) => {
+          setTimeout(() => reject(new Error(`Task "${taskName}" timed out after ${taskTimeout}ms`)), taskTimeout);
+        })
+      ]);
+      
       return result;
     } catch (error) {
       lastError = error instanceof Error ? error : new Error(String(error));
       logError(`Error in task "${taskName}" (attempt ${retryCount + 1}/${maxRetries}): ${error}`);
       retryCount++;
       
-      // Экспоненциальное увеличение времени задержки между попытками
-      const delay = Math.min(
-        30000,
-        1000 * Math.pow(2, retryCount)
-      );
+      // Получаем умную задержку с учетом типа ошибки
+      const delay = getRetryDelay(lastError, retryCount);
       
       logInfo(`Waiting ${delay}ms before retry...`);
       await new Promise(resolve => setTimeout(resolve, delay));
@@ -1895,6 +1934,21 @@ async function scrapePropertyData(task: ScrapeTask): Promise<any> {
   let localContext: BrowserContext | null = null;
   let page: Page | null = null;
   
+  // Добавляем таймер задачи для предотвращения бесконечного выполнения
+  const TASK_TIMEOUT_MS = 90000; // 90 секунд максимум на задачу
+  const taskTimeoutPromise = new Promise<never>((_, reject) => {
+    setTimeout(() => {
+      reject(new Error(`Task timeout reached (${TASK_TIMEOUT_MS}ms)`));
+    }, TASK_TIMEOUT_MS);
+  });
+  
+  // Если у задачи уже были попытки, добавляем стартовую задержку
+  if (task.retryCount > 0) {
+    const startDelay = task.retryCount * 30000; // 30 секунд за каждую предыдущую попытку
+    logInfo(`Task ${task.id} has been retried ${task.retryCount} times. Waiting ${startDelay}ms before starting...`);
+    await new Promise(resolve => setTimeout(resolve, startDelay));
+  }
+  
   try {
     // Закрываем существующий браузер, если есть
     if (browser) {
@@ -1935,37 +1989,51 @@ async function scrapePropertyData(task: ScrapeTask): Promise<any> {
     const roomTypeQuery = getRoomTypeQuery(task.roomType);
     const fullUrl = `${baseUrl}${roomTypeQuery}`;
     
-    // Имитируем естественное поведение перед основным запросом
-    await runWithRetry(
-      () => simulateNaturalBrowsing(page!),
-      'Natural browsing simulation'
-    );
-    
-    // Переходим на страницу поиска
-    logInfo(`Navigating to search URL: ${fullUrl}`);
-    await runWithRetry(
-      async () => {
-        await page!.goto(fullUrl, { waitUntil: 'networkidle' });
-        
-        // Проверка на загрузку содержимого и антибот-защиту
-        const hasListings = await page!.waitForSelector(
-          'article, [data-cy="listing-item"], [data-cy="search.listing"]', 
-          { timeout: 15000 }
-        ).then(() => true).catch(() => false);
-        
-        if (!hasListings) {
-          const botDetected = await checkForBotDetection(page!);
-          if (botDetected) {
-            throw new Error('Bot detection triggered on search page');
+    // Создаем функцию для задачи скрапинга
+    const scrapeDataTask = async () => {
+      // Имитируем естественное поведение перед основным запросом
+      await runWithRetry(
+        () => simulateNaturalBrowsing(page!),
+        'Natural browsing simulation'
+      );
+      
+      // Переходим напрямую на страницу поиска с фильтрованными URL параметрами
+      // Убираем промежуточные шаги навигации через UI для уменьшения шансов ошибки
+      logInfo(`Navigating directly to search URL: ${fullUrl}`);
+      await runWithRetry(
+        async () => {
+          // Используем более надежную стратегию загрузки: сначала 'domcontentloaded', затем проверяем элементы
+          await page!.goto(fullUrl, { waitUntil: 'domcontentloaded', timeout: 45000 });
+          
+          // Небольшая задержка для стабилизации страницы
+          await new Promise(r => setTimeout(r, 2000));
+          
+          // Проверка на загрузку содержимого и антибот-защиту с более длительным таймаутом
+          const hasListings = await page!.waitForSelector(
+            'article, [data-cy="listing-item"], [data-cy="search.listing"], .css-1sxg93g, .css-14cy79a', 
+            { timeout: 20000 }
+          ).then(() => true).catch(() => false);
+          
+          if (!hasListings) {
+            const botDetected = await checkForBotDetection(page!);
+            if (botDetected) {
+              throw new Error('Bot detection triggered on search page');
+            }
+            
+            throw new Error('No listing elements found on search page');
           }
           
-          throw new Error('No listing elements found on search page');
-        }
-        
-        return true;
-      },
-      'Search page navigation'
-    );
+          return true;
+        },
+        'Search page navigation'
+      );
+    };
+    
+    // Выполняем задачу с таймаутом
+    await Promise.race([
+      scrapeDataTask(),
+      taskTimeoutPromise
+    ]);
     
     // Иногда случайно посещаем объявление для имитации пользователя
     await visitRandomListing(page);

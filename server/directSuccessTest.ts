@@ -1,0 +1,305 @@
+// Direct Success Test Scraper
+// Этот скрапер фокусируется на прямом получении данных с минимальным количеством шагов
+import * as fs from 'fs';
+import * as path from 'path';
+import { chromium } from 'playwright';
+
+// Константы
+const URL = 'https://www.otodom.pl/pl/oferty/sprzedaz/mieszkanie/warszawa/srodmiescie?roomsNumber=%5BTHREE%5D';
+const LOGS_DIR = './logs/direct_test';
+const TIMEOUT_SEC = 60; // 60 секунд на весь скрапинг
+
+// Создаем директорию для логов
+if (!fs.existsSync(LOGS_DIR)) {
+  fs.mkdirSync(LOGS_DIR, { recursive: true });
+}
+
+// Функция логирования
+function log(message: string): void {
+  const timestamp = new Date().toISOString();
+  const formattedMessage = `[${timestamp}] ${message}`;
+  console.log(formattedMessage);
+  fs.appendFileSync(path.join(LOGS_DIR, 'log.txt'), formattedMessage + '\n');
+}
+
+// Основная функция скрапера
+async function directTest(): Promise<void> {
+  log('=== STARTING DIRECT TEST SCRAPER ===');
+  
+  // Устанавливаем глобальный таймаут
+  const timeoutId = setTimeout(() => {
+    log('⚠️ TIMEOUT: Глобальное время выполнения превышено');
+    process.exit(1);
+  }, TIMEOUT_SEC * 1000);
+  
+  let browser = null;
+  
+  try {
+    // 1. Запускаем браузер
+    log('Запуск браузера...');
+    browser = await chromium.launch({
+      headless: true,
+      executablePath: '/nix/store/zi4f80l169xlmivz8vja8wlphq74qqk0-chromium-125.0.6422.141/bin/chromium',
+      args: [
+        '--no-sandbox',
+        '--disable-blink-features=AutomationControlled',
+        '--disable-features=IsolateOrigins,site-per-process',
+        '--disable-web-security',
+        '--disable-dev-shm-usage',
+      ]
+    });
+    log('✓ Браузер запущен');
+    
+    // 2. Создаем контекст с польскими настройками
+    log('Создание польского контекста...');
+    const context = await browser.newContext({
+      userAgent: 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36',
+      locale: 'pl-PL',
+      timezoneId: 'Europe/Warsaw',
+      viewport: { width: 1920, height: 1080 },
+      extraHTTPHeaders: {
+        'Accept-Language': 'pl-PL,pl;q=0.9,en-US;q=0.8,en;q=0.7',
+        'sec-ch-ua': '"Chromium";v="124", "Google Chrome";v="124", "Not-A.Brand";v="99"',
+        'sec-ch-ua-platform': '"Windows"',
+      }
+    });
+    log('✓ Контекст создан');
+    
+    // 3. Установка cookie для обхода баннера
+    log('Установка cookies...');
+    await context.addCookies([
+      {
+        name: 'OptanonAlertBoxClosed',
+        value: new Date().toISOString(),
+        domain: '.otodom.pl',
+        path: '/',
+        expires: Math.floor(Date.now() / 1000) + 86400 * 7
+      },
+      {
+        name: 'OptanonConsent',
+        value: 'isIABGlobal=false&datestamp=Mon+Apr+29+2024+08%3A05%3A54+GMT%2B0000&version=202209.1.0&hosts=&landingPath=NotLandingPage&groups=C0001%3A1%2CC0002%3A0%2CC0003%3A0%2CC0004%3A0&geolocation=PL%3B14&AwaitingReconsent=false',
+        domain: '.otodom.pl',
+        path: '/',
+        expires: Math.floor(Date.now() / 1000) + 86400 * 7
+      }
+    ]);
+    log('✓ Cookies установлены');
+    
+    // 4. Открываем страницу и настраиваем антидетект
+    log('Создание страницы с антидетектом...');
+    const page = await context.newPage();
+    
+    // Добавляем скрипт антидетекта перед загрузкой страницы
+    await page.addInitScript(() => {
+      Object.defineProperty(navigator, 'webdriver', { get: () => false });
+      Object.defineProperty(navigator, 'plugins', {
+        get: () => [
+          { name: 'Chrome PDF Plugin', filename: 'internal-pdf-viewer' },
+          { name: 'Chrome PDF Viewer', filename: 'mhjfbmdgcfjbbpaeojofohoefgiehjai' },
+          { name: 'Native Client', filename: 'internal-nacl-plugin' },
+        ]
+      });
+      Object.defineProperty(navigator, 'languages', { get: () => ['pl-PL', 'pl', 'en-US', 'en'] });
+    });
+    log('✓ Антидетект настроен');
+    
+    // 5. Переходим прямо на целевую страницу
+    log(`Переход на целевую страницу: ${URL}`);
+    const response = await page.goto(URL, { 
+      waitUntil: 'domcontentloaded',
+      timeout: 30000
+    });
+    
+    if (!response) {
+      throw new Error('Не получен ответ от сервера');
+    }
+    
+    log(`✓ Страница загружена, статус: ${response.status()}`);
+    
+    // 6. Делаем скриншот страницы
+    const screenshotPath = path.join(LOGS_DIR, 'results_page.png');
+    await page.screenshot({ path: screenshotPath });
+    log(`✓ Скриншот сохранен: ${screenshotPath}`);
+    
+    // 7. Сохраняем HTML
+    const html = await page.content();
+    const htmlPath = path.join(LOGS_DIR, 'results_page.html');
+    fs.writeFileSync(htmlPath, html);
+    log(`✓ HTML сохранен: ${htmlPath}`);
+    
+    // 8. Проверяем на блокировку CloudFront
+    const isBlocked = html.includes('ERROR: The request could not be satisfied') || 
+                     html.includes('Request blocked') ||
+                     html.includes('Generated by cloudfront');
+    
+    if (isBlocked) {
+      log('❌ ЗАБЛОКИРОВАНО: Обнаружена блокировка CloudFront!');
+      
+      // Сохраняем информацию о блокировке
+      fs.writeFileSync(path.join(LOGS_DIR, 'cloudfront_block.txt'), 
+        `Blocked: ${isBlocked}\nTime: ${new Date().toISOString()}\nURL: ${URL}\n\nPage title: ${await page.title()}`);
+    } else {
+      log('✓ Блокировка не обнаружена');
+    }
+    
+    // 9. Извлекаем данные
+    log('Извлечение данных...');
+    const data = await page.evaluate(() => {
+      // Вспомогательная функция для чистки чисел
+      const cleanNumber = (str: string): number => {
+        const cleaned = str.replace(/[^\d]/g, '');
+        return cleaned ? parseInt(cleaned) : 0;
+      };
+      
+      // Вспомогательная функция для чистки площади
+      const cleanArea = (str: string): number => {
+        const cleaned = str.replace(/[^\d.,]/g, '').replace(',', '.');
+        return cleaned ? parseFloat(cleaned) : 0;
+      };
+      
+      // Поиск объявлений
+      const articles = document.querySelectorAll('article');
+      
+      // Получение счетчика объявлений
+      const countEl = document.querySelector('[data-cy="search.listing-panel.label"]');
+      const count = countEl ? countEl.textContent : null;
+      
+      // Проверяем разные селекторы для цен и площади
+      const prices: number[] = [];
+      const areas: number[] = [];
+      
+      // Селекторы для цен
+      const priceSelectors = [
+        '[data-cy="listing-item-price"]',
+        '.css-s8lxhp',
+        '.e1jyrtvq0',
+        'article .css-1mojcj4 span'
+      ];
+      
+      // Селекторы для площадей
+      const areaSelectors = [
+        '[data-cy="listing-item-area"]',
+        'article span[aria-label*="area"]',
+        'article span[aria-label*="powierzchnia"]'
+      ];
+      
+      // Ищем цены по всем селекторам
+      for (const selector of priceSelectors) {
+        try {
+          const elements = document.querySelectorAll(selector);
+          if (elements.length > 0) {
+            Array.from(elements).forEach(el => {
+              const price = cleanNumber(el.textContent || '');
+              if (price > 0) prices.push(price);
+            });
+            
+            // Если нашли цены, прекращаем поиск
+            if (prices.length > 0) break;
+          }
+        } catch (e) {
+          console.error(`Error with selector ${selector}:`, e);
+        }
+      }
+      
+      // Ищем площади по всем селекторам
+      for (const selector of areaSelectors) {
+        try {
+          const elements = document.querySelectorAll(selector);
+          if (elements.length > 0) {
+            Array.from(elements).forEach(el => {
+              const area = cleanArea(el.textContent || '');
+              if (area > 0) areas.push(area);
+            });
+            
+            // Если нашли площади, прекращаем поиск
+            if (areas.length > 0) break;
+          }
+        } catch (e) {
+          console.error(`Error with selector ${selector}:`, e);
+        }
+      }
+      
+      // Рассчитываем цены за квадратный метр
+      const pricesPerSqm: number[] = [];
+      
+      if (prices.length === areas.length) {
+        for (let i = 0; i < prices.length; i++) {
+          if (areas[i] > 0) {
+            pricesPerSqm.push(Math.round(prices[i] / areas[i]));
+          }
+        }
+      }
+      
+      // Рассчитываем средние значения
+      const avgPrice = prices.length > 0 
+        ? Math.round(prices.reduce((sum, p) => sum + p, 0) / prices.length) 
+        : 0;
+        
+      const avgPricePerSqm = pricesPerSqm.length > 0 
+        ? Math.round(pricesPerSqm.reduce((sum, p) => sum + p, 0) / pricesPerSqm.length) 
+        : 0;
+      
+      return {
+        count,
+        articlesCount: articles.length,
+        prices,
+        areas,
+        pricesPerSqm,
+        avgPrice,
+        avgPricePerSqm,
+        pageTitle: document.title,
+        url: window.location.href,
+        bodyText: document.body.innerText.slice(0, 200) // Первые 200 символов текста для диагностики
+      };
+    });
+    
+    log(`✓ Данные извлечены: ${data.prices.length} цен, ${data.areas.length} площадей`);
+    
+    // 10. Сохраняем результаты в JSON
+    const resultsPath = path.join(LOGS_DIR, 'results.json');
+    fs.writeFileSync(resultsPath, JSON.stringify({
+      timestamp: new Date().toISOString(),
+      url: URL,
+      isBlocked,
+      ...data
+    }, null, 2));
+    
+    log(`✓ Результаты сохранены: ${resultsPath}`);
+    
+    // Подведение итогов
+    if (data.prices.length > 0) {
+      log(`\n=== УСПЕХ! ===\nСобрано объявлений: ${data.articlesCount}\nСредняя цена: ${data.avgPrice} PLN\nСредняя цена за м²: ${data.avgPricePerSqm} PLN/m²`);
+    } else if (!isBlocked) {
+      log('\n=== ЧАСТИЧНЫЙ УСПЕХ ===\nСтраница загружена без блокировки, но не удалось извлечь цены.');
+    } else {
+      log('\n=== НЕУДАЧА ===\nСтраница заблокирована CloudFront.');
+    }
+    
+  } catch (error) {
+    log(`❌ ОШИБКА: ${error.message}`);
+    if (error.stack) {
+      fs.writeFileSync(path.join(LOGS_DIR, 'error.txt'), error.stack);
+    }
+  } finally {
+    // Очистка ресурсов
+    if (browser) {
+      try {
+        await browser.close();
+        log('✓ Браузер закрыт');
+      } catch (e) {
+        log(`Ошибка при закрытии браузера: ${e.message}`);
+      }
+    }
+    
+    clearTimeout(timeoutId);
+    log('=== ТЕСТ ЗАВЕРШЕН ===');
+  }
+}
+
+// Запускаем скрапер
+directTest()
+  .then(() => process.exit(0))
+  .catch(err => {
+    console.error('Неперехваченная ошибка:', err);
+    process.exit(1);
+  });

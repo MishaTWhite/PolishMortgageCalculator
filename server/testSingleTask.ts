@@ -22,8 +22,8 @@ interface ScraperResult {
 }
 
 // Константы и параметры
-const TIMEOUT_MS = 120000; // 2 минуты таймаут для всего скрапинга
-const TASK_ID = 'test_task';
+const TIMEOUT_MS = 80000; // 80 секунд таймаут для всего скрапинга (уменьшен для ускорения тестов)
+const TASK_ID = 'test_task2';
 const TASK_DISTRICT = 'Śródmieście';
 const TASK_ROOMS = 'threeRoom';
 const LOGS_DIR = './logs';

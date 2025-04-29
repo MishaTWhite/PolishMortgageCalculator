@@ -10,32 +10,32 @@
   "errorStack": "Error: Task timeout reached (90000ms)\n    at Timeout._onTimeout (/home/runner/workspace/server/playwrightScraper.ts:1942:14)\n    at listOnTimeout (node:internal/timers:581:17)\n    at process.processTimers (node:internal/timers:519:7)",
   "botDetected": true,
   "task": {
-    "id": "ma2ikv7fssw",
+    "id": "ma2ii9iqf07",
     "cityUrl": "warszawa",
     "cityNormalized": "warsaw",
-    "districtName": "Śródmieście",
-    "districtSearchTerm": "srodmiescie",
-    "roomType": "fourPlusRoom",
+    "districtName": "Mokotów",
+    "districtSearchTerm": "mokotow",
+    "roomType": "oneRoom",
     "fetchDate": "29.04.2025",
     "status": "in_progress"
   },
   "diagnostics": {
-    "timestamp": "2025-04-29T13:35:25.903Z",
-    "executionTimeMs": 90006,
+    "timestamp": "2025-04-29T13:40:16.901Z",
+    "executionTimeMs": 90005,
     "environment": {
-      "memoryUsageMb": 249,
+      "memoryUsageMb": 247,
       "nodeVersion": "v20.18.1",
       "platform": "linux"
     },
     "error": {
       "message": "Task timeout reached (90000ms)",
       "stack": "Error: Task timeout reached (90000ms)\n    at Timeout._onTimeout (/home/runner/workspace/server/playwrightScraper.ts:1942:14)\n    at listOnTimeout (node:internal/timers:581:17)\n    at process.processTimers (node:internal/timers:519:7)",
-      "timestamp": "2025-04-29T13:35:25.902Z",
+      "timestamp": "2025-04-29T13:40:16.900Z",
       "errorType": "Error"
     },
     "screenshots": {
-      "error": "./logs/error_screenshot_ma2ikv7fssw.png",
-      "errorHtml": "./logs/error_page_ma2ikv7fssw.html"
+      "error": "./logs/error_screenshot_ma2ii9iqf07.png",
+      "errorHtml": "./logs/error_page_ma2ii9iqf07.html"
     },
     "cookieAttempted": true,
     "cookieAccepted": true,
@@ -62,12 +62,12 @@
       {
         "name": "cookie_banner_after.png",
         "path": "./logs/cookie_banner_after.png",
-        "timestamp": "2025-04-29T13:34:35.839Z"
+        "timestamp": "2025-04-29T13:39:27.641Z"
       },
       {
         "name": "cookie_banner_before.png",
         "path": "./logs/cookie_banner_before.png",
-        "timestamp": "2025-04-29T13:34:34.738Z"
+        "timestamp": "2025-04-29T13:39:26.541Z"
       },
       {
         "name": "minimal_main.png",
@@ -115,18 +115,18 @@
         "timestamp": "2025-04-29T13:15:57.050Z"
       }
     ],
-    "browserMemoryUsage": 249,
+    "browserMemoryUsage": 247,
     "cookieRawData": {
       "cookieAttempted": true,
       "cookieAccepted": true,
       "cookieError": "",
-      "timestamp": "2025-04-29T13:34:35.845Z",
+      "timestamp": "2025-04-29T13:39:27.648Z",
       "url": "https://www.otodom.pl/",
       "jsEvalResult": {
         "clicked": true,
         "selector": "button[id=\"onetrust-accept-btn-handler\"]"
       },
-      "htmlSize": 359535,
+      "htmlSize": 359848,
       "listingElementsFound": false,
       "iframesCount": 1,
       "bodyClasses": "",

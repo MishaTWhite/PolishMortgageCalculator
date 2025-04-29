@@ -1,0 +1,14 @@
+{
+  "count": 0,
+  "reportedCount": 0,
+  "avgPrice": 0,
+  "avgPricePerSqm": 0,
+  "prices": [],
+  "pricesPerSqm": [],
+  "hasListings": true,
+  "botDetected": false,
+  "missingSelectors": true,
+  "hasCookieBanner": false,
+  "hasErrors": false,
+  "errorMessages": []
+}

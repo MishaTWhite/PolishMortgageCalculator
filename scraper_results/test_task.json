@@ -1,0 +1,41 @@
+{
+  "count": 0,
+  "reportedCount": 0,
+  "avgPrice": 0,
+  "avgPricePerSqm": 0,
+  "prices": [],
+  "pricesPerSqm": [],
+  "error": true,
+  "errorMessage": "browserContext.newPage: Target page, context or browser has been closed",
+  "errorStack": "browserContext.newPage: Target page, context or browser has been closed\n    at scrapePropertyData (/home/runner/workspace/server/playwrightScraper.ts:1402:31)\n    at async Timeout.processNextTask (/home/runner/workspace/server/scrapeTaskManager.ts:412:20)",
+  "botDetected": true,
+  "task": {
+    "id": "ma2ffyr3pfm",
+    "cityUrl": "warszawa",
+    "cityNormalized": "warsaw",
+    "districtName": "Ochota",
+    "districtSearchTerm": "ochota",
+    "roomType": "fourPlusRoom",
+    "fetchDate": "29.04.2025",
+    "status": "in_progress"
+  },
+  "diagnostics": {
+    "timestamp": "2025-04-29T11:39:02.474Z",
+    "executionTimeMs": 1,
+    "environment": {
+      "memoryUsageMb": 248,
+      "nodeVersion": "v20.18.1",
+      "platform": "linux"
+    },
+    "error": {
+      "message": "browserContext.newPage: Target page, context or browser has been closed",
+      "stack": "browserContext.newPage: Target page, context or browser has been closed\n    at scrapePropertyData (/home/runner/workspace/server/playwrightScraper.ts:1402:31)\n    at async Timeout.processNextTask (/home/runner/workspace/server/scrapeTaskManager.ts:412:20)",
+      "timestamp": "2025-04-29T11:39:02.474Z",
+      "errorType": "TargetClosedError"
+    },
+    "screenshots": {
+      "error": "./logs/error_screenshot_ma2ffyr3pfm.png",
+      "errorHtml": "./logs/error_page_ma2ffyr3pfm.html"
+    }
+  }
+}

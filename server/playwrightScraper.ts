@@ -462,6 +462,12 @@ async function visitRandomListing(page: Page): Promise<boolean> {
 async function handleCookieBanner(page: Page): Promise<boolean> {
   logInfo('Checking for cookie banner...');
   
+  // Для расширенной диагностики
+  let cookieAttempted = false;
+  let cookieAccepted = false;
+  let cookieError = "";
+  let diagnosticInfo: Record<string, any> = {};
+  
   try {
     // Делаем скриншот до обработки cookie-баннера
     try {
@@ -489,57 +495,239 @@ async function handleCookieBanner(page: Page): Promise<boolean> {
       'button.cookie-close'
     ];
 
-    let bannerFound = false;
-    
-    // Проверяем наличие cookie-баннера через несколько селекторов
-    for (const selector of acceptButtonSelectors) {
-      const button = await page.$(selector);
-      if (button) {
-        bannerFound = true;
-        logInfo(`Cookie banner found with selector: ${selector}`);
+    // СТРАТЕГИЯ 1: JavaScript evaluate для клика на кнопку
+    logInfo('Trying cookie accept via JavaScript evaluate...');
+    try {
+      cookieAttempted = true;
+      const jsResult = await page.evaluate(() => {
+        const selectors = [
+          'button[id="onetrust-accept-btn-handler"]',
+          '#onetrust-accept-btn-handler',
+          'button.cookie-consent__button',
+          '[data-testid="accept-gdpr-button"]',
+          '[data-testid="cookie-policy-dialog-accept-button"]',
+          '[data-testid="button-accept"]',
+          // Пробуем найти любую кнопку с текстом принятия cookies
+          ...Array.from(document.querySelectorAll('button')).filter(el => 
+            el.textContent && 
+            ['accept', 'akceptuj', 'zgadzam'].some(text => 
+              el.textContent?.toLowerCase().includes(text) || false
+            )
+          )
+        ];
         
-        try {
-          // Кликаем на кнопку принятия
-          await button.click();
-          logInfo(`Clicked accept button with selector: ${selector}`);
+        for (const selector of selectors) {
+          const element = typeof selector === 'string' 
+            ? document.querySelector(selector) 
+            : selector;
           
-          // Ждем исчезновения баннера
-          await page.waitForTimeout(1000);
-          
-          // Проверяем, что баннер исчез
-          const buttonAfterClick = await page.$(selector);
-          if (!buttonAfterClick) {
-            logInfo('Cookie banner successfully closed');
-            
-            // Делаем скриншот после закрытия cookie-баннера
+          if (element) {
             try {
-              const screenshotPath = `./logs/cookie_banner_after.png`;
-              await page.screenshot({ path: screenshotPath, fullPage: false });
-              logInfo(`Saved post-cookie screenshot to ${screenshotPath}`);
-            } catch (screenshotError) {
-              logWarning(`Failed to save post-cookie screenshot: ${screenshotError}`);
+              element.click();
+              return { clicked: true, selector: String(selector) };
+            } catch (e) {
+              console.error("Click error:", e);
             }
-            
-            return true;
-          } else {
-            logWarning('Cookie banner still visible after click');
           }
-        } catch (clickError) {
-          logWarning(`Error clicking cookie button: ${clickError}`);
         }
+        
+        // Глобальный поиск любых кнопок с атрибутами, похожими на cookies
+        const allButtons = document.querySelectorAll('button');
+        for (const btn of Array.from(allButtons)) {
+          if (btn.id?.toLowerCase().includes('cookie') || 
+              btn.className?.toLowerCase().includes('cookie') ||
+              btn.getAttribute('data-testid')?.toLowerCase().includes('cookie')) {
+            try {
+              btn.click();
+              return { clicked: true, selector: `button#${btn.id || 'unknown'}` };
+            } catch (e) {
+              console.error("Click error for cookie button:", e);
+            }
+          }
+        }
+        
+        return { 
+          clicked: false, 
+          selector: null,
+          // Для диагностики
+          cookieBannerExists: !!document.querySelector('#onetrust-banner-sdk, #onetrust-consent-sdk, [id*="cookie"], [class*="cookie"]'),
+          bodyHtml: document.body.innerHTML.length
+        };
+      });
+      
+      diagnosticInfo = { ...diagnosticInfo, jsEvalResult: jsResult };
+      
+      if (jsResult.clicked) {
+        logInfo(`Clicked cookie button via JavaScript: ${jsResult.selector}`);
+        cookieAccepted = true;
+        
+        // Даем время для обработки клика
+        await page.waitForTimeout(1000);
+      } else {
+        logWarning(`No cookie buttons clicked via JavaScript. Cookie banner exists: ${jsResult.cookieBannerExists}`);
+      }
+    } catch (error) {
+      cookieError = String(error);
+      logWarning(`Error handling cookies via JavaScript: ${error}`);
+    }
+    
+    // СТРАТЕГИЯ 2: Стандартный подход с .click() если JS не сработал
+    if (!cookieAccepted) {
+      let bannerFound = false;
+      
+      // Проверяем наличие cookie-баннера через несколько селекторов
+      for (const selector of acceptButtonSelectors) {
+        const button = await page.$(selector);
+        if (button) {
+          bannerFound = true;
+          cookieAttempted = true;
+          logInfo(`Cookie banner found with selector: ${selector}`);
+          
+          try {
+            // Кликаем на кнопку принятия
+            await button.click();
+            logInfo(`Clicked accept button with selector: ${selector}`);
+            
+            // Ждем исчезновения баннера
+            await page.waitForTimeout(1000);
+            
+            // Проверяем, что баннер исчез
+            const buttonAfterClick = await page.$(selector);
+            if (!buttonAfterClick) {
+              logInfo('Cookie banner successfully closed via standard click');
+              cookieAccepted = true;
+              break;
+            } else {
+              logWarning('Cookie banner still visible after standard click');
+            }
+          } catch (clickError) {
+            cookieError = String(clickError);
+            logWarning(`Error clicking cookie button: ${clickError}`);
+          }
+        }
+      }
+      
+      if (!bannerFound) {
+        logInfo('No cookie banner detected by standard selectors');
       }
     }
     
-    if (!bannerFound) {
-      logInfo('No cookie banner detected or it was already accepted');
-      return false;
+    // СТРАТЕГИЯ 3: Если предыдущие методы не сработали, попробуем обойти через localStorage
+    if (!cookieAccepted) {
+      logInfo('Trying cookie bypass via localStorage...');
+      try {
+        cookieAttempted = true;
+        
+        // Устанавливаем различные ключи localStorage, используемые для cookie-согласия
+        await page.evaluate(() => {
+          try {
+            localStorage.setItem('cookie-consent', 'true');
+            localStorage.setItem('cookie_consent', 'true');
+            localStorage.setItem('gdpr-consent', 'true');
+            localStorage.setItem('gdpr_consent', 'true');
+            localStorage.setItem('cookies-accepted', 'true');
+            localStorage.setItem('cookieConsent', 'true');
+            localStorage.setItem('cookiesAccepted', 'true');
+            localStorage.setItem('OptanonAlertBoxClosed', new Date().toISOString());
+            localStorage.setItem('OptanonConsent', 'true');
+            
+            // Специфично для OneTrust (используется на Otodom)
+            const oneTrustGroups = "C0001,C0002,C0003,C0004";
+            localStorage.setItem('OptanonConsent', `groups=${oneTrustGroups}`);
+            
+            return { localStorageSet: true };
+          } catch (e) {
+            return { localStorageSet: false, error: String(e) };
+          }
+        });
+        
+        // Перезагружаем страницу для применения настроек localStorage
+        logInfo('Reloading page after localStorage cookie consent bypass');
+        await page.reload({ waitUntil: 'networkidle' });
+        
+        // Проверяем, видны ли все еще cookie-баннеры
+        const bannerVisible = await page.evaluate(() => {
+          return !!document.querySelector('#onetrust-banner-sdk, #onetrust-consent-sdk, [id*="cookie-banner"]');
+        });
+        
+        if (!bannerVisible) {
+          logInfo('Cookie banner successfully bypassed via localStorage');
+          cookieAccepted = true;
+        } else {
+          logWarning('Cookie banner still visible after localStorage bypass');
+        }
+      } catch (error) {
+        cookieError = String(error);
+        logWarning(`Error bypassing cookies via localStorage: ${error}`);
+      }
     }
     
-    // Если дошли до этой точки, значит баннер есть, но принять не получилось
-    logWarning('Failed to accept cookies after multiple attempts');
-    return false;
+    // Делаем скриншот после всех попыток закрытия cookie-баннера
+    try {
+      const screenshotPath = `./logs/cookie_banner_after.png`;
+      await page.screenshot({ path: screenshotPath, fullPage: false });
+      logInfo(`Saved post-cookie screenshot to ${screenshotPath}`);
+      
+      // Получаем диагностическую информацию о странице после обработки cookie
+      const pageInfo = await page.evaluate(() => {
+        return {
+          url: window.location.href,
+          htmlSize: document.documentElement.outerHTML.length,
+          listingElementsFound: !!document.querySelector('article, [data-cy="listing-item"], [data-cy="search.listing"]'),
+          iframesCount: document.querySelectorAll('iframe').length,
+          bodyClasses: document.body.className,
+          cookieBannerVisible: !!document.querySelector('#onetrust-banner-sdk, #onetrust-consent-sdk, [id*="cookie-banner"]')
+        };
+      });
+      
+      diagnosticInfo = { ...diagnosticInfo, ...pageInfo };
+      logInfo(`Page diagnostic after cookie handling: ${JSON.stringify(pageInfo)}`);
+    } catch (error) {
+      logWarning(`Failed to save post-cookie diagnostic info: ${error}`);
+    }
+    
+    // Записываем расширенную диагностику в JSON
+    try {
+      // Создаем объект диагностики cookie
+      const cookieDiagnostic = {
+        cookieAttempted,
+        cookieAccepted,
+        cookieError,
+        timestamp: new Date().toISOString(),
+        url: await page.url(),
+        ...diagnosticInfo
+      };
+      
+      // Сохраняем диагностику в файл
+      const cookieDiagnosticPath = `./logs/cookie_diagnostic.json`;
+      fs.writeFileSync(cookieDiagnosticPath, JSON.stringify(cookieDiagnostic, null, 2));
+      logInfo(`Saved cookie diagnostic information to ${cookieDiagnosticPath}`);
+    } catch (error) {
+      logWarning(`Failed to save cookie diagnostic file: ${error}`);
+    }
+    
+    // Если не получилось обработать cookie-баннер всеми методами
+    if (!cookieAccepted && cookieAttempted) {
+      logWarning('Failed to accept cookies after multiple attempts');
+    }
+    
+    logInfo(`Cookie banner handled: ${cookieAccepted}`);
+    return cookieAccepted;
   } catch (error) {
     logError(`Error handling cookie banner: ${error}`);
+    
+    // Сохраняем информацию об ошибке
+    try {
+      fs.writeFileSync('./logs/cookie_error.json', JSON.stringify({
+        error: String(error),
+        timestamp: new Date().toISOString(),
+        cookieAttempted,
+        cookieAccepted
+      }, null, 2));
+    } catch (e) {
+      logError(`Failed to save cookie error info: ${e}`);
+    }
+    
     return false;
   }
 }
@@ -1335,6 +1523,53 @@ function saveIntermediateResults(task: ScrapeTask, results: any, diagnosticInfo?
     // Сохраняем диагностический test_task.json
     const testTaskPath = path.join(RESULTS_DIR, 'test_task.json');
     
+    // Загружаем cookie диагностику, если файл существует
+    let cookieDiagnostic = {};
+    try {
+      const cookieDiagnosticPath = './logs/cookie_diagnostic.json';
+      if (fs.existsSync(cookieDiagnosticPath)) {
+        const cookieData = fs.readFileSync(cookieDiagnosticPath, 'utf8');
+        cookieDiagnostic = JSON.parse(cookieData);
+        logInfo('Loaded cookie diagnostic data for test_task.json');
+      }
+    } catch (cookieError) {
+      logWarning(`Failed to load cookie diagnostic: ${cookieError}`);
+    }
+    
+    // Получаем информацию о состоянии страниц в логах
+    let pageScreenshots = [];
+    try {
+      const logDir = './logs';
+      if (fs.existsSync(logDir)) {
+        const files = fs.readdirSync(logDir);
+        pageScreenshots = files
+          .filter(file => file.endsWith('.png'))
+          .map(file => ({
+            name: file,
+            path: `${logDir}/${file}`,
+            timestamp: fs.statSync(`${logDir}/${file}`).mtime.toISOString()
+          }));
+      }
+    } catch (screenshotError) {
+      logWarning(`Failed to list screenshots: ${screenshotError}`);
+    }
+    
+    // Добавляем расширенную диагностику по формату, предложенному заказчиком
+    const enhancedDiagnostics = {
+      cookieAttempted: cookieDiagnostic.cookieAttempted || false,
+      cookieAccepted: cookieDiagnostic.cookieAccepted || false,
+      cookieError: cookieDiagnostic.cookieError || "",
+      listingElementsFound: 
+        results.count > 0 || 
+        (diagnosticInfo?.pageStatus?.hasListings === true) || 
+        (cookieDiagnostic.jsEvalResult?.listingElementsFound === true) || 
+        false,
+      pageUrl: cookieDiagnostic.url || "",
+      htmlSize: cookieDiagnostic.jsEvalResult?.bodyHtml || 0,
+      screenhotsTaken: pageScreenshots,
+      browserMemoryUsage: getCurrentMemoryUsage()
+    };
+    
     // Объединяем основные результаты с диагностической информацией
     const extendedResults = {
       ...results,
@@ -1357,12 +1592,16 @@ function saveIntermediateResults(task: ScrapeTask, results: any, diagnosticInfo?
           platform: process.platform
         },
         // Добавляем дополнительную диагностическую информацию, если она есть
-        ...diagnosticInfo
+        ...diagnosticInfo,
+        // Добавляем расширенную диагностику
+        ...enhancedDiagnostics,
+        // Если есть raw данные о cookie из оригинального файла
+        cookieRawData: cookieDiagnostic
       }
     };
     
     fs.writeFileSync(testTaskPath, JSON.stringify(extendedResults, null, 2), 'utf8');
-    logInfo(`Saved diagnostic results to test_task.json`);
+    logInfo(`Saved enhanced diagnostic results to test_task.json`);
   } catch (error) {
     logError(`Failed to save results: ${error}`);
   }

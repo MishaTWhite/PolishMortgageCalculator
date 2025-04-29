@@ -13,7 +13,7 @@ import { chromium, Browser, BrowserContext, Page } from 'playwright';
 const MAX_RUNTIME = 30000; // 30 секунд максимум
 const COOKIES_FILE = './attached_assets/Pasted-1-Cookie-cooki-1745927642029.txt';
 // Прямая ссылка на объявление для более быстрой загрузки
-const TARGET_URL = 'https://www.otodom.pl/pl/oferta/3-pokojowe-mieszkanie-w-centrum-warszawy-srodmiescie-ID4jRFn';
+const TARGET_URL = 'https://www.otodom.pl/pl/oferta/nowoczesny-apartament-w-srodmiesciu-i-pietro-ID4np3Y';
 const RESULTS_DIR = './scraper_results';
 
 // Создаем директорию для результатов, если она не существует

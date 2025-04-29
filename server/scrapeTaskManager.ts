@@ -794,7 +794,8 @@ export function saveScrapingStatistics(filename: string = 'scraping_stats.json')
           percentage: scrapingStats.failed > 0 
             ? Math.round((count / scrapingStats.failed) * 100) 
             : 0,
-          description: getErrorDescription(type as ErrorType)
+          description: getErrorDescription(type as ErrorType),
+          descriptionEn: getErrorDescriptionEn(type as ErrorType) // Добавляем английское описание
         })),
       
       // Агрегированные данные для анализа

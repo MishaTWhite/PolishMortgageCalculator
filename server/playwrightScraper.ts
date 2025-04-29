@@ -23,7 +23,8 @@ import {
   getCurrentMemoryUsage,
   logMemoryUsage
 } from './scraperLogger';
-import { ScrapeTask, registerTaskProcessor } from './scrapeTaskManager';
+import { ScrapeTask, registerTaskProcessor, getRetryDelay } from './scrapeTaskManager';
+import { TaskStatus, ErrorType } from './scraperTypes';
 
 // Директория для промежуточных результатов
 const RESULTS_DIR = path.join(process.cwd(), 'scraper_results');

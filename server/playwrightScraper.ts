@@ -56,12 +56,44 @@ async function initBrowser(): Promise<Browser> {
     await closeBrowser();
   }
   
-  logInfo('Initializing browser');
-  browser = await chromium.launch(BROWSER_LAUNCH_OPTIONS);
-  browserStartTime = Date.now();
-  pagesProcessed = 0;
+  logInfo('Initializing browser with enhanced options for Replit environment');
   
-  return browser;
+  // Расширенные опции для запуска в Replit
+  const enhancedOptions = {
+    ...BROWSER_LAUNCH_OPTIONS,
+    executablePath: process.env.PLAYWRIGHT_BROWSERS_PATH 
+      ? `${process.env.PLAYWRIGHT_BROWSERS_PATH}/chromium/chrome-linux/chrome` 
+      : undefined,
+    args: [
+      ...(BROWSER_LAUNCH_OPTIONS.args || []),
+      '--no-sandbox',
+      '--disable-setuid-sandbox',
+      '--disable-dev-shm-usage',
+      '--single-process'
+    ],
+    ignoreDefaultArgs: ['--disable-extensions'],
+    handleSIGINT: false,
+    handleSIGTERM: false,
+    handleSIGHUP: false,
+    chromiumSandbox: false
+  };
+
+  logInfo(`Launch options: ${JSON.stringify(enhancedOptions, null, 2)}`);
+  
+  try {
+    browser = await chromium.launch(enhancedOptions);
+    browserStartTime = Date.now();
+    pagesProcessed = 0;
+    logInfo('Browser successfully launched');
+    return browser;
+  } catch (error) {
+    logError(`Browser launch failed: ${error}`);
+    // Попытка запуска с более простыми опциями
+    logInfo('Trying with minimal options');
+    browser = await chromium.launch({ headless: true, args: ['--no-sandbox'] });
+    logInfo('Browser launched with minimal options');
+    return browser;
+  }
 }
 
 /**
@@ -346,6 +378,10 @@ async function simulateNaturalBrowsing(page: Page): Promise<void> {
     await page.goto('https://www.otodom.pl/', { 
       waitUntil: 'networkidle'
     });
+    
+    // Логируем URL после загрузки страницы
+    const currentUrl = page.url();
+    logInfo(`Current URL after navigation: ${currentUrl}`);
     
     // Случайная задержка как будто "смотрим главную"
     const homeDelay = getRandomDelay(
@@ -681,25 +717,88 @@ async function processFirstPage(
 async function navigateToNextPage(page: Page, currentPageNum: number): Promise<boolean> {
   logInfo(`Attempting to navigate to page ${currentPageNum + 1}`);
   
-  // Проверяем наличие кнопки следующей страницы
-  const hasNextButton = await page.$('[data-cy="pagination.next-page"]');
+  // Логируем текущий URL перед навигацией
+  const currentUrl = page.url();
+  logInfo(`Current URL before navigation: ${currentUrl}`);
   
-  if (!hasNextButton) {
-    logInfo('Next page button not found, reached end of results');
+  // Пробуем найти элементы пагинации с использованием разных селекторов
+  const selectors = [
+    '[data-cy="pagination.next-page"]',
+    'nav button:last-child',
+    'button[aria-label*="next"]',
+    'a[href*="page="][rel="next"]',
+    '.pagination-next',
+    'nav li:last-child a',
+    'button:has-text("Następna")'
+  ];
+  
+  // Логируем найденные элементы пагинации
+  let paginationElements: any[] = [];
+  
+  for (const selector of selectors) {
+    const elements = await page.$$(selector);
+    if (elements.length > 0) {
+      logInfo(`Found ${elements.length} pagination elements using selector: ${selector}`);
+      paginationElements = elements;
+      break;
+    }
+  }
+  
+  if (paginationElements.length === 0) {
+    logInfo('No pagination elements found, checking if there might be more pages');
+    
+    // Проверяем общее количество объявлений, возможно на странице не отображаются элементы пагинации,
+    // но есть еще страницы (более 72 объявлений)
+    const countText = await page.textContent('[data-cy="search.listing-panel.label"], .css-lm38vc, .listing-panel-header, h1 span') || '';
+    const reportedCount = extractReportedCount(countText);
+    
+    if (reportedCount > 72 && currentPageNum === 1) {
+      logInfo(`No pagination detected, but reportedCount ${reportedCount} suggests ~${Math.ceil(reportedCount/72)} pages`);
+      
+      // Пробуем напрямую перейти на следующую страницу
+      const nextPageUrl = currentUrl.includes('?') 
+        ? currentUrl + `&page=${currentPageNum + 1}` 
+        : currentUrl + `?page=${currentPageNum + 1}`;
+      
+      logInfo(`Trying direct navigation to: ${nextPageUrl}`);
+      
+      try {
+        await page.goto(nextPageUrl, { waitUntil: 'networkidle' });
+        const newUrl = page.url();
+        
+        if (newUrl.includes(`page=${currentPageNum + 1}`)) {
+          logInfo(`Found page ${currentPageNum + 1}`);
+          return true;
+        } else {
+          logInfo(`Could not navigate to page ${currentPageNum + 1}`);
+          return false;
+        }
+      } catch (error) {
+        logError(`Error during direct navigation: ${error}`);
+        return false;
+      }
+    }
+    
+    logInfo('Pagination elements not found, reached end of results');
     return false;
   }
   
   try {
     // Кликаем на кнопку следующей страницы
-    await page.click('[data-cy="pagination.next-page"]');
+    logInfo('Clicking next page button');
+    await paginationElements[0].click();
     
     // Дожидаемся загрузки страницы и появления элементов-объявлений
-    await page.waitForLoadState('networkidle', { timeout: 10000 })
+    await page.waitForLoadState('networkidle', { timeout: 15000 })
       .catch(e => logWarning(`Timeout in waitForLoadState: ${e}`));
+    
+    // Логируем URL после клика
+    const afterClickUrl = page.url();
+    logInfo(`URL after click: ${afterClickUrl}`);
     
     await page.waitForSelector(
       'article, [data-cy="listing-item"], [data-cy="search.listing"]', 
-      { timeout: 15000 }
+      { timeout: 20000 }
     ).catch(e => logWarning(`Timeout waiting for listing elements: ${e}`));
     
     // Дополнительная задержка для стабилизации страницы
@@ -710,6 +809,8 @@ async function navigateToNextPage(page: Page, currentPageNum: number): Promise<b
     
     // Проверка URL для подтверждения смены страницы
     const pageUrl = page.url();
+    logInfo(`Final URL after navigation: ${pageUrl}`);
+    
     const expectedPageParam = `page=${currentPageNum + 1}`;
     const pageNumberCheck = pageUrl.includes(expectedPageParam);
     
@@ -717,9 +818,15 @@ async function navigateToNextPage(page: Page, currentPageNum: number): Promise<b
       logWarning(`Page navigation may have failed. URL doesn't contain ${expectedPageParam}: ${pageUrl}`);
       
       // Дополнительная проверка на изменение содержимого
-      const hasPageNum = await page.$(`[data-cy="pagination.page-${currentPageNum + 1}"]`);
+      // Проверяем любые элементы пагинации
+      const paginationChecks = await page.$$('nav button, .pagination, [data-cy*="pagination"]');
       
-      if (!hasPageNum) {
+      if (currentUrl !== pageUrl) {
+        logInfo(`URL changed from ${currentUrl} to ${pageUrl}, considering navigation successful`);
+        return true;
+      }
+      
+      if (paginationChecks.length === 0) {
         // Проверка на антибот
         const botDetected = await checkForBotDetection(page);
         if (botDetected) {

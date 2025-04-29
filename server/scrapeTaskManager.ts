@@ -473,14 +473,20 @@ async function processNextTask(): Promise<void> {
       logInfo(`Task ${currentTask.id} will be retried (${currentTask.retryCount}/3): ${errorDesc}`);
       
       // Перемещаем в конец очереди
-      const taskIndex = taskQueue.findIndex(t => t.id === currentTask!.id);
-      if (taskIndex >= 0) {
-        taskQueue.splice(taskIndex, 1);
+      if (currentTask && currentTask.id) { // Добавляем проверку на наличие currentTask и id
+        // Type assertion для TSC, чтобы убрать ошибку "currentTask is possibly null"
+        const task = currentTask as ScrapeTask;
+        const taskIndex = taskQueue.findIndex(t => t && t.id === task.id);
+        if (taskIndex >= 0) {
+          taskQueue.splice(taskIndex, 1);
+        }
+        
+        // Добавляем с повышенным приоритетом (но не в самое начало)
+        // чтобы избежать блокировки обработки одной проблемной задачей
+        taskQueue.splice(Math.min(taskQueue.length, 5), 0, currentTask);
+      } else {
+        logWarning("Cannot requeue task: currentTask or currentTask.id is null/undefined");
       }
-      
-      // Добавляем с повышенным приоритетом (но не в самое начало)
-      // чтобы избежать блокировки обработки одной проблемной задачей
-      taskQueue.splice(Math.min(taskQueue.length, 5), 0, currentTask);
       
       saveQueue();
       currentTask = null;

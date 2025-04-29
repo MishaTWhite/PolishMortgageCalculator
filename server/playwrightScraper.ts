@@ -809,11 +809,40 @@ async function simulateNaturalBrowsing(page: Page): Promise<void> {
   logInfo('Starting natural browsing simulation');
   
   try {
-    // Посещаем главную страницу
+    // Посещаем главную страницу с более надежной стратегией загрузки
     logInfo('Visiting Otodom homepage');
-    await page.goto('https://www.otodom.pl/', { 
-      waitUntil: 'networkidle'
-    });
+    
+    // Используем более надежные параметры и обработку ошибок
+    try {
+      // Первая попытка с load - быстрее и меньше шансов на таймаут
+      await page.goto('https://www.otodom.pl/', { 
+        waitUntil: 'load',
+        timeout: 30000
+      });
+    } catch (navError) {
+      logWarning(`Initial navigation error with 'load': ${navError}`);
+      
+      // Вторая попытка с domcontentloaded - еще более надежная
+      try {
+        await page.goto('https://www.otodom.pl/', { 
+          waitUntil: 'domcontentloaded',
+          timeout: 30000
+        });
+      } catch (secondNavError) {
+        logWarning(`Fallback navigation error with 'domcontentloaded': ${secondNavError}`);
+        // Продолжаем выполнение даже при ошибке навигации
+      }
+    }
+    
+    // Дополнительно ждем когда сеть станет относительно неактивной
+    try {
+      // Ждем пока сеть станет "тихой" с небольшим таймаутом
+      await page.waitForLoadState('networkidle', { timeout: 10000 }).catch(() => {
+        logInfo('Network remained active after navigation, continuing anyway');
+      });
+    } catch (stateError) {
+      logWarning(`Error waiting for networkidle state: ${stateError}`);
+    }
     
     // Логируем URL после загрузки страницы
     const currentUrl = page.url();
@@ -834,11 +863,39 @@ async function simulateNaturalBrowsing(page: Page): Promise<void> {
     // Немного прокручиваем главную страницу
     await performRandomScrolling(page);
     
-    // Переходим в раздел продажи
+    // Переходим в раздел продажи с более надежной стратегией загрузки
     logInfo('Navigating to sales category');
-    await page.goto('https://www.otodom.pl/pl/oferty/sprzedaz', { 
-      waitUntil: 'networkidle'
-    });
+    
+    try {
+      // Первая попытка с load - быстрее и меньше шансов на таймаут
+      await page.goto('https://www.otodom.pl/pl/oferty/sprzedaz', { 
+        waitUntil: 'load',
+        timeout: 30000
+      });
+    } catch (navError) {
+      logWarning(`Sales category navigation error with 'load': ${navError}`);
+      
+      // Вторая попытка с domcontentloaded - еще более надежная
+      try {
+        await page.goto('https://www.otodom.pl/pl/oferty/sprzedaz', { 
+          waitUntil: 'domcontentloaded',
+          timeout: 30000
+        });
+      } catch (secondNavError) {
+        logWarning(`Fallback sales navigation error with 'domcontentloaded': ${secondNavError}`);
+        // Продолжаем выполнение даже при ошибке навигации
+      }
+    }
+    
+    // Дополнительно ждем когда сеть станет относительно неактивной
+    try {
+      // Ждем пока сеть станет "тихой" с небольшим таймаутом
+      await page.waitForLoadState('networkidle', { timeout: 10000 }).catch(() => {
+        logInfo('Network remained active after sales navigation, continuing anyway');
+      });
+    } catch (stateError) {
+      logWarning(`Error waiting for networkidle state in sales: ${stateError}`);
+    }
     
     // Проверяем cookie-баннер еще раз (на всякий случай)
     await handleCookieBanner(page);

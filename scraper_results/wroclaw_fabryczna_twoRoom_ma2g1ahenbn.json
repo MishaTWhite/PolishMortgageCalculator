@@ -6,7 +6,7 @@
   "prices": [],
   "pricesPerSqm": [],
   "error": true,
-  "errorMessage": "browserContext.newPage: Target page, context or browser has been closed",
-  "errorStack": "browserContext.newPage: Target page, context or browser has been closed\n    at scrapePropertyData (/home/runner/workspace/server/playwrightScraper.ts:1662:31)\n    at async Timeout.processNextTask (/home/runner/workspace/server/scrapeTaskManager.ts:412:20)",
+  "errorMessage": "Failed after 3 retries for task \"Natural browsing simulation\": page.goto: Target page, context or browser has been closed",
+  "errorStack": "Error: Failed after 3 retries for task \"Natural browsing simulation\": page.goto: Target page, context or browser has been closed\n    at runWithRetry (/home/runner/workspace/server/playwrightScraper.ts:1607:9)\n    at async scrapePropertyData (/home/runner/workspace/server/playwrightScraper.ts:1779:5)\n    at async processNextTask (/home/runner/workspace/server/scrapeTaskManager.ts:411:20)",
   "botDetected": true
 }

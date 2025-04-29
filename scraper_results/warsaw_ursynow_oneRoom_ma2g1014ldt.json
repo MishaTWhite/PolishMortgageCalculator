@@ -6,7 +6,7 @@
   "prices": [],
   "pricesPerSqm": [],
   "error": true,
-  "errorMessage": "Failed after 3 retries for task \"Natural browsing simulation\": page.goto: Target page, context or browser has been closed\nCall log:\n\u001b[2m  - navigating to \"https://www.otodom.pl/pl/oferty/sprzedaz\", waiting until \"networkidle\"\u001b[22m\n",
-  "errorStack": "Error: Failed after 3 retries for task \"Natural browsing simulation\": page.goto: Target page, context or browser has been closed\nCall log:\n\u001b[2m  - navigating to \"https://www.otodom.pl/pl/oferty/sprzedaz\", waiting until \"networkidle\"\u001b[22m\n\n    at runWithRetry (/home/runner/workspace/server/playwrightScraper.ts:1511:9)\n    at async scrapePropertyData (/home/runner/workspace/server/playwrightScraper.ts:1683:5)\n    at async processNextTask (/home/runner/workspace/server/scrapeTaskManager.ts:411:20)",
+  "errorMessage": "Failed after 3 retries for task \"Natural browsing simulation\": page.goto: Target page, context or browser has been closed",
+  "errorStack": "Error: Failed after 3 retries for task \"Natural browsing simulation\": page.goto: Target page, context or browser has been closed\n    at runWithRetry (/home/runner/workspace/server/playwrightScraper.ts:1578:9)\n    at async scrapePropertyData (/home/runner/workspace/server/playwrightScraper.ts:1750:5)\n    at async processNextTask (/home/runner/workspace/server/scrapeTaskManager.ts:411:20)",
   "botDetected": true
 }

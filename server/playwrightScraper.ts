@@ -119,15 +119,13 @@ async function initBrowser(): Promise<Browser> {
           '--disable-dev-shm-usage',
           '--disable-gpu',
           '--no-zygote',
-          '--single-process', // Особенно важно для легкого режима
-          '--mute-audio',
-          '--disable-web-security',
-          '--disable-remote-fonts'
+          '--single-process',
+          '--mute-audio'
         ],
+        executablePath: process.env.PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH || undefined,
         chromiumSandbox: false,
         timeout: 120000,
-        handleSIGINT: false,
-        ignoreDefaultArgs: ['--disable-extensions', '--enable-automation']
+        handleSIGINT: false
       };
       
       logInfo(`Chromium fallback options: ${JSON.stringify(minimalOptions)}`);

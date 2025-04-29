@@ -6,36 +6,36 @@
   "prices": [],
   "pricesPerSqm": [],
   "error": true,
-  "errorMessage": "Failed after 3 retries for task \"Search page navigation\": page.goto: Target page, context or browser has been closed",
-  "errorStack": "Error: Failed after 3 retries for task \"Search page navigation\": page.goto: Target page, context or browser has been closed\n    at runWithRetry (/home/runner/workspace/server/playwrightScraper.ts:1807:9)\n    at async scrapeDataTask (/home/runner/workspace/server/playwrightScraper.ts:2012:7)\n    at async scrapePropertyData (/home/runner/workspace/server/playwrightScraper.ts:2042:5)\n    at async Timeout.processNextTask (/home/runner/workspace/server/scrapeTaskManager.ts:522:20)",
+  "errorMessage": "Task timeout reached (90000ms)",
+  "errorStack": "Error: Task timeout reached (90000ms)\n    at Timeout._onTimeout (/home/runner/workspace/server/playwrightScraper.ts:1942:14)\n    at listOnTimeout (node:internal/timers:581:17)\n    at process.processTimers (node:internal/timers:519:7)",
   "botDetected": true,
   "task": {
-    "id": "ma2ikv899kq",
+    "id": "ma2h9qtzolt",
     "cityUrl": "warszawa",
     "cityNormalized": "warsaw",
     "districtName": "Mokotów",
     "districtSearchTerm": "mokotow",
-    "roomType": "twoRoom",
+    "roomType": "fourPlusRoom",
     "fetchDate": "29.04.2025",
     "status": "in_progress"
   },
   "diagnostics": {
-    "timestamp": "2025-04-29T14:10:10.911Z",
-    "executionTimeMs": 87035,
+    "timestamp": "2025-04-29T14:35:36.552Z",
+    "executionTimeMs": 90007,
     "environment": {
-      "memoryUsageMb": 272,
+      "memoryUsageMb": 249,
       "nodeVersion": "v20.18.1",
       "platform": "linux"
     },
     "error": {
-      "message": "Failed after 3 retries for task \"Search page navigation\": page.goto: Target page, context or browser has been closed",
-      "stack": "Error: Failed after 3 retries for task \"Search page navigation\": page.goto: Target page, context or browser has been closed\n    at runWithRetry (/home/runner/workspace/server/playwrightScraper.ts:1807:9)\n    at async scrapeDataTask (/home/runner/workspace/server/playwrightScraper.ts:2012:7)\n    at async scrapePropertyData (/home/runner/workspace/server/playwrightScraper.ts:2042:5)\n    at async Timeout.processNextTask (/home/runner/workspace/server/scrapeTaskManager.ts:522:20)",
-      "timestamp": "2025-04-29T14:10:10.910Z",
+      "message": "Task timeout reached (90000ms)",
+      "stack": "Error: Task timeout reached (90000ms)\n    at Timeout._onTimeout (/home/runner/workspace/server/playwrightScraper.ts:1942:14)\n    at listOnTimeout (node:internal/timers:581:17)\n    at process.processTimers (node:internal/timers:519:7)",
+      "timestamp": "2025-04-29T14:35:36.551Z",
       "errorType": "Error"
     },
     "screenshots": {
-      "error": "./logs/error_screenshot_ma2ikv899kq.png",
-      "errorHtml": "./logs/error_page_ma2ikv899kq.html"
+      "error": "./logs/error_screenshot_ma2h9qtzolt.png",
+      "errorHtml": "./logs/error_page_ma2h9qtzolt.html"
     },
     "cookieAttempted": true,
     "cookieAccepted": true,
@@ -62,12 +62,12 @@
       {
         "name": "cookie_banner_after.png",
         "path": "./logs/cookie_banner_after.png",
-        "timestamp": "2025-04-29T14:09:15.083Z"
+        "timestamp": "2025-04-29T14:34:37.910Z"
       },
       {
         "name": "cookie_banner_before.png",
         "path": "./logs/cookie_banner_before.png",
-        "timestamp": "2025-04-29T14:09:13.964Z"
+        "timestamp": "2025-04-29T14:34:36.809Z"
       },
       {
         "name": "minimal_main.png",
@@ -120,18 +120,18 @@
         "timestamp": "2025-04-29T13:15:57.050Z"
       }
     ],
-    "browserMemoryUsage": 273,
+    "browserMemoryUsage": 249,
     "cookieRawData": {
       "cookieAttempted": true,
       "cookieAccepted": true,
       "cookieError": "",
-      "timestamp": "2025-04-29T14:09:15.091Z",
+      "timestamp": "2025-04-29T14:34:37.917Z",
       "url": "https://www.otodom.pl/",
       "jsEvalResult": {
         "clicked": true,
         "selector": "button[id=\"onetrust-accept-btn-handler\"]"
       },
-      "htmlSize": 359473,
+      "htmlSize": 359644,
       "listingElementsFound": false,
       "iframesCount": 1,
       "bodyClasses": "",

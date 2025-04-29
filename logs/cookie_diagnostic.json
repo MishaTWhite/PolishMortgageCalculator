@@ -2,16 +2,14 @@
   "cookieAttempted": true,
   "cookieAccepted": true,
   "cookieError": "",
-  "timestamp": "2025-04-29T12:55:12.773Z",
-  "url": "https://www.otodom.pl/pl/wyniki/sprzedaz/mieszkanie/cala-polska",
+  "timestamp": "2025-04-29T13:04:36.864Z",
+  "url": "https://www.otodom.pl/",
   "jsEvalResult": {
-    "clicked": false,
-    "selector": null,
-    "cookieBannerExists": true,
-    "bodyHtml": 1008036
+    "clicked": true,
+    "selector": "button[id=\"onetrust-accept-btn-handler\"]"
   },
-  "htmlSize": 1250985,
-  "listingElementsFound": true,
+  "htmlSize": 358971,
+  "listingElementsFound": false,
   "iframesCount": 1,
   "bodyClasses": "",
   "cookieBannerVisible": true

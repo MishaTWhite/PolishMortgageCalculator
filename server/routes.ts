@@ -157,6 +157,76 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
   
+  // Тестовый маршрут для диагностики единичной задачи скрапинга
+  app.get("/api/test-single-task", async (req, res) => {
+    try {
+      const city = req.query.city as string || "warsaw"; 
+      const district = req.query.district as string || "srodmiescie"; 
+      const roomType = req.query.roomType as string || "threeRoom"; 
+      const fetchDate = format(new Date(), "dd.MM.yyyy");
+      
+      console.log(`====== ISOLATED TEST TASK ======`);
+      console.log(`Starting single isolated task for diagnostic`);
+      console.log(`City: ${city}, District: ${district}, RoomType: ${roomType}`);
+      console.log(`Date: ${fetchDate}`);
+      console.log(`===============================`);
+      
+      // Создаем тестовую задачу
+      const testTask: ScrapeTask = {
+        id: `test_${Date.now()}`,
+        cityName: city,
+        districtName: district,
+        roomType: roomType,
+        status: TaskStatus.PENDING,
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+        priority: 1,
+        retryCount: 0
+      };
+      
+      // Выполняем скрапинг прямо в обработчике запроса (без очереди)
+      const result = await scrapePropertyData(testTask);
+      
+      // Сохраняем результаты в специальный файл
+      const filePath = path.join(process.cwd(), 'scraper_results', 'test_task.json');
+      fs.writeFileSync(filePath, JSON.stringify(result, null, 2), 'utf8');
+      
+      // Проверяем, получили ли мы данные
+      if (result && result.data && result.data.prices && result.data.prices.length > 0) {
+        console.log(`Test task SUCCESS: ${result.data.prices.length} prices found`);
+        console.log(`Average price: ${result.data.averagePrice} zł`);
+        console.log(`Results saved to ${filePath}`);
+        
+        res.json({
+          success: true,
+          message: `Task completed successfully with ${result.data.prices.length} prices`,
+          result: result,
+          filePath: filePath
+        });
+      } else {
+        // Задача выполнена, но данных нет
+        console.warn(`Test task WARNING: Task completed but no prices found`);
+        console.log(`cookieAccepted: ${result.diagnostics?.cookieAccepted}`);
+        console.log(`pagesVisited: ${result.diagnostics?.pagesVisited || 0}`);
+        
+        res.json({
+          success: false,
+          message: `Task completed but no prices found`,
+          diagnostics: result.diagnostics,
+          result: result,
+          filePath: filePath
+        });
+      }
+    } catch (error) {
+      console.error("Error running isolated test task:", error);
+      res.status(500).json({ 
+        success: false, 
+        message: "Error running isolated test task",
+        error: error instanceof Error ? error.message : String(error)
+      });
+    }
+  });
+  
   // This endpoint is now handled by the comprehensive scraping-status endpoint above
   // Get property prices by city
   app.get("/api/property-prices", async (req, res) => {

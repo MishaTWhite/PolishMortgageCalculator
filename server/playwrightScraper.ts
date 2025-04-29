@@ -457,6 +457,94 @@ async function visitRandomListing(page: Page): Promise<boolean> {
 }
 
 /**
+ * Обрабатывает cookie-баннер на странице
+ */
+async function handleCookieBanner(page: Page): Promise<boolean> {
+  logInfo('Checking for cookie banner...');
+  
+  try {
+    // Делаем скриншот до обработки cookie-баннера
+    try {
+      const screenshotPath = `./logs/cookie_banner_before.png`;
+      await page.screenshot({ path: screenshotPath, fullPage: false });
+      logInfo(`Saved pre-cookie screenshot to ${screenshotPath}`);
+    } catch (screenshotError) {
+      logWarning(`Failed to save pre-cookie screenshot: ${screenshotError}`);
+    }
+
+    // Массив возможных селекторов для кнопки принятия cookies
+    const acceptButtonSelectors = [
+      '[data-testid="button-accept"]',
+      'button[data-cy="accept-cookies"]',
+      'button[data-testid="accept-consent"]',
+      'button[id="onetrust-accept-btn-handler"]',
+      '#onetrust-accept-btn-handler',
+      'button:has-text("Akceptuję")',
+      'button:has-text("Akceptuj")',
+      'button:has-text("Zgadzam się")',
+      'button:has-text("Accept all")',
+      'button:has-text("Accept cookies")',
+      '.css-1784inr',   // Специфичный селектор с Otodom
+      '[data-testid="accept-gdpr-button"]',
+      'button.cookie-close'
+    ];
+
+    let bannerFound = false;
+    
+    // Проверяем наличие cookie-баннера через несколько селекторов
+    for (const selector of acceptButtonSelectors) {
+      const button = await page.$(selector);
+      if (button) {
+        bannerFound = true;
+        logInfo(`Cookie banner found with selector: ${selector}`);
+        
+        try {
+          // Кликаем на кнопку принятия
+          await button.click();
+          logInfo(`Clicked accept button with selector: ${selector}`);
+          
+          // Ждем исчезновения баннера
+          await page.waitForTimeout(1000);
+          
+          // Проверяем, что баннер исчез
+          const buttonAfterClick = await page.$(selector);
+          if (!buttonAfterClick) {
+            logInfo('Cookie banner successfully closed');
+            
+            // Делаем скриншот после закрытия cookie-баннера
+            try {
+              const screenshotPath = `./logs/cookie_banner_after.png`;
+              await page.screenshot({ path: screenshotPath, fullPage: false });
+              logInfo(`Saved post-cookie screenshot to ${screenshotPath}`);
+            } catch (screenshotError) {
+              logWarning(`Failed to save post-cookie screenshot: ${screenshotError}`);
+            }
+            
+            return true;
+          } else {
+            logWarning('Cookie banner still visible after click');
+          }
+        } catch (clickError) {
+          logWarning(`Error clicking cookie button: ${clickError}`);
+        }
+      }
+    }
+    
+    if (!bannerFound) {
+      logInfo('No cookie banner detected or it was already accepted');
+      return false;
+    }
+    
+    // Если дошли до этой точки, значит баннер есть, но принять не получилось
+    logWarning('Failed to accept cookies after multiple attempts');
+    return false;
+  } catch (error) {
+    logError(`Error handling cookie banner: ${error}`);
+    return false;
+  }
+}
+
+/**
  * Имитирует естественную навигацию пользователя перед скрапингом
  */
 async function simulateNaturalBrowsing(page: Page): Promise<void> {
@@ -472,6 +560,10 @@ async function simulateNaturalBrowsing(page: Page): Promise<void> {
     // Логируем URL после загрузки страницы
     const currentUrl = page.url();
     logInfo(`Current URL after navigation: ${currentUrl}`);
+    
+    // Обрабатываем cookie-баннер если он есть
+    const cookieBannerHandled = await handleCookieBanner(page);
+    logInfo(`Cookie banner handled: ${cookieBannerHandled}`);
     
     // Случайная задержка как будто "смотрим главную"
     const homeDelay = getRandomDelay(
@@ -489,6 +581,9 @@ async function simulateNaturalBrowsing(page: Page): Promise<void> {
     await page.goto('https://www.otodom.pl/pl/oferty/sprzedaz', { 
       waitUntil: 'networkidle'
     });
+    
+    // Проверяем cookie-баннер еще раз (на всякий случай)
+    await handleCookieBanner(page);
     
     // Еще одна задержка
     const categoryDelay = getRandomDelay(
@@ -694,19 +789,25 @@ async function processCurrentPage(
   logInfo(`Main content preview: ${mainContent.substring(0, 200)}...`);
   
   const listingsData = await page.evaluate(() => {
-    // Получаем все элементы объявлений и логируем результат
+    // Актуализированные селекторы для Otodom (2024)
     const selectors = [
       'article', 
       '[data-cy="listing-item"]', 
       '[data-cy="search.listing"]',
       'article[data-cy]',
       '[data-testid="listing-box"]',
+      '[data-testid="listing-item"]',
+      '[data-cy="search-listing-item"]',
       '.css-1qz6v50',
-      '[data-cy="search-listing-item"]'
+      'li[data-cy="listing-item"]',
+      '[data-cy="frontend.search.listing-item"]',
+      '.css-14cy79a',   // Новый селектор для карточек объявлений (2024)
+      '[data-cy="frontend.search.listing.organic-result"]',
+      '[data-cy="search-result.listing-item"]'
     ];
     
     // Логируем количество элементов по каждому селектору отдельно
-    const counts = {};
+    const counts: Record<string, number> = {};
     selectors.forEach(selector => {
       counts[selector] = document.querySelectorAll(selector).length;
     });
@@ -717,28 +818,66 @@ async function processCurrentPage(
     const listings = Array.from(document.querySelectorAll(selectors.join(', ')));
     console.log('Total combined listings found:', listings.length);
     
+    // Специфичные селекторы для цены и площади
+    const priceSelectors = [
+      '[data-testid="ad-price-value"]',
+      '[data-cy="listing-item-price"]',
+      '.e1jrxxb92', // Селектор для цены 2024
+      '.css-s8wpzb', // Селектор для цены 2024
+      '[data-cy="frontend.search.listing.organic-result.price"]',
+      '[data-testid="listing-price"]'
+    ];
+    
+    const areaSelectors = [
+      '[data-testid="ad-area-value"]', 
+      '[data-cy="listing-item-area"]',
+      '.e1jrxxb96', // Селектор для площади 2024
+      '.css-1kxf84n', // Селектор для площади 2024
+      '[data-cy="frontend.search.listing.organic-result.area"]',
+      '[data-testid="listing-area"]'
+    ];
+    
+    // Обходим все найденные объявления
     return listings.map(listing => {
-      // Извлечение текста с ценой
+      // Пробуем сначала найти цену и площадь по специфическим селекторам
       let priceText = '';
-      // Ищем элементы с ценой
-      const priceElements = listing.querySelectorAll('p, span, div, strong');
-      for (const el of priceElements) {
-        const text = el.textContent || '';
-        if (text.includes('zł')) {
-          priceText = text;
+      let areaText = '';
+      
+      // Проверяем специфические селекторы для цены
+      for (const selector of priceSelectors) {
+        const priceElement = listing.querySelector(selector);
+        if (priceElement && priceElement.textContent) {
+          priceText = priceElement.textContent.trim();
           break;
         }
       }
       
-      // Извлечение текста с площадью
-      let areaText = '';
-      // Ищем элементы с площадью
-      const areaElements = listing.querySelectorAll('p, span, div, strong');
-      for (const el of areaElements) {
-        const text = el.textContent || '';
-        if (text.includes('m²')) {
-          areaText = text;
+      // Проверяем специфические селекторы для площади
+      for (const selector of areaSelectors) {
+        const areaElement = listing.querySelector(selector);
+        if (areaElement && areaElement.textContent) {
+          areaText = areaElement.textContent.trim();
           break;
+        }
+      }
+      
+      // Если не найдены по специфическим селекторам, ищем по тексту
+      if (!priceText || !areaText) {
+        // Ищем элементы с ценой и площадью
+        const textElements = listing.querySelectorAll('p, span, div, strong');
+        const elements = Array.from(textElements);
+        
+        for (const el of elements) {
+          const text = el.textContent?.trim() || '';
+          if (!priceText && text.includes('zł')) {
+            priceText = text;
+          }
+          if (!areaText && text.includes('m²')) {
+            areaText = text;
+          }
+          
+          // Если нашли и цену, и площадь, выходим из цикла
+          if (priceText && areaText) break;
         }
       }
       
@@ -810,7 +949,7 @@ async function processCurrentPage(
 }
 
 /**
- * Обрабатывает первую страницу результатов поиска
+ * Обрабатывает первую страницу результатов поиска с расширенной аналитикой
  */
 async function processFirstPage(
   page: Page
@@ -819,55 +958,223 @@ async function processFirstPage(
   areas: number[];
   pricesPerSqm: number[];
   reportedCount: number;
+  hasCookieBanner: boolean;
+  foundSelectors: Record<string, boolean>;
+  elementCountBySelector: Record<string, number>;
+  h1Texts: string[];
+  pageStatus: {
+    hasMainContent: boolean;
+    hasListings: boolean;
+    missingSelectors: string[];
+    possibleErrors: string[];
+  };
 }> {
-  logInfo('Processing first page of results');
+  logInfo('Processing first page of results with enhanced diagnostics');
   
-  // Извлекаем текст с количеством объявлений
-  const countText = await page.textContent(
-    '[data-cy="search.listing-panel.label.ads-number"], h1, .css-1j1z8qy, [data-cy="search-listing.status.header"]'
-  ) || '';
+  // Проверяем наличие cookie-баннера
+  const hasCookieBanner = await handleCookieBanner(page);
   
-  // Дополнительное логирование элементов страницы для анализа
-  await page.evaluate(() => {
-    const allElements = document.querySelectorAll('*[data-cy]');
-    console.log(`Found ${allElements.length} elements with data-cy attributes`);
-    
-    const dataCyValues = Array.from(allElements).map(el => el.getAttribute('data-cy')).filter(Boolean);
-    console.log('data-cy attributes:', JSON.stringify(dataCyValues.slice(0, 20)));
-    
-    // Ищем элемент с количеством объявлений
-    const h1Elements = document.querySelectorAll('h1');
-    console.log(`Found ${h1Elements.length} h1 elements`);
-    if (h1Elements.length > 0) {
-      console.log('h1 texts:', JSON.stringify(Array.from(h1Elements).map(el => el.textContent)));
+  // Делаем диагностический скриншот страницы после возможной обработки cookie
+  try {
+    const screenshotPath = `./logs/search_page_diagnostic.png`;
+    await page.screenshot({ path: screenshotPath, fullPage: false });
+    logInfo(`Saved diagnostic screenshot to ${screenshotPath}`);
+  } catch (screenshotError) {
+    logWarning(`Failed to save diagnostic screenshot: ${screenshotError}`);
+  }
+  
+  // Расширенный список селекторов для поиска количества объявлений
+  const countSelectors = [
+    '[data-cy="search.listing-panel.label.ads-number"]',
+    'h1', 
+    '.css-1j1z8qy', 
+    '[data-cy="search-listing.status.header"]',
+    // Новые 2024
+    '[data-testid="listing-counter"]',
+    '[data-cy="frontend.search.results-count"]',
+    '[data-cy="search-result.listing-items-counter"]',
+    '.css-19fk5ox'
+  ];
+  
+  // Пытаемся извлечь текст с количеством объявлений, проверяя каждый селектор
+  let countText = '';
+  let foundCountSelector = '';
+  
+  for (const selector of countSelectors) {
+    const element = await page.$(selector);
+    if (element) {
+      const text = await element.textContent() || '';
+      if (text && text.trim()) {
+        countText = text.trim();
+        foundCountSelector = selector;
+        break;
+      }
     }
+  }
+  
+  if (!countText) {
+    countText = await page.textContent('h1') || '';
+    logWarning(`Using h1 fallback for count text: "${countText}"`);
+  }
+  
+  logInfo(`Count text found with selector "${foundCountSelector}": "${countText}"`);
+  
+  // Расширенное логирование элементов страницы для анализа
+  const pageAnalysis = await page.evaluate(() => {
+    // Возможные селекторы для элементов листинга
+    const listingSelectors = [
+      'article', 
+      '[data-cy="listing-item"]', 
+      '[data-cy="search.listing"]',
+      'article[data-cy]',
+      '[data-testid="listing-box"]',
+      '[data-testid="listing-item"]',
+      '[data-cy="search-listing-item"]',
+      '.css-1qz6v50',
+      'li[data-cy="listing-item"]',
+      '[data-cy="frontend.search.listing-item"]',
+      '.css-14cy79a',
+      '[data-cy="frontend.search.listing.organic-result"]'
+    ];
     
-    // Ищем секцию с листингами
+    // Собираем информацию о наличии и количестве элементов по каждому селектору
+    const elementCountBySelector: Record<string, number> = {};
+    const foundSelectors: Record<string, boolean> = {};
+    const missingSelectors: string[] = [];
+    
+    listingSelectors.forEach(selector => {
+      const count = document.querySelectorAll(selector).length;
+      elementCountBySelector[selector] = count;
+      foundSelectors[selector] = count > 0;
+      
+      if (count === 0) {
+        missingSelectors.push(selector);
+      }
+    });
+    
+    // Ищем все элементы с data-cy атрибутами для отладки
+    const allDataCyElements = document.querySelectorAll('*[data-cy]');
+    const dataCyValues = Array.from(allDataCyElements)
+      .map(el => el.getAttribute('data-cy'))
+      .filter(Boolean);
+    
+    // Ищем элементы с количеством объявлений
+    const h1Elements = document.querySelectorAll('h1');
+    const h1Texts = Array.from(h1Elements).map(el => el.textContent || '');
+    
+    // Ищем секцию с листингами и main
     const mainElements = document.querySelectorAll('main');
-    console.log(`Found ${mainElements.length} main elements`);
-    
     const articleElements = document.querySelectorAll('article');
-    console.log(`Found ${articleElements.length} article elements`);
+    
+    // Собираем атрибуты первого article элемента, если он есть
+    let firstArticleData = {};
     if (articleElements.length > 0) {
-      console.log('First article classes:', articleElements[0].className);
-      console.log('First article data attributes:', JSON.stringify(
-        Array.from(articleElements[0].attributes)
+      const firstArticle = articleElements[0];
+      firstArticleData = {
+        className: firstArticle.className,
+        dataAttributes: Array.from(firstArticle.attributes)
           .filter(attr => attr.name.startsWith('data-'))
           .map(attr => `${attr.name}="${attr.value}"`)
-      ));
+      };
     }
+    
+    // Проверяем наличие сообщений об ошибках или отсутствии результатов
+    const possibleErrors = [];
+    const errorSelectors = [
+      '.css-18qrgpr', // Типичный селектор для сообщений об ошибках
+      '[data-testid="error-message"]',
+      '[data-cy="search-result.no-results-message"]'
+    ];
+    
+    errorSelectors.forEach(selector => {
+      const errorElement = document.querySelector(selector);
+      if (errorElement && errorElement.textContent) {
+        possibleErrors.push(`${selector}: ${errorElement.textContent.trim()}`);
+      }
+    });
+    
+    // Проверяем текст всей страницы на ошибки
+    const bodyText = document.body.textContent || '';
+    const errorKeywords = [
+      'no results', 'not found', 'brak wyników', 
+      'nie znaleziono', 'przepraszamy', 'sorry', 
+      'error', 'błąd'
+    ];
+    
+    errorKeywords.forEach(keyword => {
+      if (bodyText.toLowerCase().includes(keyword.toLowerCase())) {
+        possibleErrors.push(`Error keyword found: "${keyword}"`);
+      }
+    });
+    
+    return {
+      dataCyAttributes: dataCyValues.slice(0, 20),
+      h1Texts,
+      mainCount: mainElements.length,
+      articleCount: articleElements.length,
+      firstArticleData,
+      foundSelectors,
+      elementCountBySelector,
+      missingSelectors,
+      possibleErrors,
+      hasMainContent: mainElements.length > 0,
+      hasListings: articleElements.length > 0 || 
+                  listingSelectors.some(selector => document.querySelectorAll(selector).length > 0)
+    };
   });
   
-  logInfo(`Count text: "${countText}"`);
+  // Логируем полученные данные
+  logInfo('Page analysis results:');
+  logInfo(`Main elements found: ${pageAnalysis.mainCount}`);
+  logInfo(`Article elements found: ${pageAnalysis.articleCount}`);
+  logInfo(`H1 texts: ${JSON.stringify(pageAnalysis.h1Texts)}`);
+  logInfo(`Data-cy attributes: ${JSON.stringify(pageAnalysis.dataCyAttributes)}`);
+  logInfo(`Found selectors: ${JSON.stringify(pageAnalysis.foundSelectors)}`);
+  logInfo(`Missing selectors: ${JSON.stringify(pageAnalysis.missingSelectors)}`);
+  
+  if (pageAnalysis.possibleErrors.length > 0) {
+    logWarning(`Possible errors on page: ${JSON.stringify(pageAnalysis.possibleErrors)}`);
+  }
   
   // Извлекаем количество объявлений
   const reportedCount = extractReportedCount(countText);
   logInfo(`Reported listings count: ${reportedCount}`);
   
-  // Обрабатываем первую страницу
+  // Дополнительные проверки на случай, если reportedCount = 0
+  if (reportedCount === 0 && pageAnalysis.hasListings) {
+    // Есть объявления на странице, но не смогли извлечь их количество
+    logWarning('Found listings on page but couldn\'t extract reported count');
+  } else if (reportedCount === 0 && !pageAnalysis.hasListings) {
+    // Нет объявлений на странице
+    logWarning('No listings found on page and reported count is 0');
+    
+    // Сохраняем полный HTML для дальнейшего анализа
+    const htmlContent = await page.content();
+    try {
+      fs.writeFileSync('./logs/no_results_page.html', htmlContent);
+      logInfo('Saved full HTML of page with no results for analysis');
+    } catch (error) {
+      logError(`Failed to save HTML content: ${error}`);
+    }
+  }
+  
+  // Обрабатываем первую страницу для извлечения данных объявлений
   const pageData = await processCurrentPage(page, 1);
   
-  return { ...pageData, reportedCount };
+  return { 
+    ...pageData, 
+    reportedCount,
+    hasCookieBanner,
+    foundSelectors: pageAnalysis.foundSelectors,
+    elementCountBySelector: pageAnalysis.elementCountBySelector,
+    h1Texts: pageAnalysis.h1Texts,
+    pageStatus: {
+      hasMainContent: pageAnalysis.hasMainContent,
+      hasListings: pageAnalysis.hasListings,
+      missingSelectors: pageAnalysis.missingSelectors,
+      possibleErrors: pageAnalysis.possibleErrors
+    }
+  };
 }
 
 /**

@@ -1,0 +1,14 @@
+{
+  "id": "test-task-1",
+  "cityUrl": "warszawa",
+  "cityNormalized": "warszawa",
+  "districtName": "Śródmieście",
+  "districtSearchTerm": "srodmiescie",
+  "roomType": "oneRoom",
+  "priority": 1,
+  "fetchDate": "2025-04-29",
+  "retryCount": 0,
+  "status": "pending",
+  "createdAt": "2025-04-29T10:30:00.000Z",
+  "updatedAt": "2025-04-29T10:30:00.000Z"
+}

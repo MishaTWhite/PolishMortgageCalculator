@@ -16,6 +16,10 @@ import {
   enqueueCityTasks
 } from "./scrapeTaskManager";
 
+// Импортируем функцию для скрапинга
+import { scrapePropertyData } from './playwrightScraper';
+import { ScrapeTask } from './scrapeTaskManager';
+
 export async function registerRoutes(app: Express): Promise<Server> {
   // Get scraping status and tasks
   app.get("/api/property-prices/scraping-status", async (req, res) => {

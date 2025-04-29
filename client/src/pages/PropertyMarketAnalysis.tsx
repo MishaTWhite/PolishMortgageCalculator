@@ -359,7 +359,7 @@ export default function PropertyMarketAnalysis() {
                       refetch();
                       refetchPropertyStat();
                     }}
-                    disabled={isLoading || isPlaywrightLoading || isScrapingOtodom}
+                    disabled={isLoading || isOtodomScraperLoading || isScrapingOtodom}
                     className="flex items-center gap-2"
                   >
                     <RefreshCw size={16} className={isLoading ? "animate-spin" : ""} />
@@ -385,7 +385,7 @@ export default function PropertyMarketAnalysis() {
                         setIsLoading(false);
                       }
                     }}
-                    disabled={isLoading || isPlaywrightLoading || isScrapingOtodom}
+                    disabled={isLoading || isOtodomScraperLoading || isScrapingOtodom}
                     className="flex items-center gap-2"
                   >
                     <RefreshCw size={16} className={isLoading ? "animate-spin" : ""} />
@@ -397,7 +397,7 @@ export default function PropertyMarketAnalysis() {
                   <Button 
                     variant="default"
                     onClick={refreshPropertyData}
-                    disabled={isLoading || isPlaywrightLoading || isScrapingOtodom}
+                    disabled={isLoading || isOtodomScraperLoading || isScrapingOtodom}
                     className="flex items-center gap-2"
                   >
                     <RefreshCw size={16} className={isScrapingOtodom ? "animate-spin" : ""} />

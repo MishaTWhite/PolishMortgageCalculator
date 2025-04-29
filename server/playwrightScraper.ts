@@ -615,12 +615,77 @@ async function handleCookieBanner(page: Page): Promise<boolean> {
       }
     }
     
-    // СТРАТЕГИЯ 3: Прямое управление document.cookie
+    // СТРАТЕГИЯ 3: Прямое управление document.cookie и Playwright's cookie API
     if (!cookieAccepted) {
-      logInfo('Trying cookie bypass via document.cookie...');
+      logInfo('Trying cookie bypass via Playwright cookie API and document.cookie...');
       try {
         cookieAttempted = true;
         
+        // Get the current domain from the page
+        const currentUrl = page.url();
+        const domain = new URL(currentUrl).hostname;
+        
+        // First set cookies via Playwright's API (more reliable)
+        const now = new Date();
+        const oneYearFromNow = new Date(now.getTime() + 365 * 24 * 60 * 60 * 1000);
+        
+        // Array of cookie definitions for OneTrust and general consent systems
+        const cookiesToSet = [
+          {
+            name: 'OptanonAlertBoxClosed',
+            value: now.toISOString(),
+            domain: domain,
+            path: '/',
+            expires: oneYearFromNow.getTime() / 1000,
+            secure: true,
+            httpOnly: false
+          },
+          {
+            name: 'OptanonConsent',
+            value: 'groups=C0001:1,C0002:1,C0003:1,C0004:1',
+            domain: domain,
+            path: '/',
+            expires: oneYearFromNow.getTime() / 1000,
+            secure: true,
+            httpOnly: false
+          },
+          {
+            name: 'cookieconsent_status',
+            value: 'dismiss',
+            domain: domain,
+            path: '/',
+            expires: oneYearFromNow.getTime() / 1000,
+            secure: true,
+            httpOnly: false
+          },
+          {
+            name: 'cookie_consent',
+            value: 'true',
+            domain: domain,
+            path: '/',
+            expires: oneYearFromNow.getTime() / 1000,
+            secure: true,
+            httpOnly: false
+          },
+          {
+            name: 'gdpr_consent',
+            value: 'true',
+            domain: domain,
+            path: '/',
+            expires: oneYearFromNow.getTime() / 1000,
+            secure: true,
+            httpOnly: false
+          }
+        ];
+        
+        // Set all cookies using Playwright's API
+        for (const cookie of cookiesToSet) {
+          await page.context().addCookies([cookie]);
+        }
+        
+        logInfo(`Set ${cookiesToSet.length} cookies via Playwright API`);
+        
+        // Also use document.cookie as a fallback
         const cookieResult = await page.evaluate(() => {
           try {
             // Otodom использует OneTrust, устанавливаем соответствующие cookie
@@ -628,9 +693,11 @@ async function handleCookieBanner(page: Page): Promise<boolean> {
             const expiryDate = new Date(now.getTime() + 365 * 24 * 60 * 60 * 1000); // 1 год
             const expiryStr = expiryDate.toUTCString();
             
-            // Set OneTrust cookies directly
+            // Enhanced list of cookies based on actual browser inspection
             document.cookie = `OptanonAlertBoxClosed=${now.toISOString()}; expires=${expiryStr}; path=/;`;
             document.cookie = `OptanonConsent=groups=C0001:1,C0002:1,C0003:1,C0004:1; expires=${expiryStr}; path=/;`;
+            document.cookie = `OneTrust-SiteName=otodom-pl; expires=${expiryStr}; path=/;`;
+            document.cookie = `OptanonChoice=true; expires=${expiryStr}; path=/;`;
             
             // Additional generic cookies
             document.cookie = `cookieconsent_status=dismiss; expires=${expiryStr}; path=/;`;
@@ -645,37 +712,57 @@ async function handleCookieBanner(page: Page): Promise<boolean> {
         
         logInfo(`Document.cookie result: ${JSON.stringify(cookieResult)}`);
         
-        // Пытаемся проверить без перезагрузки сначала
-        const bannerVisible = await page.evaluate(() => {
-          return !!document.querySelector('#onetrust-banner-sdk, #onetrust-consent-sdk, [id*="cookie-banner"]');
+        // Try a gentle reload with only domcontentloaded to minimize risk of context closure
+        logInfo('Reloading page after cookie bypass with safer waitUntil strategy');
+        await page.reload({ 
+          waitUntil: 'domcontentloaded', 
+          timeout: 30000 
+        }).catch(e => {
+          logWarning(`Page reload timeout after cookie bypass: ${e}`);
+          // Continue even with timeout since page might load partially
         });
         
-        if (!bannerVisible) {
-          logInfo('Cookie banner successfully bypassed via document.cookie');
+        // Check visibility after reload using a more robust approach
+        let bannerVisibleAfterReload = true;
+        try {
+          bannerVisibleAfterReload = await page.evaluate(() => {
+            // More comprehensive selector check
+            const selectors = [
+              '#onetrust-banner-sdk', 
+              '#onetrust-consent-sdk', 
+              '[id*="cookie-banner"]',
+              '#gdpr-consent-tool-wrapper',
+              '[class*="cookie-consent"]',
+              '[class*="cookie-policy"]'
+            ];
+            
+            for (const selector of selectors) {
+              const element = document.querySelector(selector);
+              if (element) {
+                // Check if the element is actually visible
+                const style = window.getComputedStyle(element);
+                // Use HTMLElement for offsetParent check
+                if (style.display !== 'none' && style.visibility !== 'hidden' && (element as HTMLElement).offsetParent !== null) {
+                  return true; // Banner is visible
+                }
+              }
+            }
+            return false; // No visible banner found
+          }).catch(() => true); // Assume banner is visible in case of error
+        } catch (evalError) {
+          logWarning(`Error evaluating banner visibility: ${evalError}`);
+          bannerVisibleAfterReload = true; // Conservative approach
+        }
+        
+        if (!bannerVisibleAfterReload) {
+          logInfo('Cookie banner successfully bypassed via cookie API after reload');
           cookieAccepted = true;
         } else {
-          // Если баннер все еще виден, пробуем перезагрузить страницу
-          logInfo('Reloading page after document.cookie bypass attempt');
-          await page.reload({ waitUntil: 'networkidle', timeout: 30000 }).catch(e => {
-            logWarning(`Page reload timeout after cookie bypass: ${e}`);
-            // Продолжаем работу даже при таймауте, т.к. страница может загрузиться частично
-          });
-          
-          // Проверяем снова после перезагрузки
-          const bannerVisibleAfterReload = await page.evaluate(() => {
-            return !!document.querySelector('#onetrust-banner-sdk, #onetrust-consent-sdk, [id*="cookie-banner"]');
-          }).catch(() => true); // Предполагаем, что баннер виден в случае ошибки
-          
-          if (!bannerVisibleAfterReload) {
-            logInfo('Cookie banner successfully bypassed via document.cookie after reload');
-            cookieAccepted = true;
-          } else {
-            logWarning('Cookie banner still visible after document.cookie bypass and reload');
-          }
+          logWarning('Cookie banner might still be visible after cookie API bypass');
         }
       } catch (error) {
         cookieError = String(error);
-        logWarning(`Error bypassing cookies via document.cookie: ${error}`);
+        logWarning(`Error bypassing cookies: ${error}`);
       }
     }
     
@@ -708,17 +795,51 @@ async function handleCookieBanner(page: Page): Promise<boolean> {
           }
         });
         
-        // Перезагрузка с увеличенным таймаутом и обработкой ошибок
+        // Использование более безопасной перезагрузки с domcontentloaded вместо networkidle
         logInfo('Reloading page after localStorage cookie consent bypass');
-        await page.reload({ waitUntil: 'networkidle', timeout: 30000 }).catch(e => {
-          logWarning(`Page reload timeout after localStorage bypass: ${e}`);
-          // Продолжаем работу даже при таймауте, т.к. страница может загрузиться частично
-        });
         
-        // Проверяем, видны ли все еще cookie-баннеры
-        const bannerVisible = await page.evaluate(() => {
-          return !!document.querySelector('#onetrust-banner-sdk, #onetrust-consent-sdk, [id*="cookie-banner"]');
-        }).catch(() => true); // Предполагаем, что баннер виден в случае ошибки
+        try {
+          // Сначала попробуем с минимальным waitUntil для снижения риска таймаута
+          await page.reload({ 
+            waitUntil: 'domcontentloaded', 
+            timeout: 20000 
+          });
+        } catch (reloadError) {
+          logWarning(`Page reload timeout after localStorage bypass: ${reloadError}`);
+          // Продолжаем без перезагрузки, так как она не является критической
+        }
+        
+        // Используем более надежную проверку видимости баннера
+        let bannerVisible = true;
+        try {
+          bannerVisible = await page.evaluate(() => {
+            // Расширенный набор селекторов для поиска баннеров
+            const selectors = [
+              '#onetrust-banner-sdk', 
+              '#onetrust-consent-sdk', 
+              '[id*="cookie-banner"]',
+              '#gdpr-consent-tool-wrapper',
+              '[class*="cookie-consent"]',
+              '[class*="cookie-policy"]'
+            ];
+            
+            // Проверяем не только наличие, но и видимость элементов
+            for (const selector of selectors) {
+              const element = document.querySelector(selector);
+              if (element) {
+                // Проверка фактической видимости элемента
+                const style = window.getComputedStyle(element);
+                if (style.display !== 'none' && style.visibility !== 'hidden' && (element as HTMLElement).offsetParent !== null) {
+                  return true; // Баннер видим
+                }
+              }
+            }
+            return false; // Видимых баннеров не найдено
+          }).catch(() => true); // При ошибке предполагаем, что баннер виден
+        } catch (evalError) {
+          logWarning(`Error checking banner visibility: ${evalError}`);
+          bannerVisible = true; // Консервативный подход
+        }
         
         if (!bannerVisible) {
           logInfo('Cookie banner successfully bypassed via localStorage');

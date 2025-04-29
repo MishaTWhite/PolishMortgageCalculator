@@ -565,7 +565,7 @@ async function handleCookieBanner(page: Page): Promise<boolean> {
         cookieAccepted = true;
         
         // Даем время для обработки клика
-        await page.waitForTimeout(1000);
+        await new Promise(resolve => setTimeout(resolve, 1000));
       } else {
         logWarning(`No cookie buttons clicked via JavaScript. Cookie banner exists: ${jsResult.cookieBannerExists}`);
       }
@@ -592,7 +592,7 @@ async function handleCookieBanner(page: Page): Promise<boolean> {
             logInfo(`Clicked accept button with selector: ${selector}`);
             
             // Ждем исчезновения баннера
-            await page.waitForTimeout(1000);
+            await new Promise(resolve => setTimeout(resolve, 1000));
             
             // Проверяем, что баннер исчез
             const buttonAfterClick = await page.$(selector);
@@ -615,7 +615,71 @@ async function handleCookieBanner(page: Page): Promise<boolean> {
       }
     }
     
-    // СТРАТЕГИЯ 3: Если предыдущие методы не сработали, попробуем обойти через localStorage
+    // СТРАТЕГИЯ 3: Прямое управление document.cookie
+    if (!cookieAccepted) {
+      logInfo('Trying cookie bypass via document.cookie...');
+      try {
+        cookieAttempted = true;
+        
+        const cookieResult = await page.evaluate(() => {
+          try {
+            // Otodom использует OneTrust, устанавливаем соответствующие cookie
+            const now = new Date();
+            const expiryDate = new Date(now.getTime() + 365 * 24 * 60 * 60 * 1000); // 1 год
+            const expiryStr = expiryDate.toUTCString();
+            
+            // Set OneTrust cookies directly
+            document.cookie = `OptanonAlertBoxClosed=${now.toISOString()}; expires=${expiryStr}; path=/;`;
+            document.cookie = `OptanonConsent=groups=C0001:1,C0002:1,C0003:1,C0004:1; expires=${expiryStr}; path=/;`;
+            
+            // Additional generic cookies
+            document.cookie = `cookieconsent_status=dismiss; expires=${expiryStr}; path=/;`;
+            document.cookie = `cookie_consent=true; expires=${expiryStr}; path=/;`;
+            document.cookie = `gdpr_consent=true; expires=${expiryStr}; path=/;`;
+            
+            return { cookiesSet: true, cookieLength: document.cookie.length };
+          } catch (e) {
+            return { cookiesSet: false, error: String(e) };
+          }
+        });
+        
+        logInfo(`Document.cookie result: ${JSON.stringify(cookieResult)}`);
+        
+        // Пытаемся проверить без перезагрузки сначала
+        const bannerVisible = await page.evaluate(() => {
+          return !!document.querySelector('#onetrust-banner-sdk, #onetrust-consent-sdk, [id*="cookie-banner"]');
+        });
+        
+        if (!bannerVisible) {
+          logInfo('Cookie banner successfully bypassed via document.cookie');
+          cookieAccepted = true;
+        } else {
+          // Если баннер все еще виден, пробуем перезагрузить страницу
+          logInfo('Reloading page after document.cookie bypass attempt');
+          await page.reload({ waitUntil: 'networkidle', timeout: 30000 }).catch(e => {
+            logWarning(`Page reload timeout after cookie bypass: ${e}`);
+            // Продолжаем работу даже при таймауте, т.к. страница может загрузиться частично
+          });
+          
+          // Проверяем снова после перезагрузки
+          const bannerVisibleAfterReload = await page.evaluate(() => {
+            return !!document.querySelector('#onetrust-banner-sdk, #onetrust-consent-sdk, [id*="cookie-banner"]');
+          }).catch(() => true); // Предполагаем, что баннер виден в случае ошибки
+          
+          if (!bannerVisibleAfterReload) {
+            logInfo('Cookie banner successfully bypassed via document.cookie after reload');
+            cookieAccepted = true;
+          } else {
+            logWarning('Cookie banner still visible after document.cookie bypass and reload');
+          }
+        }
+      } catch (error) {
+        cookieError = String(error);
+        logWarning(`Error bypassing cookies via document.cookie: ${error}`);
+      }
+    }
+    
+    // СТРАТЕГИЯ 4: Если все предыдущие методы не сработали, попробуем обойти через localStorage
     if (!cookieAccepted) {
       logInfo('Trying cookie bypass via localStorage...');
       try {
@@ -644,14 +708,17 @@ async function handleCookieBanner(page: Page): Promise<boolean> {
           }
         });
         
-        // Перезагружаем страницу для применения настроек localStorage
+        // Перезагрузка с увеличенным таймаутом и обработкой ошибок
         logInfo('Reloading page after localStorage cookie consent bypass');
-        await page.reload({ waitUntil: 'networkidle' });
+        await page.reload({ waitUntil: 'networkidle', timeout: 30000 }).catch(e => {
+          logWarning(`Page reload timeout after localStorage bypass: ${e}`);
+          // Продолжаем работу даже при таймауте, т.к. страница может загрузиться частично
+        });
         
         // Проверяем, видны ли все еще cookie-баннеры
         const bannerVisible = await page.evaluate(() => {
           return !!document.querySelector('#onetrust-banner-sdk, #onetrust-consent-sdk, [id*="cookie-banner"]');
-        });
+        }).catch(() => true); // Предполагаем, что баннер виден в случае ошибки
         
         if (!bannerVisible) {
           logInfo('Cookie banner successfully bypassed via localStorage');

@@ -6,43 +6,43 @@
   "prices": [],
   "pricesPerSqm": [],
   "error": true,
-  "errorMessage": "Failed after 3 retries for task \"Natural browsing simulation\": page.goto: Target page, context or browser has been closed",
-  "errorStack": "Error: Failed after 3 retries for task \"Natural browsing simulation\": page.goto: Target page, context or browser has been closed\n    at runWithRetry (/home/runner/workspace/server/playwrightScraper.ts:1511:9)\n    at async scrapePropertyData (/home/runner/workspace/server/playwrightScraper.ts:1683:5)\n    at async processNextTask (/home/runner/workspace/server/scrapeTaskManager.ts:411:20)",
+  "errorMessage": "Failed after 3 retries for task \"Natural browsing simulation\": page.goto: Target page, context or browser has been closed\nCall log:\n\u001b[2m  - navigating to \"https://www.otodom.pl/pl/oferty/sprzedaz\", waiting until \"networkidle\"\u001b[22m\n",
+  "errorStack": "Error: Failed after 3 retries for task \"Natural browsing simulation\": page.goto: Target page, context or browser has been closed\nCall log:\n\u001b[2m  - navigating to \"https://www.otodom.pl/pl/oferty/sprzedaz\", waiting until \"networkidle\"\u001b[22m\n\n    at runWithRetry (/home/runner/workspace/server/playwrightScraper.ts:1511:9)\n    at async scrapePropertyData (/home/runner/workspace/server/playwrightScraper.ts:1683:5)\n    at async processNextTask (/home/runner/workspace/server/scrapeTaskManager.ts:411:20)",
   "botDetected": true,
   "task": {
-    "id": "ma2g101fp6w",
+    "id": "ma2g1014ldt",
     "cityUrl": "warszawa",
     "cityNormalized": "warsaw",
     "districtName": "Ursynów",
     "districtSearchTerm": "ursynow",
-    "roomType": "twoRoom",
+    "roomType": "oneRoom",
     "fetchDate": "29.04.2025",
     "status": "in_progress"
   },
   "diagnostics": {
-    "timestamp": "2025-04-29T12:03:57.597Z",
-    "executionTimeMs": 32811,
+    "timestamp": "2025-04-29T12:07:52.027Z",
+    "executionTimeMs": 179333,
     "environment": {
-      "memoryUsageMb": 250,
+      "memoryUsageMb": 345,
       "nodeVersion": "v20.18.1",
       "platform": "linux"
     },
     "error": {
-      "message": "Failed after 3 retries for task \"Natural browsing simulation\": page.goto: Target page, context or browser has been closed",
-      "stack": "Error: Failed after 3 retries for task \"Natural browsing simulation\": page.goto: Target page, context or browser has been closed\n    at runWithRetry (/home/runner/workspace/server/playwrightScraper.ts:1511:9)\n    at async scrapePropertyData (/home/runner/workspace/server/playwrightScraper.ts:1683:5)\n    at async processNextTask (/home/runner/workspace/server/scrapeTaskManager.ts:411:20)",
-      "timestamp": "2025-04-29T12:03:57.596Z",
+      "message": "Failed after 3 retries for task \"Natural browsing simulation\": page.goto: Target page, context or browser has been closed\nCall log:\n\u001b[2m  - navigating to \"https://www.otodom.pl/pl/oferty/sprzedaz\", waiting until \"networkidle\"\u001b[22m\n",
+      "stack": "Error: Failed after 3 retries for task \"Natural browsing simulation\": page.goto: Target page, context or browser has been closed\nCall log:\n\u001b[2m  - navigating to \"https://www.otodom.pl/pl/oferty/sprzedaz\", waiting until \"networkidle\"\u001b[22m\n\n    at runWithRetry (/home/runner/workspace/server/playwrightScraper.ts:1511:9)\n    at async scrapePropertyData (/home/runner/workspace/server/playwrightScraper.ts:1683:5)\n    at async processNextTask (/home/runner/workspace/server/scrapeTaskManager.ts:411:20)",
+      "timestamp": "2025-04-29T12:07:52.026Z",
       "errorType": "Error"
     },
     "screenshots": {
-      "error": "./logs/error_screenshot_ma2g101fp6w.png",
-      "errorHtml": "./logs/error_page_ma2g101fp6w.html"
+      "error": "./logs/error_screenshot_ma2g1014ldt.png",
+      "errorHtml": "./logs/error_page_ma2g1014ldt.html"
     },
     "cookieAttempted": true,
-    "cookieAccepted": true,
+    "cookieAccepted": false,
     "cookieError": "",
     "listingElementsFound": false,
     "pageUrl": "https://www.otodom.pl/",
-    "htmlSize": 0,
+    "htmlSize": 191867,
     "screenhotsTaken": [
       {
         "name": "after_first_page_processing.png",
@@ -52,12 +52,12 @@
       {
         "name": "cookie_banner_after.png",
         "path": "./logs/cookie_banner_after.png",
-        "timestamp": "2025-04-29T12:03:30.730Z"
+        "timestamp": "2025-04-29T12:07:27.768Z"
       },
       {
         "name": "cookie_banner_before.png",
         "path": "./logs/cookie_banner_before.png",
-        "timestamp": "2025-04-29T12:03:29.624Z"
+        "timestamp": "2025-04-29T12:07:25.115Z"
       },
       {
         "name": "page_1_screenshot.png",
@@ -70,20 +70,22 @@
         "timestamp": "2025-04-29T11:36:33.553Z"
       }
     ],
-    "browserMemoryUsage": 250,
+    "browserMemoryUsage": 345,
     "cookieRawData": {
       "cookieAttempted": true,
-      "cookieAccepted": true,
+      "cookieAccepted": false,
       "cookieError": "",
-      "timestamp": "2025-04-29T12:03:30.740Z",
+      "timestamp": "2025-04-29T12:07:27.775Z",
       "url": "https://www.otodom.pl/",
       "jsEvalResult": {
-        "clicked": true,
-        "selector": "button[id=\"onetrust-accept-btn-handler\"]"
+        "clicked": false,
+        "selector": null,
+        "cookieBannerExists": true,
+        "bodyHtml": 191867
       },
-      "htmlSize": 359393,
+      "htmlSize": 364741,
       "listingElementsFound": false,
-      "iframesCount": 1,
+      "iframesCount": 6,
       "bodyClasses": "",
       "cookieBannerVisible": true
     }

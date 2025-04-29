@@ -1,7 +1,7 @@
 /**
  * Основной модуль скрапинга с использованием Playwright
  */
-import { chromium, Browser, BrowserContext, Page } from 'playwright';
+import { chromium, firefox, Browser, BrowserContext, Page } from 'playwright';
 import * as fs from 'fs';
 import * as path from 'path';
 import {
@@ -61,38 +61,77 @@ async function initBrowser(): Promise<Browser> {
   // Расширенные опции для запуска в Replit
   const enhancedOptions = {
     ...BROWSER_LAUNCH_OPTIONS,
-    executablePath: process.env.PLAYWRIGHT_BROWSERS_PATH 
-      ? `${process.env.PLAYWRIGHT_BROWSERS_PATH}/chromium/chrome-linux/chrome` 
-      : undefined,
+    // Не указываем путь к исполняемому файлу, чтобы использовать встроенный браузер
+    executablePath: undefined,
     args: [
       ...(BROWSER_LAUNCH_OPTIONS.args || []),
       '--no-sandbox',
       '--disable-setuid-sandbox',
-      '--disable-dev-shm-usage',
-      '--single-process'
+      '--disable-dev-shm-usage', 
+      '--single-process',
+      '--no-zygote',
+      '--disable-gpu',
+      '--mute-audio',
+      '--disable-web-security',
+      '--disable-features=site-per-process',
+      '--disable-remote-fonts'
     ],
     ignoreDefaultArgs: ['--disable-extensions'],
     handleSIGINT: false,
     handleSIGTERM: false,
     handleSIGHUP: false,
-    chromiumSandbox: false
+    chromiumSandbox: false,
+    downloadsPath: '/tmp/playwright-downloads',
+    timeout: 60000
   };
 
   logInfo(`Launch options: ${JSON.stringify(enhancedOptions, null, 2)}`);
   
   try {
-    browser = await chromium.launch(enhancedOptions);
+    // Пробуем сначала Firefox, так как он менее требователен к системным библиотекам
+    logInfo('Trying to launch Firefox browser');
+    const firefoxOptions = {
+      headless: true,
+      args: ['--no-sandbox'],
+      timeout: 60000,
+      handleSIGINT: false,
+      downloadsPath: '/tmp/playwright-downloads'
+    };
+    
+    logInfo(`Firefox options: ${JSON.stringify(firefoxOptions)}`);
+    browser = await firefox.launch(firefoxOptions);
     browserStartTime = Date.now();
     pagesProcessed = 0;
-    logInfo('Browser successfully launched');
+    logInfo('Firefox browser successfully launched');
     return browser;
   } catch (error) {
-    logError(`Browser launch failed: ${error}`);
-    // Попытка запуска с более простыми опциями
-    logInfo('Trying with minimal options');
-    browser = await chromium.launch({ headless: true, args: ['--no-sandbox'] });
-    logInfo('Browser launched with minimal options');
-    return browser;
+    logError(`Firefox launch failed: ${error}`);
+    
+    // Если Firefox не запустился, пробуем Chromium
+    try {
+      logInfo('Trying to launch Chromium as fallback');
+      const minimalOptions = {
+        headless: true,
+        args: [
+          '--no-sandbox',
+          '--disable-setuid-sandbox',
+          '--disable-dev-shm-usage',
+          '--disable-gpu'
+        ],
+        timeout: 90000,
+        handleSIGINT: false
+      };
+      
+      logInfo(`Chromium fallback options: ${JSON.stringify(minimalOptions)}`);
+      browser = await chromium.launch(minimalOptions);
+      browserStartTime = Date.now();
+      pagesProcessed = 0;
+      logInfo('Chromium browser launched as fallback');
+      return browser;
+    } catch (fallbackError) {
+      logError(`All browser launch attempts failed: ${fallbackError}`);
+      throw new Error(`Failed to launch any browser: ${error}, then: ${fallbackError}`);
+    }
   }
 }
 

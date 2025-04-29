@@ -392,36 +392,7 @@ export default function PropertyMarketAnalysis() {
                     {t.updateAllCities || "Update Property Data"}
                   </Button>
                   
-                  <Button 
-                    variant="default"
-                    onClick={async () => {
-                      setIsPlaywrightLoading(true);
-                      setShowScraperStatus(true);
-                      try {
-                        // Start Playwright scraper for the current city
-                        const response = await fetch(`/api/property-prices/update-playwright?city=${selectedCity}`);
-                        const result = await response.json() as PlaywrightScraperResponse;
-                        
-                        // Update tasks and status
-                        if (result.tasks) {
-                          setPlaywrightTasks(result.tasks);
-                        }
-                        setScraperStatus(result.status);
-                        
-                        // Trigger status refetch
-                        refetchScraperStatus();
-                      } catch (error) {
-                        console.error("Error starting Playwright scraper:", error);
-                      } finally {
-                        setIsPlaywrightLoading(false);
-                      }
-                    }}
-                    disabled={isLoading || isPlaywrightLoading || isScrapingOtodom}
-                    className="flex items-center gap-2"
-                  >
-                    <BarChart3 size={16} className={isPlaywrightLoading ? "animate-spin" : ""} />
-                    {t.usePlaywrightScraper || "Use Playwright Scraper"}
-                  </Button>
+                  {/* Кнопка Playwright удалена по запросу пользователя */}
                   
                   <Button 
                     variant="default"
@@ -445,7 +416,7 @@ export default function PropertyMarketAnalysis() {
                 <div className="flex items-center gap-2 justify-between">
                   <div className="flex items-center gap-2">
                     <BarChart3 className="h-5 w-5 text-primary" />
-                    <CardTitle>{t.playwrightScraperStatus || "Playwright Scraper Status"}</CardTitle>
+                    <CardTitle>{t.otodomScraperStatus || "Otodom Scraper Status"}</CardTitle>
                   </div>
                   <Button 
                     variant="ghost" 

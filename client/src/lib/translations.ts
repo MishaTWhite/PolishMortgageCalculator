@@ -52,9 +52,10 @@ type TranslationKeys = {
   count: string;
   detailedRoomBreakdown: string;
   
-  // Playwright scraper
+  // Otodom scraper
   usePlaywrightScraper: string;
   playwrightScraperStatus: string;
+  otodomScraperStatus: string;
   taskProgress: string;
   tasksCompleted: string;
   processing: string;
@@ -235,6 +236,7 @@ export const translations: Translations = {
     // Playwright scraper
     usePlaywrightScraper: "Użyj Playwright Scraper",
     playwrightScraperStatus: "Status Playwright Scraper",
+    otodomScraperStatus: "Status Otodom Scraper",
     taskProgress: "Postęp zadania",
     tasksCompleted: "zadań ukończonych",
     processing: "Przetwarzanie",
@@ -410,6 +412,7 @@ export const translations: Translations = {
     // Playwright scraper
     usePlaywrightScraper: "Use Playwright Scraper",
     playwrightScraperStatus: "Playwright Scraper Status",
+    otodomScraperStatus: "Otodom Scraper Status",
     taskProgress: "Task Progress",
     tasksCompleted: "tasks completed",
     processing: "Processing",
@@ -585,6 +588,7 @@ export const translations: Translations = {
     // Playwright scraper
     usePlaywrightScraper: "Використовувати Playwright Scraper",
     playwrightScraperStatus: "Статус Playwright Scraper",
+    otodomScraperStatus: "Статус Otodom Scraper",
     taskProgress: "Прогрес завдання",
     tasksCompleted: "завдань завершено",
     processing: "Обробка",

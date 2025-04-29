@@ -51,7 +51,7 @@ async function scrapeOtodomPrices(city = 'warszawa', district = 'srodmiescie', r
     console.log('Launching browser using system Chromium...');
     browser = await chromium.launch({
       headless: true,
-      executablePath: process.env.PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH || '/nix/store/76z37s9dpnhsm8a6lplbndnz85dmhq7k-chromium-120.0.6099.216/bin/chromium',
+      executablePath: process.env.PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH || '/nix/store/zi4f80l169xlmivz8vja8wlphq74qqk0-chromium-125.0.6422.141/bin/chromium',
       args: ['--no-sandbox', '--disable-setuid-sandbox']
     });
     
@@ -79,7 +79,64 @@ async function scrapeOtodomPrices(city = 'warszawa', district = 'srodmiescie', r
       timeout: 30000
     });
     
-    // Скриншот страницы поиска
+    // Делаем скриншот начального состояния
+    const initialScreenshotPath = path.join(logsDir, `initial_${city}_${district}_${roomType}_${Date.now()}.png`);
+    await page.screenshot({ path: initialScreenshotPath, fullPage: false });
+    console.log(`Initial screenshot saved to ${initialScreenshotPath}`);
+    
+    // Эмулируем человеческое поведение - ждем, скроллим
+    console.log('Emulating human behavior...');
+    
+    // Ждем загрузки контента
+    console.log('Waiting for content to load...');
+    await page.waitForTimeout(3000);
+    
+    // Принимаем куки, если есть диалог
+    try {
+      console.log('Trying to accept cookies...');
+      const acceptCookieSelectors = [
+        '#onetrust-accept-btn-handler',
+        'button[aria-label="accept cookies"]',
+        'button.consent-give',
+        'button.cookie-consent__agree'
+      ];
+      
+      for (const selector of acceptCookieSelectors) {
+        const cookieButton = await page.$(selector);
+        if (cookieButton) {
+          console.log(`Found cookie consent button with selector: ${selector}`);
+          await cookieButton.click();
+          console.log('Clicked on cookie consent button');
+          break;
+        }
+      }
+    } catch (e) {
+      console.log('No cookie dialog found or failed to click:', e);
+    }
+    
+    // Скроллим вниз медленно как человек
+    console.log('Scrolling down like a human...');
+    await page.evaluate(() => {
+      return new Promise((resolve) => {
+        let totalHeight = 0;
+        const distance = 100;
+        const timer = setInterval(() => {
+          const scrollHeight = document.body.scrollHeight;
+          window.scrollBy(0, distance);
+          totalHeight += distance;
+          
+          if (totalHeight >= scrollHeight - window.innerHeight) {
+            clearInterval(timer);
+            resolve(true);
+          }
+        }, 100);
+      });
+    });
+    
+    // Ждем после скролла
+    await page.waitForTimeout(2000);
+    
+    // Делаем скриншот полной страницы
     const screenshotPath = path.join(logsDir, `${city}_${district}_${roomType}_${Date.now()}.png`);
     await page.screenshot({ path: screenshotPath, fullPage: true });
     console.log(`Screenshot saved to ${screenshotPath}`);
@@ -90,11 +147,14 @@ async function scrapeOtodomPrices(city = 'warszawa', district = 'srodmiescie', r
       // Найдем все карточки с объявлениями, используя разные селекторы
       var cards = null;
       
-      // Пробуем разные селекторы для карточек
+      // Пробуем разные селекторы для карточек - новые селекторы в начале списка
       var selectors = [
+        '[data-cy="listing-item"]',
+        'div[data-cy="search.listing"] li',
         'div[data-cy="search.listing.organic"] li[data-cy="listing-item"]',
+        'li.css-p74l73',
         '.listing-item',
-        'li[data-cy="listing-item"]',
+        'article[data-cy="listing-item"]',
         'article'
       ];
       

@@ -795,36 +795,6 @@ function saveIntermediateResults(task: ScrapeTask, results: any): void {
  * Основная функция для скрапинга данных о недвижимости
  */
 export async function scrapePropertyData(task: ScrapeTask): Promise<any> {
-  // Since we're having dependency issues with Playwright, let's use a fallback approach
-  logInfo(`Using fallback approach for task ${task.id} due to Playwright dependency issues`);
-  
-  // Create a minimal result object to simulate successful scraping
-  const result: {
-    count: number;
-    reportedCount: number;
-    avgPrice: number;
-    avgPricePerSqm: number;
-    prices: number[];
-    pricesPerSqm: number[];
-  } = {
-    count: Math.floor(Math.random() * 30) + 10, // Random number between 10-40
-    reportedCount: Math.floor(Math.random() * 50) + 20, // Random number between 20-70
-    avgPrice: Math.floor(Math.random() * 5000) + 15000, // Random number between 15000-20000
-    avgPricePerSqm: Math.floor(Math.random() * 2000) + 8000, // Random number between 8000-10000
-    prices: [],
-    pricesPerSqm: []
-  };
-  
-  // Generate some random prices for variety
-  for (let i = 0; i < result.count; i++) {
-    result.prices.push(Math.floor(Math.random() * 2000000) + 500000); // Between 500k and 2.5M
-    result.pricesPerSqm.push(Math.floor(Math.random() * 5000) + 10000); // Between 10k and 15k per sqm
-  }
-  
-  logInfo(`Generated fallback data for ${task.districtName} (${task.roomType}): ${result.count} listings`);
-  return result;
-  
-  /* Original implementation below, commented out due to dependency issues */
   
   logInfo(`Starting scrape task ${task.id}: ${task.cityNormalized}/${task.districtName}/${task.roomType}`);
   

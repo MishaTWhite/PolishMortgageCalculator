@@ -1640,22 +1640,34 @@ async function scrapePropertyData(task: ScrapeTask): Promise<any> {
   let page: Page | null = null;
   
   try {
-    // Проверяем состояние глобального браузера
-    const isBrowserHealthy = browser ? await checkBrowserHealth() : false;
+    // Закрываем существующий браузер, если есть
+    if (browser) {
+      await closeBrowser().catch(e => logError(`Error closing existing browser: ${e}`));
+    }
     
-    if (!isBrowserHealthy) {
-      logInfo('Browser needs initialization or restart');
+    // Всегда начинаем с чистого состояния
+    logInfo('Browser needs initialization or restart');
+    
+    // Инициализируем новый браузер и контекст для каждой задачи
+    try {
+      localBrowser = await initBrowser();
+      if (!localBrowser) {
+        throw new Error('Failed to initialize browser');
+      }
+      
+      localContext = await createContext(localBrowser);
+      if (!localContext) {
+        throw new Error('Failed to create browser context');
+      }
+    } catch (initError) {
+      // Если не удалось инициализировать браузер, логируем и пробуем еще раз
+      logError(`Error initializing browser: ${initError}`);
+      
+      // Повторная попытка с задержкой
+      await new Promise(resolve => setTimeout(resolve, 2000));
+      
       localBrowser = await initBrowser();
       localContext = await createContext(localBrowser);
-    } else {
-      logInfo('Reusing existing browser instance');
-      localBrowser = browser!; // Утвердительное приведение типа, мы уже проверили что browser существует
-      // Если существует глобальный контекст, используем его, иначе создаем новый
-      if (context) {
-        localContext = context;
-      } else {
-        localContext = await createContext(localBrowser);
-      }
     }
     
     // Создаем новую страницу
@@ -1999,17 +2011,39 @@ async function scrapePropertyData(task: ScrapeTask): Promise<any> {
     logError(`Critical error during scraping task ${task.id}: ${error}`);
     throw error;
   } finally {
-    // Закрываем страницу
-    if (page) {
-      await page.close().catch(e => logError(`Error closing page: ${e}`));
+    try {
+      // Закрываем страницу
+      if (page) {
+        await page.close().catch(e => logError(`Error closing page: ${e}`));
+      }
+      
+      // Всегда закрываем использованные ресурсы после каждой задачи
+      if (localContext) {
+        await localContext.close().catch(e => logError(`Error closing context: ${e}`));
+      }
+      
+      if (localBrowser) {
+        await localBrowser.close().catch(e => logError(`Error closing browser: ${e}`));
+      }
+      
+      // Сбрасываем глобальные ссылки
+      browser = null;
+      context = null;
+    } catch (cleanupError) {
+      logError(`Error during browser cleanup: ${cleanupError}`);
+    } finally {
+      // Логируем использование памяти
+      logMemoryUsage();
+      
+      // Принудительная сборка мусора
+      if (global.gc) {
+        try {
+          global.gc();
+        } catch (gcError) {
+          logError(`Error during garbage collection: ${gcError}`);
+        }
+      }
     }
-    
-    // Логируем использование памяти
-    logMemoryUsage();
-    
-    // Обновляем глобальные ссылки
-    browser = localBrowser;
-    context = localContext;
   }
 }
 

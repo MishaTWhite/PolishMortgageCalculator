@@ -23,7 +23,7 @@ const CURRENT_TASK_FILE = path.join(TASKS_DIR, 'current_task.json');
 const COMPLETED_TASKS_FILE = path.join(TASKS_DIR, 'completed_tasks.json');
 
 // Импортируем типы ошибок
-import { TaskStatus, ErrorType, ScrapeResult, DiagnosticInfo, determineErrorType, isRetriable, getErrorDescription } from './scraperTypes';
+import { TaskStatus, ErrorType, ScrapeResult, DiagnosticInfo, determineErrorType, isRetriable, getErrorDescription, getErrorDescriptionEn } from './scraperTypes';
 
 // Реэкспортируем TaskStatus для других модулей
 export { TaskStatus };
@@ -754,6 +754,20 @@ export function printScrapingStatistics(): void {
   logInfo(`⏱ Runtime: ${runtimeMinutes}m ${runtimeSeconds}s`);
   logInfo(`📋 Tasks: total=${scrapingStats.total}, pending=${scrapingStats.pending}, in_progress=${scrapingStats.inProgress}, retried=${scrapingStats.retried}`);
   
+  // Добавляем расширенную информацию об ошибках  
+  const retryableFailed = completedTasks.filter(t => {
+    return t.status === TaskStatus.FAILED && 
+      t.errorType && isRetriable(t.errorType);
+  }).length;
+  
+  const maxRetryReached = completedTasks.filter(t => {
+    return t.status === TaskStatus.FAILED && t.retryCount >= 3;
+  }).length;
+  
+  if (scrapingStats.failed > 0) {
+    logInfo(`🛠 Failures: max_retries=${maxRetryReached}, retriable=${retryableFailed}, non_retriable=${scrapingStats.failed - retryableFailed}`);
+  }
+  
   // Выводим статистику по типам ошибок
   if (scrapingStats.failed > 0) {
     logInfo('🔍 Error types:');
@@ -795,7 +809,7 @@ export function saveScrapingStatistics(filename: string = 'scraping_stats.json')
             ? Math.round((count / scrapingStats.failed) * 100) 
             : 0,
           description: getErrorDescription(type as ErrorType),
-          descriptionEn: getErrorDescriptionEn(type as ErrorType) // Добавляем английское описание
+          descriptionEn: getErrorDescriptionEn ? getErrorDescriptionEn(type as ErrorType) : type // Добавляем английское описание
         })),
       
       // Агрегированные данные для анализа
@@ -817,6 +831,32 @@ export function saveScrapingStatistics(filename: string = 'scraping_stats.json')
           ? Math.round(((scrapingStats.completed + scrapingStats.failed) / scrapingStats.runtime) * 60000 * 10) / 10
           : 0,
         timeFormatted: `${Math.floor(scrapingStats.runtime / 60000)}m ${Math.floor((scrapingStats.runtime % 60000) / 1000)}s`
+      },
+      
+      // Детальная информация об ошибках
+      errorDetails: {
+        retryableFailed: completedTasks.filter(t => {
+          return t.status === TaskStatus.FAILED && 
+            t.errorType && isRetriable(t.errorType);
+        }).length,
+        nonRetryableFailed: completedTasks.filter(t => {
+          return t.status === TaskStatus.FAILED && 
+            t.errorType && !isRetriable(t.errorType);
+        }).length,
+        maxRetryReached: completedTasks.filter(t => {
+          return t.status === TaskStatus.FAILED && t.retryCount >= 3;
+        }).length,
+        // Группировка ошибок по типам для анализа
+        commonErrors: Object.entries(scrapingStats.errorsByType)
+          .filter(([_, count]) => count > 0)
+          .sort((a, b) => b[1] - a[1])
+          .slice(0, 3)
+          .map(([type, count]) => ({
+            type,
+            count,
+            percentage: Math.round((count / scrapingStats.failed) * 100),
+            description: getErrorDescriptionEn ? getErrorDescriptionEn(type as ErrorType) : getErrorDescription(type as ErrorType)
+          }))
       }
     };
     

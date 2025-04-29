@@ -42,6 +42,14 @@ interface InterestRateSectionProps {
   selectedWiborType?: string;
 }
 
+// Helper function to safely format a number with toFixed
+const safeToFixed = (value: number | null | undefined, digits: number = 2): string => {
+  if (value === null || value === undefined || isNaN(value)) {
+    return "?";
+  }
+  return value.toFixed(digits);
+};
+
 export default function InterestRateSection({
   baseRate,
   bankMargin,
@@ -127,13 +135,13 @@ export default function InterestRateSection({
         <div className="flex flex-col">
           <div className="flex justify-between items-center">
             <span className="text-sm">{t.totalInterestRate}</span>
-            <span className="text-lg font-medium text-primary">{totalInterestRate.toFixed(2)}%</span>
+            <span className="text-lg font-medium text-primary">{safeToFixed(totalInterestRate)}%</span>
           </div>
-          {selectedWiborType && (
+          {selectedWiborType && wiborRates && wiborRates[selectedWiborType] !== undefined ? (
             <div className="text-xs text-muted-foreground mt-1">
-              {`Based on WIBOR ${selectedWiborType} (${wiborRates?.[selectedWiborType]?.toFixed(2) || "?"}%) + Bank Margin (${bankMargin.toFixed(2)}%)`}
+              {`Based on WIBOR ${selectedWiborType} (${safeToFixed(wiborRates[selectedWiborType])}%) + Bank Margin (${safeToFixed(bankMargin)}%)`}
             </div>
-          )}
+          ) : null}
         </div>
       </div>
       
@@ -151,14 +159,14 @@ export default function InterestRateSection({
           </CardHeader>
           <CardContent>
             <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-              {Object.entries(wiborRates).map(([term, rate]) => (
+              {Object.entries(wiborRates || {}).map(([term, rate]) => (
                 <div 
                   key={term} 
                   className={`border rounded-md p-3 text-center cursor-pointer hover:bg-gray-50 transition-colors ${selectedWiborType === term ? 'border-primary bg-primary/5' : ''}`}
                   onClick={() => onSelectWibor && onSelectWibor(term, rate)}
                 >
                   <div className="text-sm text-muted-foreground">WIBOR {term}</div>
-                  <div className="text-lg font-medium text-primary">{rate.toFixed(2)}%</div>
+                  <div className="text-lg font-medium text-primary">{safeToFixed(rate)}%</div>
                   {selectedWiborType === term && (
                     <Badge variant="outline" className="mt-2 bg-primary/10 text-primary border-primary">
                       Selected
@@ -211,9 +219,9 @@ export default function InterestRateSection({
                     }}
                   >
                     <TableCell className="font-medium">{offer.bankName}</TableCell>
-                    <TableCell>{offer.bankMargin.toFixed(2)}%</TableCell>
+                    <TableCell>{safeToFixed(offer.bankMargin)}%</TableCell>
                     <TableCell>WIBOR {offer.wiborType}</TableCell>
-                    <TableCell className="text-primary font-semibold">{offer.totalRate.toFixed(2)}%</TableCell>
+                    <TableCell className="text-primary font-semibold">{safeToFixed(offer.totalRate)}%</TableCell>
                   </TableRow>
                 ))}
               </TableBody>
@@ -223,8 +231,10 @@ export default function InterestRateSection({
               {bankMargin > 0 && (
                 <div className="mt-2 p-2 bg-secondary/20 rounded-md">
                   <p className="font-medium">
-                    Your current rate: {totalInterestRate.toFixed(2)}% 
-                    ({selectedWiborType ? `WIBOR ${selectedWiborType}` : "NBP Reference Rate"} + {bankMargin.toFixed(2)}% margin)
+                    Your current rate: {safeToFixed(totalInterestRate)}% 
+                    ({selectedWiborType && wiborRates && wiborRates[selectedWiborType] !== undefined 
+                      ? `WIBOR ${selectedWiborType}` 
+                      : "NBP Reference Rate"} + {safeToFixed(bankMargin)}% margin)
                   </p>
                 </div>
               )}

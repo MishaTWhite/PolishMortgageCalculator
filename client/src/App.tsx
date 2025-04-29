@@ -8,7 +8,6 @@ import MortgageCalculator from "@/pages/MortgageCalculator";
 import InvestmentCalculator from "@/pages/InvestmentCalculator";
 import CurrencyConverterPage from "@/pages/CurrencyConverter";
 import PropertyMarketAnalysis from "@/pages/PropertyMarketAnalysis";
-import PropertyStatistics from "@/pages/PropertyStatistics";
 import { LanguageProvider } from "@/context/LanguageContext";
 
 function Router() {
@@ -18,7 +17,12 @@ function Router() {
       <Route path="/investment" component={InvestmentCalculator} />
       <Route path="/converter" component={CurrencyConverterPage} />
       <Route path="/property-market-analysis" component={PropertyMarketAnalysis} />
-      <Route path="/property-statistics" component={PropertyStatistics} />
+      <Route path="/property-statistics">
+        {() => {
+          window.location.href = "/property-market-analysis";
+          return null;
+        }}
+      </Route>
       <Route component={NotFound} />
     </Switch>
   );

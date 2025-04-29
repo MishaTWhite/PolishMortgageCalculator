@@ -17,6 +17,7 @@ type TranslationKeys = {
   refresh: string;
   forceRefresh: string;
   updateAllCities: string;
+  updateFromOtodom: string;
   errorLoadingData: string;
   cityAveragePrice: string;
   dataBasedOn: string;
@@ -31,6 +32,8 @@ type TranslationKeys = {
   fourPlusRoom: string;
   district: string;
   avgPricePerSqm: string;
+  avgPrice: string;
+  pricePerSqm: string;
   avgArea: string;
   listings: string;
   processedListings: string;
@@ -44,7 +47,10 @@ type TranslationKeys = {
   dataDisclaimerDetails: string;
   noDataAvailable: string;
   lastUpdated: string;
+  lastUpdatedOn: string;
   updateAllData: string;
+  count: string;
+  detailedRoomBreakdown: string;
   
   // Playwright scraper
   usePlaywrightScraper: string;
@@ -191,6 +197,7 @@ export const translations: Translations = {
     refresh: "Odśwież dane",
     forceRefresh: "Zaktualizuj z Otodom",
     updateAllCities: "Zaktualizuj wszystkie miasta",
+    updateFromOtodom: "Aktualizuj z Otodom",
     updateAllData: "Aktualizuj dane nieruchomości",
     errorLoadingData: "Nie udało się załadować danych",
     cityAveragePrice: "Średnia cena za m² w mieście",
@@ -219,6 +226,11 @@ export const translations: Translations = {
     dataDisclaimerDetails: "Ceny mogą się różnić od rzeczywistych transakcji i zależą od wielu czynników, w tym standardu wykończenia, piętra, dostępności itd.",
     noDataAvailable: "Brak dostępnych danych. Spróbuj ponownie później.",
     lastUpdated: "Ostatnia aktualizacja",
+    lastUpdatedOn: "Ostatnia aktualizacja z",
+    avgPrice: "Średnia cena",
+    pricePerSqm: "Cena/m²",
+    count: "Liczba",
+    detailedRoomBreakdown: "Szczegółowe statystyki cen według dzielnic i typów pokoi",
     
     // Playwright scraper
     usePlaywrightScraper: "Użyj Playwright Scraper",
@@ -360,6 +372,7 @@ export const translations: Translations = {
     refresh: "Refresh Data",
     forceRefresh: "Update from Otodom",
     updateAllCities: "Update All Cities",
+    updateFromOtodom: "Update from Otodom",
     updateAllData: "Update Property Data",
     errorLoadingData: "Error loading data. Please try again later.",
     cityAveragePrice: "City Average Price per m²",
@@ -388,6 +401,11 @@ export const translations: Translations = {
     dataDisclaimerDetails: "Prices may differ from actual transactions and depend on many factors including finish standard, floor, accessibility, etc.",
     noDataAvailable: "No data available. Please try again later.",
     lastUpdated: "Last updated",
+    lastUpdatedOn: "Last updated on",
+    avgPrice: "Avg. Price",
+    pricePerSqm: "Price/m²",
+    count: "Count",
+    detailedRoomBreakdown: "Detailed price statistics by district and room type",
     
     // Playwright scraper
     usePlaywrightScraper: "Use Playwright Scraper",
@@ -557,6 +575,12 @@ export const translations: Translations = {
     dataDisclaimerDetails: "Ціни можуть відрізнятися від реальних транзакцій і залежать від багатьох факторів, включаючи стандарт оздоблення, поверх, доступність тощо.",
     noDataAvailable: "Дані відсутні. Спробуйте пізніше.",
     lastUpdated: "Останнє оновлення",
+    lastUpdatedOn: "Останнє оновлення",
+    avgPrice: "Середня ціна",
+    pricePerSqm: "Ціна/м²",
+    count: "Кількість",
+    detailedRoomBreakdown: "Детальна статистика цін за районами та типами кімнат",
+    updateFromOtodom: "Оновити з Otodom",
     
     // Playwright scraper
     usePlaywrightScraper: "Використовувати Playwright Scraper",

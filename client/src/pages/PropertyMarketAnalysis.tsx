@@ -10,7 +10,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
-import { RefreshCw, Building, Home, MapPin, Bed, Layers, Box, BarChart3 } from "lucide-react";
+import { RefreshCw, Building, Home, MapPin, Bed, Layers, Box, BarChart3, LineChart } from "lucide-react";
 import {
   Table,
   TableBody,
@@ -47,6 +47,30 @@ interface PropertyPrice {
     threeRoom: RoomBreakdown;
     fourPlusRoom: RoomBreakdown;
   };
+}
+
+// Interface for the new property statistics data
+interface PropertyListing {
+  district: string;
+  roomType: string;
+  price: number;
+  area: number;
+  pricePerSqm: number;
+}
+
+interface DistrictSummary {
+  district: string;
+  roomType: string;
+  count: number;
+  avgPricePerSqm: number;
+  avgPrice: number;
+  avgArea: number;
+  timestamp: string;
+}
+
+interface PropertyPriceStatResponse {
+  city: string;
+  prices: DistrictSummary[];
 }
 
 // Interface for the scraper task status
@@ -132,6 +156,25 @@ export default function PropertyMarketAnalysis() {
     }
   });
   
+  // Fetch property statistics data from the new API
+  const {
+    data: propertyStatData,
+    isLoading: isPropertyStatLoading,
+    isError: isPropertyStatError,
+    error: propertyStatError,
+    refetch: refetchPropertyStat
+  } = useQuery<PropertyPriceStatResponse>({
+    queryKey: ['/api/property-statistics', selectedCity],
+    staleTime: 5 * 60 * 1000, // 5 minutes
+    queryFn: async () => {
+      const response = await fetch(`/api/property-statistics?city=${selectedCity}`);
+      if (!response.ok) {
+        throw new Error('Failed to get property statistics');
+      }
+      return response.json();
+    }
+  });
+  
   // Update scraper status when data changes
   useEffect(() => {
     if (scraperData) {
@@ -145,8 +188,37 @@ export default function PropertyMarketAnalysis() {
     }
   }, [scraperData]);
   
+  // Инициировать скрапинг новых данных с Otodom
+  const [isScrapingOtodom, setIsScrapingOtodom] = useState(false);
+  
+  const refreshPropertyData = async () => {
+    setIsScrapingOtodom(true);
+    try {
+      await fetch("/api/scrape-property-data", { 
+        method: "POST",
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ city: selectedCity === 'warsaw' ? 'warszawa' : selectedCity })
+      });
+      
+      // Ждем немного и затем обновляем данные
+      setTimeout(() => {
+        // Обновляем данные из обоих API
+        queryClient.invalidateQueries({ queryKey: ['/api/property-statistics'] });
+        queryClient.invalidateQueries({ queryKey: ['/api/property-prices'] });
+        refetchPropertyStat();
+        refetch();
+        setIsScrapingOtodom(false);
+      }, 3000);
+    } catch (error) {
+      console.error("Failed to trigger scraping:", error);
+      setIsScrapingOtodom(false);
+    }
+  };
+  
   // Combine loading states
-  const isPageLoading = isLoading || isQueryLoading;
+  const isPageLoading = isLoading || isQueryLoading || isScrapingOtodom;
   
   // Function to format prices in PLN
   const formatPrice = (price: number): string => {
@@ -283,9 +355,11 @@ export default function PropertyMarketAnalysis() {
                     variant="outline"
                     onClick={() => {
                       queryClient.invalidateQueries({ queryKey: ['/api/property-prices', selectedCity] });
+                      queryClient.invalidateQueries({ queryKey: ['/api/property-statistics', selectedCity] });
                       refetch();
+                      refetchPropertyStat();
                     }}
-                    disabled={isLoading || isPlaywrightLoading}
+                    disabled={isLoading || isPlaywrightLoading || isScrapingOtodom}
                     className="flex items-center gap-2"
                   >
                     <RefreshCw size={16} className={isLoading ? "animate-spin" : ""} />
@@ -304,12 +378,14 @@ export default function PropertyMarketAnalysis() {
                         }
                         // Invalidate all queries and refetch current one
                         queryClient.invalidateQueries({ queryKey: ['/api/property-prices'] });
+                        queryClient.invalidateQueries({ queryKey: ['/api/property-statistics'] });
                         refetch();
+                        refetchPropertyStat();
                       } finally {
                         setIsLoading(false);
                       }
                     }}
-                    disabled={isLoading || isPlaywrightLoading}
+                    disabled={isLoading || isPlaywrightLoading || isScrapingOtodom}
                     className="flex items-center gap-2"
                   >
                     <RefreshCw size={16} className={isLoading ? "animate-spin" : ""} />
@@ -340,11 +416,21 @@ export default function PropertyMarketAnalysis() {
                         setIsPlaywrightLoading(false);
                       }
                     }}
-                    disabled={isLoading || isPlaywrightLoading}
+                    disabled={isLoading || isPlaywrightLoading || isScrapingOtodom}
                     className="flex items-center gap-2"
                   >
                     <BarChart3 size={16} className={isPlaywrightLoading ? "animate-spin" : ""} />
                     {t.usePlaywrightScraper || "Use Playwright Scraper"}
+                  </Button>
+                  
+                  <Button 
+                    variant="default"
+                    onClick={refreshPropertyData}
+                    disabled={isLoading || isPlaywrightLoading || isScrapingOtodom}
+                    className="flex items-center gap-2"
+                  >
+                    <RefreshCw size={16} className={isScrapingOtodom ? "animate-spin" : ""} />
+                    {t.updateFromOtodom || "Update from Otodom"}
                   </Button>
                 </div>
               </div>
@@ -715,6 +801,74 @@ export default function PropertyMarketAnalysis() {
                   </Table>
                 </CardContent>
               </Card>
+
+              {/* Property Statistics Section */}
+              {propertyStatData && propertyStatData.prices && propertyStatData.prices.length > 0 && (
+                <Card className="mt-6">
+                  <CardHeader className="pb-2">
+                    <div className="flex items-center gap-2">
+                      <LineChart className="h-5 w-5 text-primary" />
+                      <CardTitle>{t.propertyStatistics || "Property Statistics"}</CardTitle>
+                    </div>
+                    <CardDescription>
+                      {t.detailedRoomBreakdown || "Detailed price statistics by district and room type"}
+                    </CardDescription>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="space-y-6">
+                      <Tabs defaultValue="oneRoom" className="w-full">
+                        <TabsList className="grid w-full grid-cols-4">
+                          <TabsTrigger value="oneRoom">{t.oneRoom || "1 Room"}</TabsTrigger>
+                          <TabsTrigger value="twoRoom">{t.twoRoom || "2 Rooms"}</TabsTrigger>
+                          <TabsTrigger value="threeRoom">{t.threeRoom || "3 Rooms"}</TabsTrigger>
+                          <TabsTrigger value="fourPlusRoom">{t.fourPlusRoom || "4+ Rooms"}</TabsTrigger>
+                        </TabsList>
+                        
+                        {["oneRoom", "twoRoom", "threeRoom", "fourPlusRoom"].map((roomType) => (
+                          <TabsContent key={roomType} value={roomType}>
+                            <div className="rounded-md border">
+                              <Table>
+                                <TableHeader>
+                                  <TableRow>
+                                    <TableHead>{t.district || "District"}</TableHead>
+                                    <TableHead className="text-right">{t.avgPrice || "Avg. Price"}</TableHead>
+                                    <TableHead className="text-right">{t.pricePerSqm || "Price/m²"}</TableHead>
+                                    <TableHead className="text-right">{t.avgArea || "Avg. Area"}</TableHead>
+                                    <TableHead className="text-right">{t.count || "Count"}</TableHead>
+                                  </TableRow>
+                                </TableHeader>
+                                <TableBody>
+                                  {propertyStatData.prices
+                                    .filter(district => district.roomType === roomType)
+                                    .sort((a, b) => b.avgPricePerSqm - a.avgPricePerSqm)
+                                    .map((district, i) => (
+                                      <TableRow key={`${district.district}-${roomType}-${i}`}>
+                                        <TableCell className="font-medium">{district.district}</TableCell>
+                                        <TableCell className="text-right">{formatPrice(district.avgPrice)}</TableCell>
+                                        <TableCell className="text-right">{formatPrice(district.avgPricePerSqm)}</TableCell>
+                                        <TableCell className="text-right">{district.avgArea.toFixed(1)} m²</TableCell>
+                                        <TableCell className="text-right">{district.count}</TableCell>
+                                      </TableRow>
+                                    ))}
+                                </TableBody>
+                              </Table>
+                            </div>
+                            
+                            <div className="mt-4">
+                              <small className="text-muted-foreground">
+                                {t.lastUpdatedOn || "Last updated on"}: {propertyStatData.prices
+                                  .filter(district => district.roomType === roomType)
+                                  .map(district => district.timestamp)
+                                  .filter(Boolean)[0] || "N/A"}
+                              </small>
+                            </div>
+                          </TabsContent>
+                        ))}
+                      </Tabs>
+                    </div>
+                  </CardContent>
+                </Card>
+              )}
               
               <div className="text-sm text-muted-foreground mt-2">
                 <p>{t.dataDisclaimer || "Data collected from"} {propertyData.source || "Otodom"}. 

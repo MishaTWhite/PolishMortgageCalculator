@@ -221,7 +221,7 @@ async function searchSummaryScraper(config: ScraperConfig) {
  */
 async function extractListings(page: Page, district: string, roomType: string): Promise<PropertyListing[]> {
   // Находим все карточки объявлений на странице
-  return page.evaluate((district, roomType, districtNames) => {
+  return page.evaluate(({ district, roomType, districtNameMap }) => {
     const results: PropertyListing[] = [];
     
     // Используем наиболее распространенные селекторы для карточек объявлений
@@ -268,7 +268,7 @@ async function extractListings(page: Page, district: string, roomType: string): 
           // Добавляем в результаты только если удалось извлечь оба значения
           if (price > 0 && area > 0) {
             results.push({
-              district: districtNames[district] || district,
+              district: districtNameMap[district] || district,
               roomType,
               price,
               area,
@@ -283,7 +283,7 @@ async function extractListings(page: Page, district: string, roomType: string): 
     });
     
     return results;
-  }, district, roomType, districtNames);
+  }, { district, roomType, districtNameMap: districtNames });
 }
 
 /**

@@ -89,13 +89,14 @@ async function initBrowser(): Promise<Browser> {
   
   try {
     // Пробуем сначала Firefox, так как он менее требователен к системным библиотекам
-    logInfo('Trying to launch Firefox browser');
+    logInfo('Trying to launch Firefox browser using local binary');
     const firefoxOptions = {
       headless: true,
       args: ['--no-sandbox'],
       timeout: 60000,
       handleSIGINT: false,
-      downloadsPath: '/tmp/playwright-downloads'
+      downloadsPath: '/tmp/playwright-downloads',
+      executablePath: '/tmp/firefox-extracted/firefox/firefox-bin' // Указываем путь к локальному Firefox
     };
     
     logInfo(`Firefox options: ${JSON.stringify(firefoxOptions)}`);
@@ -116,10 +117,17 @@ async function initBrowser(): Promise<Browser> {
           '--no-sandbox',
           '--disable-setuid-sandbox',
           '--disable-dev-shm-usage',
-          '--disable-gpu'
+          '--disable-gpu',
+          '--no-zygote',
+          '--single-process', // Особенно важно для легкого режима
+          '--mute-audio',
+          '--disable-web-security',
+          '--disable-remote-fonts'
         ],
-        timeout: 90000,
-        handleSIGINT: false
+        chromiumSandbox: false,
+        timeout: 120000,
+        handleSIGINT: false,
+        ignoreDefaultArgs: ['--disable-extensions', '--enable-automation']
       };
       
       logInfo(`Chromium fallback options: ${JSON.stringify(minimalOptions)}`);

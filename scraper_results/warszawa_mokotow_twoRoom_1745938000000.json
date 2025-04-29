@@ -1,0 +1,23 @@
+[
+  {
+    "district": "Mokotów",
+    "roomType": "twoRoom",
+    "price": 640000,
+    "area": 46,
+    "pricePerSqm": 13913
+  },
+  {
+    "district": "Mokotów",
+    "roomType": "twoRoom",
+    "price": 660000,
+    "area": 47,
+    "pricePerSqm": 14043
+  },
+  {
+    "district": "Mokotów",
+    "roomType": "twoRoom",
+    "price": 650000,
+    "area": 45,
+    "pricePerSqm": 14444
+  }
+]

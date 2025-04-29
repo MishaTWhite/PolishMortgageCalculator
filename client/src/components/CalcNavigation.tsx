@@ -2,7 +2,7 @@ import { Link, useLocation } from "wouter";
 import { Button } from "@/components/ui/button";
 import { useLanguage } from "@/context/LanguageContext";
 import { useTranslations } from "@/lib/translations";
-import { Calculator, DollarSign, BarChart, Home } from "lucide-react";
+import { Calculator, DollarSign, BarChart, Home, LineChart } from "lucide-react";
 
 export default function CalcNavigation() {
   const [location] = useLocation();
@@ -52,6 +52,17 @@ export default function CalcNavigation() {
         >
           <Home size={16} />
           {t.propertyMarketAnalysis || "Property Market"}
+        </Button>
+      </Link>
+      
+      <Link href="/property-statistics">
+        <Button
+          variant={location === "/property-statistics" ? "default" : "outline"}
+          className="flex items-center gap-2"
+          size="sm"
+        >
+          <LineChart size={16} />
+          {t.propertyStatistics || "Property Statistics"}
         </Button>
       </Link>
     </div>

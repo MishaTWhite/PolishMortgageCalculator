@@ -1,0 +1,30 @@
+[
+  {
+    "district": "Mokotów",
+    "roomType": "oneRoom",
+    "price": 520000,
+    "area": 30,
+    "pricePerSqm": 17333
+  },
+  {
+    "district": "Mokotów",
+    "roomType": "oneRoom",
+    "price": 540000,
+    "area": 32,
+    "pricePerSqm": 16875
+  },
+  {
+    "district": "Mokotów",
+    "roomType": "oneRoom",
+    "price": 490000,
+    "area": 28,
+    "pricePerSqm": 17500
+  },
+  {
+    "district": "Mokotów",
+    "roomType": "oneRoom",
+    "price": 510000,
+    "area": 29,
+    "pricePerSqm": 17586
+  }
+]

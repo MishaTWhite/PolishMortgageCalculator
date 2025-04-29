@@ -6,6 +6,7 @@ type TranslationKeys = {
   investmentCalculator: string;
   currencyConverter: string;
   propertyMarketAnalysis: string;
+  propertyStatistics: string;
   
   // Application title and header  
   appTitle: string;
@@ -30,6 +31,7 @@ type TranslationKeys = {
   fourPlusRoom: string;
   district: string;
   avgPricePerSqm: string;
+  avgArea: string;
   listings: string;
   processedListings: string;
   reportedCount: string;
@@ -178,6 +180,7 @@ export const translations: Translations = {
     investmentCalculator: "Kalkulator Inwestycyjny",
     currencyConverter: "Przelicznik walut",
     propertyMarketAnalysis: "Analiza Rynku Nieruchomości",
+    propertyStatistics: "Statystyki Nieruchomości",
     
     // Application title and header
     appTitle: "Polski Kalkulator Kredytu Hipotecznego",
@@ -203,6 +206,7 @@ export const translations: Translations = {
     fourPlusRoom: "4+ Pokoje",
     district: "Dzielnica",
     avgPricePerSqm: "Średnia cena/m²",
+    avgArea: "Średnia powierzchnia",
     listings: "Ogłoszenia",
     processedListings: "przetworzonych",
     reportedCount: "podanych",
@@ -345,6 +349,7 @@ export const translations: Translations = {
     investmentCalculator: "Investment Calculator",
     currencyConverter: "Currency Converter",
     propertyMarketAnalysis: "Property Market Analysis",
+    propertyStatistics: "Property Statistics",
     
     // Application title and header
     appTitle: "Polish Mortgage Calculator",
@@ -370,6 +375,7 @@ export const translations: Translations = {
     fourPlusRoom: "4+ Rooms",
     district: "District",
     avgPricePerSqm: "Avg Price/m²",
+    avgArea: "Average Area",
     listings: "Listings",
     processedListings: "processed",
     reportedCount: "reported",
@@ -512,6 +518,7 @@ export const translations: Translations = {
     investmentCalculator: "Інвестиційний калькулятор",
     currencyConverter: "Конвертер валют",
     propertyMarketAnalysis: "Аналіз ринку нерухомості",
+    propertyStatistics: "Статистика нерухомості",
     
     // Application title and header
     appTitle: "Польський іпотечний калькулятор",
@@ -537,6 +544,7 @@ export const translations: Translations = {
     fourPlusRoom: "4+ Кімнат",
     district: "Район",
     avgPricePerSqm: "Середня ціна/м²",
+    avgArea: "Середня площа",
     listings: "Оголошення",
     processedListings: "оброблених",
     reportedCount: "вказаних",

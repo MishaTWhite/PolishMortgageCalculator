@@ -45,6 +45,7 @@ export interface ScrapeTask {
   startedAt?: string;            // Дата и время начала выполнения (если есть)
   completedAt?: string;          // Дата и время завершения (если есть)
   error?: string;                // Ошибка, если задача завершилась с ошибкой
+  errorType?: ErrorType;         // Тип ошибки для более точной классификации
   result?: any;                  // Результаты выполнения задачи (если есть)
 }
 
@@ -102,7 +103,9 @@ const scrapingStats: ScrapingStatistics = {
   endTime: null,
   runtime: 0,
   errorsByType: Object.values(ErrorType).reduce((acc, type) => {
-    acc[type] = 0;
+    if (typeof type === 'string') {
+      acc[type as ErrorType] = 0;
+    }
     return acc;
   }, {} as Record<ErrorType, number>)
 };
@@ -318,7 +321,8 @@ export function updateTaskStatus(
   taskId: string,
   status: TaskStatus,
   result?: any,
-  error?: string
+  error?: string,
+  errorType?: ErrorType
 ): void {
   // Сначала ищем в текущей задаче
   if (currentTask && currentTask.id === taskId) {
@@ -335,6 +339,10 @@ export function updateTaskStatus(
     
     if (error) {
       currentTask.error = error;
+    }
+    
+    if (errorType) {
+      currentTask.errorType = errorType;
     }
     
     saveCurrentTask();
@@ -359,6 +367,10 @@ export function updateTaskStatus(
       taskQueue[taskIndex].error = error;
     }
     
+    if (errorType) {
+      taskQueue[taskIndex].errorType = errorType;
+    }
+    
     saveQueue();
     return;
   }
@@ -379,6 +391,10 @@ export function updateTaskStatus(
     
     if (error) {
       completedTasks[completedIndex].error = error;
+    }
+    
+    if (errorType) {
+      completedTasks[completedIndex].errorType = errorType;
     }
     
     saveCompletedTasks();
@@ -505,6 +521,7 @@ async function processNextTask(): Promise<void> {
         taskForError.completedAt = new Date().toISOString();
         taskForError.updatedAt = new Date().toISOString();
         taskForError.error = `${errorDesc}: ${errorMessage}`;
+        taskForError.errorType = errorType;
         taskForError.result = {
           ...taskForError.result,
           ...errorResult,
@@ -522,6 +539,7 @@ async function processNextTask(): Promise<void> {
         taskForError.retryCount++;
         taskForError.updatedAt = new Date().toISOString();
         taskForError.error = `${errorDesc}: ${errorMessage}`;
+        taskForError.errorType = errorType;
         
         // Логируем информацию о повторной попытке
         logInfo(`Task ${taskForError.id} will be retried (${taskForError.retryCount}/3): ${errorDesc}`);
@@ -547,12 +565,18 @@ async function processNextTask(): Promise<void> {
     // Сбрасываем флаг обработки
     isProcessing = false;
     
+    // Обновляем статистику после каждой задачи
+    updateScrapingStatistics();
+    
     // Если в очереди остались задачи, продолжаем обработку
     if (taskQueue.length > 0) {
       // Небольшая задержка между задачами
       setTimeout(processNextTask, 1000);
     } else {
+      // Задачи закончились, выводим итоговую статистику
+      scrapingStats.endTime = new Date().toISOString();
       logInfo('Task queue processing completed');
+      printScrapingStatistics();
     }
   }
 }
@@ -648,9 +672,17 @@ function updateScrapingStatistics(): void {
   scrapingStats.runtime = Date.now() - startTime;
   
   // Анализируем типы ошибок
+  // Сначала сбрасываем счетчики
+  Object.keys(scrapingStats.errorsByType).forEach(key => {
+    scrapingStats.errorsByType[key as ErrorType] = 0;
+  });
+
+  // Затем считаем ошибки для каждого типа
   completedTasks.forEach(task => {
     if (task.status === TaskStatus.FAILED && task.errorType) {
-      scrapingStats.errorsByType[task.errorType] = (scrapingStats.errorsByType[task.errorType] || 0) + 1;
+      if (Object.values(ErrorType).includes(task.errorType)) {
+        scrapingStats.errorsByType[task.errorType] = (scrapingStats.errorsByType[task.errorType] || 0) + 1;
+      }
     }
   });
 }

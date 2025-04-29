@@ -1,16 +1,13 @@
 {
   "cookieAttempted": true,
-  "cookieAccepted": true,
-  "cookieError": "",
-  "timestamp": "2025-04-29T12:42:23.085Z",
-  "url": "https://www.otodom.pl/",
+  "cookieAccepted": false,
+  "cookieError": "Error: page.evaluate: Target page, context or browser has been closed",
+  "timestamp": "2025-04-29T12:43:53.732Z",
+  "url": "https://www.otodom.pl/pl/wyniki/sprzedaz/mieszkanie,3-pokoje/mazowieckie/warszawa/warszawa/warszawa/mokotow?limit=72&ownerTypeSingleSelect=ALL&by=DEFAULT&direction=DESC&viewType=listing",
   "jsEvalResult": {
-    "clicked": true,
-    "selector": "button[id=\"onetrust-accept-btn-handler\"]"
-  },
-  "htmlSize": 358634,
-  "listingElementsFound": false,
-  "iframesCount": 1,
-  "bodyClasses": "",
-  "cookieBannerVisible": true
+    "clicked": false,
+    "selector": null,
+    "cookieBannerExists": true,
+    "bodyHtml": 1795256
+  }
 }

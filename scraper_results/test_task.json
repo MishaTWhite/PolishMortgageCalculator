@@ -6,43 +6,43 @@
   "prices": [],
   "pricesPerSqm": [],
   "error": true,
-  "errorMessage": "Failed after 3 retries for task \"Search page navigation\": page.goto: Target page, context or browser has been closed",
-  "errorStack": "Error: Failed after 3 retries for task \"Search page navigation\": page.goto: Target page, context or browser has been closed\n    at runWithRetry (/home/runner/workspace/server/playwrightScraper.ts:1806:9)\n    at async scrapeDataTask (/home/runner/workspace/server/playwrightScraper.ts:2003:7)\n    at async scrapePropertyData (/home/runner/workspace/server/playwrightScraper.ts:2033:5)\n    at async processNextTask (/home/runner/workspace/server/scrapeTaskManager.ts:423:20)",
+  "errorMessage": "Failed after 3 retries for task \"First page processing\": page.$: Target page, context or browser has been closed",
+  "errorStack": "Error: Failed after 3 retries for task \"First page processing\": page.$: Target page, context or browser has been closed\n    at runWithRetry (/home/runner/workspace/server/playwrightScraper.ts:1806:9)\n    at async scrapePropertyData (/home/runner/workspace/server/playwrightScraper.ts:2042:30)\n    at async processNextTask (/home/runner/workspace/server/scrapeTaskManager.ts:460:20)",
   "botDetected": true,
   "task": {
-    "id": "ma2h9qtrda9",
+    "id": "ma2h9qtthdt",
     "cityUrl": "warszawa",
     "cityNormalized": "warsaw",
     "districtName": "Mokotów",
     "districtSearchTerm": "mokotow",
-    "roomType": "twoRoom",
+    "roomType": "threeRoom",
     "fetchDate": "29.04.2025",
     "status": "in_progress"
   },
   "diagnostics": {
-    "timestamp": "2025-04-29T12:40:15.773Z",
-    "executionTimeMs": 88309,
+    "timestamp": "2025-04-29T12:44:32.916Z",
+    "executionTimeMs": 109108,
     "environment": {
-      "memoryUsageMb": 302,
+      "memoryUsageMb": 247,
       "nodeVersion": "v20.18.1",
       "platform": "linux"
     },
     "error": {
-      "message": "Failed after 3 retries for task \"Search page navigation\": page.goto: Target page, context or browser has been closed",
-      "stack": "Error: Failed after 3 retries for task \"Search page navigation\": page.goto: Target page, context or browser has been closed\n    at runWithRetry (/home/runner/workspace/server/playwrightScraper.ts:1806:9)\n    at async scrapeDataTask (/home/runner/workspace/server/playwrightScraper.ts:2003:7)\n    at async scrapePropertyData (/home/runner/workspace/server/playwrightScraper.ts:2033:5)\n    at async processNextTask (/home/runner/workspace/server/scrapeTaskManager.ts:423:20)",
-      "timestamp": "2025-04-29T12:40:15.772Z",
+      "message": "Failed after 3 retries for task \"First page processing\": page.$: Target page, context or browser has been closed",
+      "stack": "Error: Failed after 3 retries for task \"First page processing\": page.$: Target page, context or browser has been closed\n    at runWithRetry (/home/runner/workspace/server/playwrightScraper.ts:1806:9)\n    at async scrapePropertyData (/home/runner/workspace/server/playwrightScraper.ts:2042:30)\n    at async processNextTask (/home/runner/workspace/server/scrapeTaskManager.ts:460:20)",
+      "timestamp": "2025-04-29T12:44:32.912Z",
       "errorType": "Error"
     },
     "screenshots": {
-      "error": "./logs/error_screenshot_ma2h9qtrda9.png",
-      "errorHtml": "./logs/error_page_ma2h9qtrda9.html"
+      "error": "./logs/error_screenshot_ma2h9qtthdt.png",
+      "errorHtml": "./logs/error_page_ma2h9qtthdt.html"
     },
     "cookieAttempted": true,
-    "cookieAccepted": true,
-    "cookieError": "",
+    "cookieAccepted": false,
+    "cookieError": "Error: page.evaluate: Target page, context or browser has been closed",
     "listingElementsFound": false,
-    "pageUrl": "https://www.otodom.pl/",
-    "htmlSize": 0,
+    "pageUrl": "https://www.otodom.pl/pl/wyniki/sprzedaz/mieszkanie,3-pokoje/mazowieckie/warszawa/warszawa/warszawa/mokotow?limit=72&ownerTypeSingleSelect=ALL&by=DEFAULT&direction=DESC&viewType=listing",
+    "htmlSize": 1795256,
     "screenhotsTaken": [
       {
         "name": "after_first_page_processing.png",
@@ -52,12 +52,12 @@
       {
         "name": "cookie_banner_after.png",
         "path": "./logs/cookie_banner_after.png",
-        "timestamp": "2025-04-29T12:39:22.032Z"
+        "timestamp": "2025-04-29T12:43:32.293Z"
       },
       {
         "name": "cookie_banner_before.png",
         "path": "./logs/cookie_banner_before.png",
-        "timestamp": "2025-04-29T12:39:20.918Z"
+        "timestamp": "2025-04-29T12:43:43.586Z"
       },
       {
         "name": "page_1_screenshot.png",
@@ -70,22 +70,19 @@
         "timestamp": "2025-04-29T11:36:33.553Z"
       }
     ],
-    "browserMemoryUsage": 302,
+    "browserMemoryUsage": 247,
     "cookieRawData": {
       "cookieAttempted": true,
-      "cookieAccepted": true,
-      "cookieError": "",
-      "timestamp": "2025-04-29T12:39:22.042Z",
-      "url": "https://www.otodom.pl/",
+      "cookieAccepted": false,
+      "cookieError": "Error: page.evaluate: Target page, context or browser has been closed",
+      "timestamp": "2025-04-29T12:43:53.732Z",
+      "url": "https://www.otodom.pl/pl/wyniki/sprzedaz/mieszkanie,3-pokoje/mazowieckie/warszawa/warszawa/warszawa/mokotow?limit=72&ownerTypeSingleSelect=ALL&by=DEFAULT&direction=DESC&viewType=listing",
       "jsEvalResult": {
-        "clicked": true,
-        "selector": "button[id=\"onetrust-accept-btn-handler\"]"
-      },
-      "htmlSize": 359961,
-      "listingElementsFound": false,
-      "iframesCount": 1,
-      "bodyClasses": "",
-      "cookieBannerVisible": true
+        "clicked": false,
+        "selector": null,
+        "cookieBannerExists": true,
+        "bodyHtml": 1795256
+      }
     }
   }
 }

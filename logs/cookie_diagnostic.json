@@ -2,13 +2,13 @@
   "cookieAttempted": true,
   "cookieAccepted": true,
   "cookieError": "",
-  "timestamp": "2025-04-29T14:34:37.917Z",
+  "timestamp": "2025-04-29T14:40:35.634Z",
   "url": "https://www.otodom.pl/",
   "jsEvalResult": {
     "clicked": true,
     "selector": "button[id=\"onetrust-accept-btn-handler\"]"
   },
-  "htmlSize": 359644,
+  "htmlSize": 360729,
   "listingElementsFound": false,
   "iframesCount": 1,
   "bodyClasses": "",

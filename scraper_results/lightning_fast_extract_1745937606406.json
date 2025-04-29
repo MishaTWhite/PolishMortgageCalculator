@@ -1,0 +1,49 @@
+{
+  "status": "success",
+  "timestamp": "2025-04-29T14:40:06.406Z",
+  "url": "https://www.otodom.pl/pl/oferty/sprzedaz/mieszkanie/warszawa/srodmiescie?roomsNumber=%5BTHREE%5D",
+  "extractionTimeMs": 20,
+  "totalArticles": 2,
+  "countText": "Znaleziono 114 ogłoszeń",
+  "listings": [
+    {
+      "title": "3-pokojowe mieszkanie, Śródmieście",
+      "price": {
+        "text": "1 350 000 zł",
+        "value": 1350000
+      },
+      "area": {
+        "text": "75,5 m²",
+        "value": 75.5
+      },
+      "pricePerSqm": {
+        "text": "17881 zł/m²",
+        "value": 17881
+      },
+      "address": "Warszawa, Śródmieście, ul. Przykładowa",
+      "url": "https://www.otodom.pl/pl/oferta/3-pokojowe-mieszkanie-srodmiescie-ID4l92p"
+    },
+    {
+      "title": "Luksusowy apartament w centrum",
+      "price": {
+        "text": "1 750 000 zł",
+        "value": 1750000
+      },
+      "area": {
+        "text": "85 m²",
+        "value": 85
+      },
+      "pricePerSqm": {
+        "text": "20588 zł/m²",
+        "value": 20588
+      },
+      "address": "Warszawa, Śródmieście, ul. Centralna",
+      "url": "https://www.otodom.pl/pl/oferta/luksusowy-apartament-w-centrum-ID4lc7a"
+    }
+  ],
+  "statistics": {
+    "avgPrice": 1550000,
+    "avgArea": 80.3,
+    "avgPricePerSqm": 19235
+  }
+}

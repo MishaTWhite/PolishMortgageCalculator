@@ -114,8 +114,8 @@ export default function PropertyMarketAnalysis() {
   // State for selected city and loading state
   const [selectedCity, setSelectedCity] = useState("warsaw");
   const [isLoading, setIsLoading] = useState(false);
-  const [isPlaywrightLoading, setIsPlaywrightLoading] = useState(false);
-  const [playwrightTasks, setPlaywrightTasks] = useState<ScrapingTask[]>([]);
+  const [isOtodomScraperLoading, setIsOtodomScraperLoading] = useState(false);
+  const [otodomTasks, setOtodomTasks] = useState<ScrapingTask[]>([]);
   const [scraperStatus, setScraperStatus] = useState<ScraperQueueStatus | null>(null);
   const [showScraperStatus, setShowScraperStatus] = useState(false);
   
@@ -143,7 +143,7 @@ export default function PropertyMarketAnalysis() {
     data: scraperData,
     isLoading: isScraperStatusLoading,
     refetch: refetchScraperStatus
-  } = useQuery<PlaywrightScraperResponse>({
+  } = useQuery<OtodomScraperResponse>({
     queryKey: ['/api/property-prices/scraping-status'],
     enabled: showScraperStatus,
     refetchInterval: showScraperStatus ? 3000 : false, // Poll every 3 seconds when visible
@@ -183,7 +183,7 @@ export default function PropertyMarketAnalysis() {
       }
       // Update task list if available
       if (scraperData.tasks) {
-        setPlaywrightTasks(scraperData.tasks);
+        setOtodomTasks(scraperData.tasks);
       }
     }
   }, [scraperData]);
@@ -456,12 +456,12 @@ export default function PropertyMarketAnalysis() {
                     </Alert>
                   )}
                   
-                  {playwrightTasks.length > 0 && (
+                  {otodomTasks.length > 0 && (
                     <div className="mt-4">
                       <h3 className="text-sm font-medium mb-2">{t.taskDetails || "Task Details"}</h3>
                       <div className="bg-gray-50 rounded-md p-3 max-h-40 overflow-y-auto">
                         <div className="space-y-2">
-                          {playwrightTasks.map(task => (
+                          {otodomTasks.map((task: ScrapingTask) => (
                             <div key={task.id} className="flex justify-between items-center text-xs">
                               <span>
                                 <span className="font-medium">{task.district}</span>

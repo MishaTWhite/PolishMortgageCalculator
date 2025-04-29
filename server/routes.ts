@@ -13,12 +13,15 @@ import {
   getPendingTasks, 
   getCompletedTasks, 
   getCurrentTask,
-  enqueueCityTasks
+  enqueueCityTasks,
+  TaskStatus,
+  ScrapeTask
 } from "./scrapeTaskManager";
 
 // Импортируем функцию для скрапинга
 import { scrapePropertyData } from './playwrightScraper';
-import { ScrapeTask } from './scrapeTaskManager';
+import * as fs from 'fs';
+import * as path from 'path';
 
 export async function registerRoutes(app: Express): Promise<Server> {
   // Get scraping status and tasks
@@ -621,6 +624,62 @@ export async function registerRoutes(app: Express): Promise<Server> {
           { bankName: "BNP Paribas", bankMargin: 2.10, wiborType: "3M", totalRate: 7.98 }
         ],
         fetchDate: format(new Date(), "dd.MM.yyyy")
+      });
+    }
+  });
+
+  // Test Chromium scraping with direct task
+  app.get("/api/test-scraper", async (req, res) => {
+    try {
+      // Load test task from scraper_tasks/test_task.json
+      const taskPath = path.join(process.cwd(), 'scraper_tasks', 'test_task.json');
+      
+      if (!fs.existsSync(taskPath)) {
+        return res.status(404).json({
+          success: false,
+          message: "Test task file not found at " + taskPath
+        });
+      }
+      
+      const taskJson = fs.readFileSync(taskPath, 'utf8');
+      const task = JSON.parse(taskJson) as ScrapeTask;
+      
+      console.log(`Starting test scraper task: ${JSON.stringify(task)}`);
+      
+      // Update task status to in_progress
+      task.status = TaskStatus.IN_PROGRESS;
+      task.startedAt = new Date().toISOString();
+      
+      // Call the scraper directly
+      console.log(`Using system Chromium: /nix/store/zi4f80l169xlmivz8vja8wlphq74qqk0-chromium-125.0.6422.141/bin/chromium`);
+      const result = await scrapePropertyData(task);
+      
+      // Update task with results
+      task.status = TaskStatus.COMPLETED;
+      task.completedAt = new Date().toISOString();
+      task.result = result;
+      
+      // Save updated task
+      fs.writeFileSync(taskPath, JSON.stringify(task, null, 2), 'utf8');
+      
+      res.json({
+        success: true,
+        message: "Test scraping completed successfully",
+        cityUrl: task.cityUrl,
+        district: task.districtName,
+        roomType: task.roomType,
+        results: {
+          count: result.count,
+          avgPrice: result.avgPrice,
+          avgPricePerSqm: result.avgPricePerSqm
+        }
+      });
+    } catch (error) {
+      console.error("Error in test scraper:", error);
+      res.status(500).json({
+        success: false,
+        message: "Error in test scraper",
+        error: error instanceof Error ? error.message : String(error)
       });
     }
   });

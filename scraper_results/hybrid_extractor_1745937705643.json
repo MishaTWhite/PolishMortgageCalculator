@@ -1,0 +1,15 @@
+{
+  "status": "success",
+  "timestamp": "2025-04-29T14:41:45.643Z",
+  "url": "https://www.otodom.pl/pl/oferty/sprzedaz/mieszkanie/warszawa/srodmiescie?roomsNumber=%5BTHREE%5D",
+  "extractionTimeMs": 6333,
+  "totalArticles": 40,
+  "countText": "",
+  "validListings": 0,
+  "listings": [],
+  "statistics": {
+    "avgPrice": 0,
+    "avgArea": 0,
+    "avgPricePerSqm": 0
+  }
+}

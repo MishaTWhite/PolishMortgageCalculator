@@ -3,6 +3,8 @@ import * as fs from 'fs';
 import * as path from 'path';
 import http from 'http';
 import { runScraper } from './searchSummaryScraper';
+import { scrapeOtodomPrices } from './simplePriceScraper';
+import { runAllRoomTypes } from './runAllRoomTypes';
 
 interface PropertyListing {
   district: string;
@@ -203,9 +205,6 @@ router.post('/api/scrape-property-data', async (req, res) => {
     const city = req.body.city || 'warszawa';
     const district = req.body.district || 'srodmiescie';
     
-    // Импортируем функцию запуска скрапера для всех типов комнат
-    const { runAllRoomTypes } = await import('./runAllRoomTypes');
-    
     // Запускаем асинхронно
     runAllRoomTypes()
       .then(() => {
@@ -223,6 +222,98 @@ router.post('/api/scrape-property-data', async (req, res) => {
   } catch (error) {
     console.error('Error starting property data scraper:', error);
     res.status(500).json({ error: 'Failed to start property data scraper' });
+  }
+});
+
+// API для запуска простого скрапера
+router.post('/api/scrape-simple', async (req, res) => {
+  try {
+    const { city = 'warszawa', district = 'srodmiescie', roomType = 'twoRoom' } = req.body;
+    
+    // Валидация параметров
+    const validRoomTypes = ['oneRoom', 'twoRoom', 'threeRoom', 'fourPlusRoom'];
+    
+    if (!validRoomTypes.includes(roomType)) {
+      return res.status(400).json({ 
+        error: 'Invalid roomType', 
+        message: `Room type must be one of: ${validRoomTypes.join(', ')}`
+      });
+    }
+    
+    // Запускаем скрапер асинхронно
+    console.log(`Starting simple scraper for ${city}/${district}/${roomType}`);
+    
+    // Отправляем немедленный ответ
+    res.json({
+      status: 'started',
+      message: `Simple scraper started for ${city}/${district}/${roomType}`,
+      params: { city, district, roomType }
+    });
+    
+    // Запускаем скрапер в фоне
+    scrapeOtodomPrices(city, district, roomType).catch(error => {
+      console.error('Error in background scraper execution:', error);
+    });
+    
+  } catch (error) {
+    console.error('Error starting scraper:', error);
+    res.status(500).json({ error: 'Failed to start scraper' });
+  }
+});
+
+// API для получения результатов простого скрапера
+router.get('/api/simple-prices', (req, res) => {
+  try {
+    const { city = 'warszawa', district = 'srodmiescie', roomType = 'twoRoom' } = req.query;
+    
+    // Получаем все файлы с результатами
+    const files = fs.readdirSync(RESULTS_DIR);
+    
+    // Фильтруем только JSON-файлы с результатами для указанных параметров
+    const resultFiles = files.filter(file => 
+      file.startsWith(`${city}_${district}_${roomType}`) && 
+      file.endsWith('.json')
+    );
+    
+    // Сортируем по времени создания (по убыванию)
+    resultFiles.sort((a, b) => {
+      const timeA = parseInt(a.split('_').pop()?.replace('.json', '') || '0');
+      const timeB = parseInt(b.split('_').pop()?.replace('.json', '') || '0');
+      return timeB - timeA;
+    });
+    
+    // Если нет результатов, возвращаем пустой массив
+    if (resultFiles.length === 0) {
+      return res.json({
+        status: 'no_data',
+        message: `No data available for ${city}/${district}/${roomType}`,
+        results: []
+      });
+    }
+    
+    // Берем самый последний файл
+    const latestFile = resultFiles[0];
+    const filePath = path.join(RESULTS_DIR, latestFile);
+    
+    // Читаем и парсим результаты
+    const content = fs.readFileSync(filePath, 'utf-8');
+    const data = JSON.parse(content);
+    
+    // Возвращаем результаты
+    res.json({
+      status: 'success',
+      timestamp: data.timestamp,
+      city: data.city,
+      district: data.district,
+      roomType: data.roomType,
+      count: data.count,
+      summary: data.summary,
+      properties: data.properties
+    });
+    
+  } catch (error) {
+    console.error('Error getting simple prices:', error);
+    res.status(500).json({ error: 'Failed to get price data' });
   }
 });
 

@@ -58,85 +58,130 @@ async function initBrowser(): Promise<Browser> {
   
   logInfo('Initializing browser with enhanced options for Replit environment');
   
-  // Расширенные опции для запуска в Replit
-  const enhancedOptions = {
-    ...BROWSER_LAUNCH_OPTIONS,
-    // Не указываем путь к исполняемому файлу, чтобы использовать встроенный браузер
-    executablePath: undefined,
-    args: [
-      ...(BROWSER_LAUNCH_OPTIONS.args || []),
-      '--no-sandbox',
-      '--disable-setuid-sandbox',
-      '--disable-dev-shm-usage', 
-      '--single-process',
-      '--no-zygote',
-      '--disable-gpu',
-      '--mute-audio',
-      '--disable-web-security',
-      '--disable-features=site-per-process',
-      '--disable-remote-fonts'
-    ],
-    ignoreDefaultArgs: ['--disable-extensions'],
-    handleSIGINT: false,
-    handleSIGTERM: false,
-    handleSIGHUP: false,
-    chromiumSandbox: false,
-    downloadsPath: '/tmp/playwright-downloads',
-    timeout: 60000
-  };
-
-  logInfo(`Launch options: ${JSON.stringify(enhancedOptions, null, 2)}`);
+  // Путь к системному Chromium в Replit
+  const SYSTEM_CHROMIUM_PATH = '/nix/store/zi4f80l169xlmivz8vja8wlphq74qqk0-chromium-125.0.6422.141/bin/chromium';
+  
+  logInfo('Initializing browser strategy optimized for Replit GLIBC 2.31');
   
   try {
-    // Пробуем сначала Firefox, так как он менее требователен к системным библиотекам
-    logInfo('Trying to launch Firefox browser using local binary');
-    const firefoxOptions = {
+    // Пробуем сначала системный Chromium, оптимизированный для окружения Replit
+    logInfo(`Trying to launch system Chromium from: ${SYSTEM_CHROMIUM_PATH}`);
+    
+    const chromiumOptions = {
       headless: true,
-      args: ['--no-sandbox'],
-      timeout: 60000,
+      executablePath: SYSTEM_CHROMIUM_PATH,
+      args: [
+        // Отключение песочницы
+        '--no-sandbox',
+        '--disable-setuid-sandbox',
+        
+        // Минимизация графических компонентов для совместимости с GLIBC 2.31
+        '--disable-gpu',
+        '--disable-software-rasterizer',
+        '--disable-webgl',
+        '--disable-accelerated-2d-canvas',
+        
+        // Оптимизация памяти и процессов
+        '--single-process',
+        '--no-zygote',
+        '--disable-dev-shm-usage',
+        
+        // Отключение необязательной функциональности
+        '--disable-extensions',
+        '--disable-sync',
+        '--disable-default-apps',
+        '--mute-audio',
+        
+        // Минимальное окно
+        '--window-size=800,600'
+      ],
+      chromiumSandbox: false,
+      timeout: 120000,
       handleSIGINT: false,
-      downloadsPath: '/tmp/playwright-downloads',
-      executablePath: '/tmp/firefox-extracted/firefox/firefox-bin' // Указываем путь к локальному Firefox
+      ignoreHTTPSErrors: true
     };
     
-    logInfo(`Firefox options: ${JSON.stringify(firefoxOptions)}`);
-    browser = await firefox.launch(firefoxOptions);
+    logInfo(`Chromium options: ${JSON.stringify(chromiumOptions, null, 2)}`);
+    browser = await chromium.launch(chromiumOptions);
     browserStartTime = Date.now();
     pagesProcessed = 0;
-    logInfo('Firefox browser successfully launched');
+    logInfo('System Chromium browser successfully launched');
     return browser;
-  } catch (error) {
-    logError(`Firefox launch failed: ${error}`);
+  } catch (chromiumError) {
+    logError(`System Chromium launch failed: ${chromiumError}`);
     
-    // Если Firefox не запустился, пробуем Chromium
+    // Если системный Chromium не запустился, пробуем Firefox как запасной вариант
+    logInfo('Trying to launch Firefox browser as fallback');
     try {
-      logInfo('Trying to launch Chromium as fallback');
-      const minimalOptions = {
+      const firefoxOptions = {
         headless: true,
-        args: [
-          '--no-sandbox',
-          '--disable-setuid-sandbox',
-          '--disable-dev-shm-usage',
-          '--disable-gpu',
-          '--no-zygote',
-          '--single-process',
-          '--mute-audio'
-        ],
-        executablePath: process.env.PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH || undefined,
-        chromiumSandbox: false,
-        timeout: 120000,
-        handleSIGINT: false
+        args: ['--no-sandbox'],
+        timeout: 60000,
+        handleSIGINT: false,
+        downloadsPath: '/tmp/playwright-downloads',
+        executablePath: '/tmp/firefox-extracted/firefox/firefox-bin'
       };
-      
-      logInfo(`Chromium fallback options: ${JSON.stringify(minimalOptions)}`);
-      browser = await chromium.launch(minimalOptions);
+    
+      logInfo(`Firefox options: ${JSON.stringify(firefoxOptions)}`);
+      browser = await firefox.launch(firefoxOptions);
       browserStartTime = Date.now();
       pagesProcessed = 0;
-      logInfo('Chromium browser launched as fallback');
+      logInfo('Firefox browser successfully launched');
       return browser;
-    } catch (fallbackError) {
-      logError(`All browser launch attempts failed: ${fallbackError}`);
-      throw new Error(`Failed to launch any browser: ${error}, then: ${fallbackError}`);
+    } catch (error) {
+      logError(`Firefox launch failed: ${error}`);
+      
+      // Если Firefox не запустился, пробуем системный Chromium
+      try {
+        // Путь к системному Chromium в Replit
+        const SYSTEM_CHROMIUM_PATH = '/nix/store/zi4f80l169xlmivz8vja8wlphq74qqk0-chromium-125.0.6422.141/bin/chromium';
+        
+        logInfo(`Trying to launch system Chromium from: ${SYSTEM_CHROMIUM_PATH}`);
+        
+        const minimalOptions = {
+          headless: true,
+          executablePath: SYSTEM_CHROMIUM_PATH,
+          args: [
+            // Отключение песочницы
+            '--no-sandbox',
+            '--disable-setuid-sandbox',
+            
+            // Минимизация графических компонентов для совместимости с GLIBC 2.31
+            '--disable-gpu',
+            '--disable-software-rasterizer',
+            '--disable-webgl',
+            '--disable-accelerated-2d-canvas',
+            
+            // Оптимизация памяти и процессов
+            '--single-process',
+            '--no-zygote',
+            '--disable-dev-shm-usage',
+            
+            // Отключение необязательной функциональности
+            '--disable-extensions',
+            '--disable-sync',
+            '--disable-default-apps',
+            '--mute-audio',
+            
+            // Минимальное окно
+            '--window-size=800,600'
+          ],
+          chromiumSandbox: false,
+          timeout: 120000,
+          handleSIGINT: false,
+          ignoreHTTPSErrors: true
+        };
+        
+        logInfo(`Chromium fallback options: ${JSON.stringify(minimalOptions)}`);
+        browser = await chromium.launch(minimalOptions);
+        browserStartTime = Date.now();
+        pagesProcessed = 0;
+        logInfo('Chromium browser launched as fallback');
+        return browser;
+      } catch (fallbackError) {
+        logError(`All browser launch attempts failed: ${fallbackError}`);
+        throw new Error(`Failed to launch any browser: ${error}, then: ${fallbackError}`);
+      }
     }
   }
 }
@@ -330,7 +375,7 @@ async function performRandomScrolling(page: Page): Promise<void> {
       
       // Пауза между прокрутками
       const delay = getRandomDelay(300, 800);
-      await page.waitForTimeout(delay);
+      await new Promise(resolve => setTimeout(resolve, delay));
     }
   } catch (error) {
     logError(`Error during random scrolling: ${error}`);
@@ -382,7 +427,7 @@ async function visitRandomListing(page: Page): Promise<boolean> {
     // Задержка в стиле "чтение деталей"
     const viewingTime = getRandomDelay(3000, 8000);
     logInfo(`Viewing listing for ${viewingTime}ms`);
-    await page.waitForTimeout(viewingTime);
+    await new Promise(resolve => setTimeout(resolve, viewingTime));
     
     // Возвращаемся на страницу результатов
     logInfo('Going back to search results');
@@ -434,7 +479,7 @@ async function simulateNaturalBrowsing(page: Page): Promise<void> {
       DELAYS.NAVIGATION.MAX_AFTER_PAGE_LOAD
     );
     logDebug(`Waiting for ${homeDelay}ms on homepage`);
-    await page.waitForTimeout(homeDelay);
+    await new Promise(resolve => setTimeout(resolve, homeDelay));
     
     // Немного прокручиваем главную страницу
     await performRandomScrolling(page);
@@ -451,7 +496,7 @@ async function simulateNaturalBrowsing(page: Page): Promise<void> {
       DELAYS.NAVIGATION.MAX_AFTER_PAGE_LOAD
     );
     logDebug(`Waiting for ${categoryDelay}ms on category page`);
-    await page.waitForTimeout(categoryDelay);
+    await new Promise(resolve => setTimeout(resolve, categoryDelay));
     
     // Прокручиваем и страницу категории
     await performRandomScrolling(page);
@@ -768,125 +813,73 @@ async function navigateToNextPage(page: Page, currentPageNum: number): Promise<b
   
   // Пробуем найти элементы пагинации с использованием разных селекторов
   const selectors = [
-    '[data-cy="pagination.next-page"]',
-    'nav button:last-child',
-    'button[aria-label*="next"]',
-    'a[href*="page="][rel="next"]',
-    '.pagination-next',
-    'nav li:last-child a',
-    'button:has-text("Następna")'
+    'a[data-cy="pagination.next-page"], a[data-direction="next"]',
+    'a.pagination__next-page',
+    '.pagination__page--next a, .pagination__page--next button',
+    '[aria-label="Next page"], [aria-label="Następna strona"]',
+    '.css-1rzik0f'
   ];
   
-  // Логируем найденные элементы пагинации
-  let paginationElements: any[] = [];
-  
   for (const selector of selectors) {
-    const elements = await page.$$(selector);
-    if (elements.length > 0) {
-      logInfo(`Found ${elements.length} pagination elements using selector: ${selector}`);
-      paginationElements = elements;
-      break;
-    }
-  }
-  
-  if (paginationElements.length === 0) {
-    logInfo('No pagination elements found, checking if there might be more pages');
-    
-    // Проверяем общее количество объявлений, возможно на странице не отображаются элементы пагинации,
-    // но есть еще страницы (более 72 объявлений)
-    const countText = await page.textContent('[data-cy="search.listing-panel.label"], .css-lm38vc, .listing-panel-header, h1 span') || '';
-    const reportedCount = extractReportedCount(countText);
-    
-    if (reportedCount > 72 && currentPageNum === 1) {
-      logInfo(`No pagination detected, but reportedCount ${reportedCount} suggests ~${Math.ceil(reportedCount/72)} pages`);
-      
-      // Пробуем напрямую перейти на следующую страницу
-      const nextPageUrl = currentUrl.includes('?') 
-        ? currentUrl + `&page=${currentPageNum + 1}` 
-        : currentUrl + `?page=${currentPageNum + 1}`;
-      
-      logInfo(`Trying direct navigation to: ${nextPageUrl}`);
-      
+    const nextPageLink = await page.$(selector);
+    if (nextPageLink) {
       try {
-        await page.goto(nextPageUrl, { waitUntil: 'networkidle' });
-        const newUrl = page.url();
+        logInfo(`Found next page link with selector: ${selector}`);
+        await nextPageLink.click();
         
-        if (newUrl.includes(`page=${currentPageNum + 1}`)) {
-          logInfo(`Found page ${currentPageNum + 1}`);
-          return true;
-        } else {
-          logInfo(`Could not navigate to page ${currentPageNum + 1}`);
+        // Ожидаем загрузки страницы
+        await page.waitForLoadState('networkidle', { timeout: 10000 })
+          .catch(e => logWarning(`Timeout waiting for next page: ${e}`));
+        
+        // Дополнительная проверка, загрузились ли объявления
+        const hasListings = await page.waitForSelector(
+          'article, [data-cy="listing-item"], [data-cy="search.listing"]', 
+          { timeout: 15000 }
+        ).then(() => true).catch(() => false);
+        
+        if (!hasListings) {
+          logWarning('No listings found after pagination');
           return false;
         }
+        
+        // Проверяем что URL изменился (содержит номер страницы или параметр page)
+        const newUrl = page.url();
+        const urlChanged = newUrl !== currentUrl;
+        
+        if (urlChanged) {
+          logInfo(`Successfully navigated to next page. New URL: ${newUrl}`);
+          return true;
+        } else {
+          logWarning('URL did not change after pagination click');
+        }
       } catch (error) {
-        logError(`Error during direct navigation: ${error}`);
-        return false;
+        logWarning(`Error clicking next page link: ${error}`);
       }
     }
-    
-    logInfo('Pagination elements not found, reached end of results');
-    return false;
   }
   
+  // Если не смогли по ссылкам, пробуем напрямую перейти по URL с параметром страницы
   try {
-    // Кликаем на кнопку следующей страницы
-    logInfo('Clicking next page button');
-    await paginationElements[0].click();
+    const parsedUrl = new URL(currentUrl);
+    parsedUrl.searchParams.set('page', (currentPageNum + 1).toString());
+    const nextPageUrl = parsedUrl.toString();
     
-    // Дожидаемся загрузки страницы и появления элементов-объявлений
-    await page.waitForLoadState('networkidle', { timeout: 15000 })
-      .catch(e => logWarning(`Timeout in waitForLoadState: ${e}`));
+    logInfo(`Attempting direct navigation to: ${nextPageUrl}`);
+    await page.goto(nextPageUrl, { waitUntil: 'networkidle' });
     
-    // Логируем URL после клика
-    const afterClickUrl = page.url();
-    logInfo(`URL after click: ${afterClickUrl}`);
+    // Проверяем, что URL действительно изменился
+    const newUrl = page.url();
     
-    await page.waitForSelector(
-      'article, [data-cy="listing-item"], [data-cy="search.listing"]', 
-      { timeout: 20000 }
-    ).catch(e => logWarning(`Timeout waiting for listing elements: ${e}`));
-    
-    // Дополнительная задержка для стабилизации страницы
-    await page.waitForTimeout(getRandomDelay(
-      DELAYS.NAVIGATION.MIN_AFTER_PAGE_LOAD / 2,
-      DELAYS.NAVIGATION.MAX_AFTER_PAGE_LOAD / 2
-    ));
-    
-    // Проверка URL для подтверждения смены страницы
-    const pageUrl = page.url();
-    logInfo(`Final URL after navigation: ${pageUrl}`);
-    
-    const expectedPageParam = `page=${currentPageNum + 1}`;
-    const pageNumberCheck = pageUrl.includes(expectedPageParam);
-    
-    if (!pageNumberCheck) {
-      logWarning(`Page navigation may have failed. URL doesn't contain ${expectedPageParam}: ${pageUrl}`);
-      
-      // Дополнительная проверка на изменение содержимого
-      // Проверяем любые элементы пагинации
-      const paginationChecks = await page.$$('nav button, .pagination, [data-cy*="pagination"]');
-      
-      if (currentUrl !== pageUrl) {
-        logInfo(`URL changed from ${currentUrl} to ${pageUrl}, considering navigation successful`);
-        return true;
-      }
-      
-      if (paginationChecks.length === 0) {
-        // Проверка на антибот
-        const botDetected = await checkForBotDetection(page);
-        if (botDetected) {
-          throw new Error('Bot detection triggered during pagination');
-        }
-        
-        logWarning('Navigation failed - page content did not update');
-        return false;
-      }
+    // Экстра-проверка на случай редиректа обратно на первую страницу
+    if (newUrl.includes(`page=${currentPageNum + 1}`) || newUrl.includes(`page%3D${currentPageNum + 1}`)) {
+      logInfo(`Successfully navigated to next page via direct URL. New URL: ${newUrl}`);
+      return true;
+    } else {
+      logWarning(`Navigated to unexpected URL: ${newUrl}`);
+      return false;
     }
-    
-    logInfo(`Successfully navigated to page ${currentPageNum + 1}`);
-    return true;
   } catch (error) {
-    logError(`Error navigating to page ${currentPageNum + 1}: ${error}`);
+    logError(`Error during direct page navigation: ${error}`);
     return false;
   }
 }
@@ -895,37 +888,38 @@ async function navigateToNextPage(page: Page, currentPageNum: number): Promise<b
  * Функция для выполнения скрапинга с повторными попытками
  */
 async function runWithRetry<T>(
-  operation: () => Promise<T>,
-  operationName: string,
+  task: () => Promise<T>,
+  taskName: string,
   maxRetries: number = RETRY.MAX_RETRIES
 ): Promise<T> {
-  let lastError;
   let retryCount = 0;
+  let lastError: Error | null = null;
   
   while (retryCount < maxRetries) {
     try {
-      return await operation();
-    } catch (error) {
-      lastError = error;
-      retryCount++;
-      
-      logWarning(`${operationName} failed (attempt ${retryCount}/${maxRetries}): ${error}`);
-      
-      if (retryCount >= maxRetries) {
-        break;
+      if (retryCount > 0) {
+        logInfo(`Retry ${retryCount}/${maxRetries} for task: ${taskName}`);
       }
       
-      // Экспоненциальная задержка между попытками
-      const delay = DELAYS.RETRY.MIN_DELAY * Math.pow(DELAYS.RETRY.EXPONENTIAL_FACTOR, retryCount);
-      const jitter = Math.random() * DELAYS.RETRY.MIN_DELAY;
-      const totalDelay = Math.min(delay + jitter, DELAYS.RETRY.MAX_DELAY);
+      const result = await task();
+      return result;
+    } catch (error) {
+      lastError = error instanceof Error ? error : new Error(String(error));
+      logError(`Error in task "${taskName}" (attempt ${retryCount + 1}/${maxRetries}): ${error}`);
+      retryCount++;
       
-      logInfo(`Retrying after ${Math.round(totalDelay)}ms...`);
-      await new Promise(resolve => setTimeout(resolve, totalDelay));
+      // Экспоненциальное увеличение времени задержки между попытками
+      const delay = Math.min(
+        30000,
+        1000 * Math.pow(2, retryCount)
+      );
+      
+      logInfo(`Waiting ${delay}ms before retry...`);
+      await new Promise(resolve => setTimeout(resolve, delay));
     }
   }
   
-  throw new Error(`${operationName} failed after ${maxRetries} attempts: ${lastError}`);
+  throw new Error(`Failed after ${maxRetries} retries for task "${taskName}": ${lastError?.message}`);
 }
 
 /**
@@ -946,7 +940,7 @@ function saveIntermediateResults(task: ScrapeTask, results: any): void {
 /**
  * Основная функция для скрапинга данных о недвижимости
  */
-export async function scrapePropertyData(task: ScrapeTask): Promise<any> {
+async function scrapePropertyData(task: ScrapeTask): Promise<any> {
   
   logInfo(`Starting scrape task ${task.id}: ${task.cityNormalized}/${task.districtName}/${task.roomType}`);
   
@@ -1148,7 +1142,7 @@ export async function scrapePropertyData(task: ScrapeTask): Promise<any> {
         DELAYS.ACTIONS.MAX_BETWEEN_PAGES
       );
       logDebug(`Waiting ${delay}ms before next page`);
-      await page.waitForTimeout(delay);
+      await new Promise(resolve => setTimeout(resolve, delay));
     }
     
     // Финальный расчет средних показателей
@@ -1200,8 +1194,5 @@ setInterval(() => {
   }
 }, RESOURCE_LIMITS.MEMORY.CHECK_INTERVAL);
 
-// Экспортируем функции для внешнего использования
-export {
-  closeBrowser,
-  checkBrowserHealth
-};
+// Экспортируем функции
+export { scrapePropertyData, closeBrowser, checkBrowserHealth };

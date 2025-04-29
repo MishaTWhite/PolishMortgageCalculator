@@ -1944,8 +1944,16 @@ async function scrapePropertyData(task: ScrapeTask): Promise<any> {
   
   // Если у задачи уже были попытки, добавляем стартовую задержку
   if (task.retryCount > 0) {
-    const startDelay = task.retryCount * 30000; // 30 секунд за каждую предыдущую попытку
+    // Используем нашу новую функцию для расчета задержки
+    // Используем тип ошибки из задачи или предполагаем UNKNOWN_ERROR
+    const errorType = task.errorType || ErrorType.UNKNOWN_ERROR;
+    
+    // Получаем оптимальную задержку с учётом типа ошибки и количества попыток
+    const startDelay = getRetryDelay(task.retryCount, errorType);
+    
     logInfo(`Task ${task.id} has been retried ${task.retryCount} times. Waiting ${startDelay}ms before starting...`);
+    logInfo(`Reason: ${task.error || 'Unknown error'} (${errorType})`);
+    
     await new Promise(resolve => setTimeout(resolve, startDelay));
   }
   

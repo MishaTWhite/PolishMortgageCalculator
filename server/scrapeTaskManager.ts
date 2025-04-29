@@ -315,6 +315,52 @@ export function enqueueCityTasks(
 }
 
 /**
+ * Рассчитывает время задержки между повторными попытками
+ * с использованием экспоненциальной стратегии
+ */
+export function getRetryDelay(retryCount: number, errorType: ErrorType): number {
+  // Базовая задержка (в миллисекундах)
+  const BASE_DELAY = 3000; // 3 секунды
+  
+  // Множитель для экспоненциального роста задержки
+  const BACKOFF_FACTOR = 3;
+  
+  // Максимальная задержка (1.5 минуты)
+  const MAX_DELAY = 90000;
+  
+  // Базовый множитель зависит от типа ошибки
+  let errorFactor = 1;
+  
+  switch (errorType) {
+    case ErrorType.BOT_DETECTED:
+      // Для обнаружения бота требуется больше времени
+      errorFactor = 5;
+      break;
+    case ErrorType.MEMORY_LIMIT_EXCEEDED:
+      // При нехватке памяти нужно дать системе время на очистку ресурсов
+      errorFactor = 3;
+      break;
+    case ErrorType.CONNECTION_ERROR:
+      // Сетевые ошибки могут требовать больше времени для восстановления
+      errorFactor = 2;
+      break;
+    case ErrorType.BROWSER_CRASHED:
+    case ErrorType.BROWSER_CONTEXT_CLOSED:
+      // Восстановление после падения браузера
+      errorFactor = 4;
+      break;
+    default:
+      errorFactor = 1;
+  }
+  
+  // Рассчитываем задержку по формуле: BASE_DELAY * (BACKOFF_FACTOR ^ retryCount) * errorFactor
+  const delay = BASE_DELAY * Math.pow(BACKOFF_FACTOR, retryCount) * errorFactor;
+  
+  // Ограничиваем максимальной задержкой
+  return Math.min(delay, MAX_DELAY);
+}
+
+/**
  * Обновляет статус задачи
  */
 export function updateTaskStatus(
@@ -577,6 +623,10 @@ async function processNextTask(): Promise<void> {
       scrapingStats.endTime = new Date().toISOString();
       logInfo('Task queue processing completed');
       printScrapingStatistics();
+      
+      // Сохраняем статистику в файл для последующего анализа
+      const timestamp = new Date().toISOString().replace(/:/g, '-').replace(/\./g, '-');
+      saveScrapingStatistics(`scraping_stats_${timestamp}.json`);
     }
   }
 }
@@ -723,6 +773,60 @@ export function printScrapingStatistics(): void {
 export function getScrapingStatistics(): ScrapingStatistics {
   updateScrapingStatistics();
   return {...scrapingStats};
+}
+
+/**
+ * Сохраняет статистику скрапинга в JSON файл
+ */
+export function saveScrapingStatistics(filename: string = 'scraping_stats.json'): void {
+  try {
+    updateScrapingStatistics();
+    
+    // Создаем объект с расширенной информацией
+    const statsExport = {
+      ...scrapingStats,
+      exportTimestamp: new Date().toISOString(),
+      errorsByTypeList: Object.entries(scrapingStats.errorsByType)
+        .filter(([_, count]) => count > 0)
+        .map(([type, count]) => ({
+          type,
+          count,
+          percentage: scrapingStats.failed > 0 
+            ? Math.round((count / scrapingStats.failed) * 100) 
+            : 0,
+          description: getErrorDescription(type as ErrorType)
+        })),
+      
+      // Агрегированные данные для анализа
+      successMetrics: {
+        overallSuccess: scrapingStats.successRate,
+        dataSuccess: scrapingStats.withDataRate,
+        emptyResults: scrapingStats.completed - scrapingStats.withData,
+        emptyResultsRate: scrapingStats.completed > 0 
+          ? Math.round(((scrapingStats.completed - scrapingStats.withData) / scrapingStats.completed) * 100)
+          : 0
+      },
+      
+      // Производительность
+      performance: {
+        averageTaskTime: scrapingStats.completed + scrapingStats.failed > 0 
+          ? Math.round(scrapingStats.runtime / (scrapingStats.completed + scrapingStats.failed))
+          : 0,
+        tasksPerMinute: scrapingStats.runtime > 60000 
+          ? Math.round(((scrapingStats.completed + scrapingStats.failed) / scrapingStats.runtime) * 60000 * 10) / 10
+          : 0,
+        timeFormatted: `${Math.floor(scrapingStats.runtime / 60000)}m ${Math.floor((scrapingStats.runtime % 60000) / 1000)}s`
+      }
+    };
+    
+    // Сохраняем в файл в директории scraper_results
+    const filePath = path.join(process.cwd(), 'scraper_results', filename);
+    fs.writeFileSync(filePath, JSON.stringify(statsExport, null, 2), 'utf8');
+    logInfo(`Saved scraping statistics to ${filePath}`);
+    
+  } catch (err) {
+    logError(`Failed to save scraping statistics: ${err}`);
+  }
 }
 
 /**

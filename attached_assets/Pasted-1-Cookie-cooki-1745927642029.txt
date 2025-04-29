@@ -1,55 +1,140 @@
-1. Обработка Cookie-баннера
-В логах наблюдаются ошибки при попытке кликнуть на кнопку принятия cookies, что приводит к таймаутам и последующим сбоям задач.​
-
-Рекомендации:
-
-Проверка видимости элемента: Убедитесь, что перед выполнением клика на кнопку принятия cookies проводится проверка на видимость элемента. Это поможет избежать таймаутов, связанных с попытками взаимодействия с невидимыми элементами.​
-
-Альтернативные методы принятия cookies: Если стандартный клик не срабатывает, рассмотрите возможность использования JavaScript-инъекций для принятия cookies напрямую или модификации localStorage/sessionStorage для обхода баннера.​
-
-2. Управление задачами скрапинга
-В текущем списке задач наблюдаются дубликаты и задачи со статусом failed, что может указывать на проблемы с управлением задачами.​
-
-Рекомендации:
-
-Идентификация задач: Убедитесь, что каждая задача имеет уникальный идентификатор, чтобы избежать дублирования.​
-
-Обработка ошибок: Реализуйте механизм повторных попыток для задач, завершившихся с ошибкой, с ограничением на количество попыток. Это поможет избежать бесконечных циклов повторений.​
-
-3. Оптимизация использования памяти
-Логи указывают на высокое использование памяти перед инициализацией браузера.​
-
-Рекомендации:
-
-Мониторинг ресурсов: Внедрите мониторинг использования памяти и других ресурсов во время выполнения скрапера. Это поможет выявить и устранить утечки памяти.​
-
-Управление браузерными сессиями: Рассмотрите возможность закрытия и повторного открытия браузера после обработки определенного количества задач, чтобы освободить ресурсы.​
-
-4. Улучшение пользовательского интерфейса
-В логах присутствуют предупреждения о дублирующихся ключах в компонентах React, что может привести к некорректному отображению данных.​
-
-Рекомендации:
-
-Уникальные ключи: Проверьте компоненты, особенно PropertyMarketAnalysis, и убедитесь, что все элементы списка имеют уникальные ключи.​
-
-Обработка ошибок отображения: Добавьте обработку ошибок отображения данных, чтобы пользователь получал информативные сообщения в случае сбоев.​
-
-5. Расширенная диагностика и логирование
-Для более эффективного анализа проблем необходимо улучшить систему логирования и диагностики.​
-
-Рекомендации:
-
-Подробные логи: Убедитесь, что логи содержат подробную информацию о каждом этапе выполнения задач, включая успешные и неуспешные попытки.​
-
-Скриншоты при ошибках: Автоматически сохраняйте скриншоты страницы при возникновении ошибок, чтобы облегчить их анализ.​
-
-6. Тестирование и валидация
-Для обеспечения стабильной работы скрапера необходимо провести тщательное тестирование.​
-
-Рекомендации:
-
-Юнит-тесты: Разработайте юнит-тесты для ключевых функций скрапера, чтобы гарантировать их корректную работу при изменениях.​
-
-Интеграционные тесты: Проведите интеграционные тесты, симулируя различные сценарии, включая появление cookie-баннера, отсутствие объявлений и т.д.​
-
-Реализация вышеуказанных рекомендаций поможет повысить надежность и эффективность работы скрапера, а также улучшить взаимодействие с пользователем.
+{
+  "cookies": [
+    {
+      "name": "OptanonAlertBoxClosed",
+      "value": "2024-04-29T13:05:54.363Z",
+      "domain": ".otodom.pl",
+      "path": "/",
+      "expires": 1779579954.363,
+      "httpOnly": false,
+      "secure": false,
+      "sameSite": "Lax"
+    },
+    {
+      "name": "OptanonConsent",
+      "value": "isIABGlobal=false&datestamp=Mon+Apr+29+2024+13%3A05%3A54+GMT%2B0000+(Coordinated+Universal+Time)&version=202209.1.0&hosts=&landingPath=NotLandingPage&groups=C0001%3A1%2CC0002%3A0%2CC0003%3A0%2CC0004%3A0&geolocation=PL%3B14&AwaitingReconsent=false",
+      "domain": ".otodom.pl",
+      "path": "/",
+      "expires": 1779579954.363,
+      "httpOnly": false,
+      "secure": false,
+      "sameSite": "Lax"
+    },
+    {
+      "name": "_abck",
+      "value": "5DE9F496A608ECFCA9B8F4BA7F58E28E~-1~YAAQhD4QAnwfhVaOAQAAi7pI3AreJGY7KQ5TZGJ9i8/VrGm4SJYJQeJZgTwXYvECg8A6jHFQY3jNhPokdM6Fa2KfcENjY7AgCk42IRA9Z5DgpnQvtbIXQFgCq4XGUuKEbM37oOcXgeYNM4gUzZQP7f+HzmZrOTsWD4oG/I9O/o9T/TxxzPUZ+AHGNVoH8SHY1QrWgZfUCySqVPeQZSyoYRTJ3/hjh2aaJN7g6oNQnXKfvlZvwK8a+RcvXZUKvFCM4JfqcAVdmT66V2UdA8iIxdxUW8/8maCRJKT3jNVJu8MBxGp59AvXnHk3UvN4tBxjGVlqTQkYj1Cj+VGsHF9dh4oSrPSC3j0lZVwAQgX5BxQtILdnOiSXAKGR2jJU2QDImfhAQKfPAXvB8QGJHqxqIvPrSuVcQgLOBUOFGQ==~-1~-1~-1",
+      "domain": ".otodom.pl",
+      "path": "/",
+      "expires": 1777463953.804,
+      "httpOnly": false,
+      "secure": false,
+      "sameSite": "None"
+    },
+    {
+      "name": "bm_sz",
+      "value": "2DDDB92CAE92C6FC71FB4CC7E1C3F71F~YAAQhD4QAnsfhVaOAQAAi7pI3BaeSgLrJ9SZLIWlldTX30xMo4KFYR9lGd9Fh8QWrk7Yxs1SYcPRGJ7XTZYSwpYt7BO+1lQ4pvyzRIRl/DGDC66KjRX5Z8B3jchMa0s4DFfsDLn2xGGswVTB3yHdVcx0Xg/KQBLZecT9qUGRqPqQ68XTGvN7EQd55LCcnPIFmcQ7zCOOfSFGiHsZh9qw9f5q7E/2xnDRyMNLhPU41S3A9hH3X0O9MgCdW7JvkDkKO0F+tAOgNkYy082sQDGj+HqH+cPgfL5SGZo8eTfWLO5qdTRw~3359118~3356866",
+      "domain": ".otodom.pl",
+      "path": "/",
+      "expires": 1714571953.803,
+      "httpOnly": false,
+      "secure": false,
+      "sameSite": "None"
+    },
+    {
+      "name": "ak_bmsc",
+      "value": "AB15654D4FB0175F8B52A82AA1B2C22F~000000000000000000000000000000~YAAQhD4QAn0fhVaOAQAAi7pI3BaVIkJ21dORQTVCf8lCsIpwpCn9ZxLSyDyemT/dUE94eMVsqQ5H0UGBbpX/kUW4aafnrw8lmRxxWEA0m7J62g49jgSWyH0uHmCJIojgoPRV8nUhE4lwO2XNZGCzIGn5GYsqwKEyHcTMrj+b4tYgbx9FCIuLNcvbpAXHKYnk4UsPDVCB5JFa8bcxKXNbXfYZKMPXptlQ7WjscEA8LMWJm4nBlbVjZBYQONEe83yCQD7LzEcmfxVqpuLKsG0x3KSV8Ff6WTt4sTxIZGLbG0q12CpTBDmQKU/1hxKXv0W/HVCuFg2Tw9sFAJZ7PYZpS3vwkXGNMx0wElkYfPbkj6I7rvWORQFuUGVWzrWYKN95e/Cp5h3XwVwvWUNjmcJ+oGAA0/wL5WtS9/8EiSLDEvlAXbsBHVj7d4Lp+3T9DrhvdADdvVu3HZcRUNXXiMPsHRBZhLCK/dQNVwF5w1h/GRpgJMQQF/2lTA==",
+      "domain": ".otodom.pl",
+      "path": "/",
+      "expires": 1714559353.804,
+      "httpOnly": true,
+      "secure": false,
+      "sameSite": "None"
+    },
+    {
+      "name": "_ga_F1PJB54KQ8",
+      "value": "GS1.1.1714485553.1.0.1714485553.0.0.0",
+      "domain": ".otodom.pl",
+      "path": "/",
+      "expires": 1779557553,
+      "httpOnly": false,
+      "secure": false,
+      "sameSite": "Lax"
+    },
+    {
+      "name": "_gcl_au",
+      "value": "1.1.969752161.1714485553",
+      "domain": ".otodom.pl",
+      "path": "/",
+      "expires": 1722261553,
+      "httpOnly": false,
+      "secure": false,
+      "sameSite": "Lax"
+    },
+    {
+      "name": "_ga",
+      "value": "GA1.1.1432642188.1714485553",
+      "domain": ".otodom.pl",
+      "path": "/",
+      "expires": 1779557553,
+      "httpOnly": false,
+      "secure": false,
+      "sameSite": "Lax"
+    },
+    {
+      "name": "device_view",
+      "value": "full",
+      "domain": ".otodom.pl",
+      "path": "/",
+      "expires": -1,
+      "httpOnly": false,
+      "secure": false,
+      "sameSite": "Lax"
+    },
+    {
+      "name": "_uetsid",
+      "value": "5e8d46f0069c11efd1a10fe6dd694e16",
+      "domain": ".otodom.pl",
+      "path": "/",
+      "expires": 1714571953,
+      "httpOnly": false,
+      "secure": false,
+      "sameSite": "Lax"
+    },
+    {
+      "name": "_uetvid",
+      "value": "5e8dce90069c11ef860ce3903e6cf66d",
+      "domain": ".otodom.pl",
+      "path": "/",
+      "expires": 1748253553,
+      "httpOnly": false,
+      "secure": false,
+      "sameSite": "Lax"
+    },
+    {
+      "name": "datadome",
+      "value": "1ZPM_6W31XvPBTxBXt9-zN4sY2KJT24i5bEhpPx2-3Xu~R~J~yg9jy1a3iD9u_L5NNQjD9f4qN_VFR3BTtMhQnKLO_jKzZ1rAIoGVS~jQfubCT5OiDu97rRKA5XwQ-g",
+      "domain": ".otodom.pl",
+      "path": "/",
+      "expires": 1714571981.099,
+      "httpOnly": false,
+      "secure": true,
+      "sameSite": "Lax"
+    }
+  ],
+  "localStorage": {
+    "ajs_user_id": null,
+    "ajs_group_id": null,
+    "ajs_anonymous_id": "%22b2e5ffcf-3ff3-4bd9-b6a4-f56b8f64da11%22",
+    "_gd_visitor": "{\"visitorId\":\"2a9f9d22-75e8-4a79-94bc-20bbe1d7eecc\",\"dhg\":true}",
+    "consentCookie": "{\"targetingObjectAllowed\":false,\"preferencesObjectAllowed\":false,\"statisticsObjectAllowed\":false,\"user_uniq_id\":\"660ea89e46aff\"}",
+    "_hjSessionUser_1953113": "{\"userId\":\"b2e5ffcf-3ff3-4bd9-b6a4-f56b8f64da11\",\"createdAt\":\"2024-04-29T13:05:53.807Z\",\"isExpired\":false}",
+    "_hjFirstSeen": "1",
+    "_hjIncludedInSessionSample_1953113": "0",
+    "_hjSession_1953113": "{\"userId\":\"b2e5ffcf-3ff3-4bd9-b6a4-f56b8f64da11\",\"createdAt\":\"2024-04-29T13:05:53.841Z\",\"isExpired\":false}",
+    "_gaVisitorUid": "63493066-8eff-4c04-8ec1-57c78b03eabc",
+    "G_ENABLED_IDPS": "[\"google\",\"facebook\"]",
+    "_hjSessionUser_3478438": "{\"userId\":\"3b75b2ee-5a70-5b71-a5c7-27c4f1ceb608\",\"createdAt\":\"2024-04-29T13:05:53.859Z\",\"isExpired\":false}",
+    "sso_segment_attributes": "[]",
+    "otodom_session": "ddf64dbb-aaa4-4d32-a89a-aa4eeeee3443"
+  }
+}
